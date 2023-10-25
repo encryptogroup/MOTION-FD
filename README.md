@@ -1,10 +1,8 @@
-# Don't Eject The Impostor
+# MOTION-FD: MOTION with function-dependent preprocessing
 
 Our implementations are based on the MPC framework MOTION ([ePrint](https://ia.cr/2020/1137), [GitHub](https://github.com/encryptogroup/MOTION)), this repository is a fork of MOTION.
 
 This code is provided as an experimental implementation for testing purposes and should not be used in a productive environment. We cannot guarantee security and correctness.
-
-We provide supplementary material in [this file](supplementary_material.pdf), which includes all additionally required gates, such as truncation and ReLU, for machine learning operations, ensuring completeness.
 
 ## Requirements
 
