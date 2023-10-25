@@ -24,9 +24,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <memory>
-#include <cstdint>
 
 #include <openssl/evp.h>
 

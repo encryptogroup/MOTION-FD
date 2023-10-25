@@ -145,12 +145,12 @@ std::string AccumulatedCommunicationStatistics::PrintHumanReadable() const {
   constexpr unsigned kMiB = 1024 * 1024;
 
   ss << "Communication with each other party:\n"
-     << fmt::format("Sent: {:0.3f} MiB in {:d} messages\n",
-                    boost::accumulators::mean(accumulators_[kIdxNumberOfBytesSent]) / kMiB,
+     << fmt::format("Sent: {:0.3f} B in {:d} messages\n",
+                    boost::accumulators::mean(accumulators_[kIdxNumberOfBytesSent]),
                     static_cast<std::size_t>(
                         boost::accumulators::mean(accumulators_[kIdxNumberOfMessagesSent])))
-     << fmt::format("Received: {:0.3f} MiB in {:d} messages\n",
-                    boost::accumulators::mean(accumulators_[kIdxNumberOfBytesReceived]) / kMiB,
+     << fmt::format("Received: {:0.3f} B in {:d} messages\n",
+                    boost::accumulators::mean(accumulators_[kIdxNumberOfBytesReceived]),
                     static_cast<std::size_t>(
                         boost::accumulators::mean(accumulators_[kIdxNumberOfMessagesReceived])));
   return ss.str();

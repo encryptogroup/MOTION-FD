@@ -25,6 +25,7 @@
 #include "pseudo_random_generator.h"
 
 #include <cstdint>
+#include <limits>
 
 #include "aes/aesni_primitives.h"
 
@@ -71,24 +72,37 @@ std::vector<std::byte> Prg::Encrypt(const std::size_t bytes) {
 }
 
 std::vector<std::byte> Prg::Encrypt(const std::byte* input, const std::size_t bytes) {
-  const unsigned int remainder = (bytes & 15u) > 0 ? 1 : 0;
-  const std::size_t number_of_blocks = (bytes / 16) + remainder;
-  int length = bytes;
+  const std::size_t total_number_of_blocks = (bytes + (AES_BLOCK_SIZE - 1)) / AES_BLOCK_SIZE;
+  const std::size_t total_byte_length = total_number_of_blocks * AES_BLOCK_SIZE;
+  std::vector<std::byte> output(total_byte_length);
+  //We make sure that kMax is a multiple of AES_BLOCK_SIZE, so that we don't get
+  //integer overflow when passing number_of_blocks * AES_BLOCK_SIZE to EVP_EncryptUpdate
+  std::size_t constexpr kMax = 
+    std::numeric_limits<int>::max() - (std::numeric_limits<int>::max() % AES_BLOCK_SIZE);
+  
+  std::size_t in_bytes = std::min(kMax, bytes);
+  std::size_t remaining_bytes = bytes - in_bytes;
+  std::size_t offset = 0;
+  do {
+    const std::size_t number_of_blocks = (in_bytes + (AES_BLOCK_SIZE - 1)) / AES_BLOCK_SIZE;
+    int length = in_bytes;
 
-  // Asserting that conversion of (possibly larger) unsigned to signed integral value is safe here.
-  assert(length > 0 && "assigning bytes to int should yield a positive value");
-  assert(static_cast<std::size_t>(length) == bytes &&
-         "converting length back to std::size_t should yield a value equal to bytes");
+    //Asserting that conversion of (possibly larger) unsigned to signed integral value is safe here.
+    //i.e. checking for integer overflow, since EVP_EncryptUpdate uses int length
+    assert(length > 0 && "assigning bytes_to_write to int should yield a positive value");
+    assert(static_cast<std::size_t>(length) == in_bytes &&
+           "converting length back to std::size_t should yield a value equal to bytes_to_write");
+    assert(number_of_blocks * AES_BLOCK_SIZE <= (size_t) std::numeric_limits<int>::max());
 
-  const std::size_t byte_length = number_of_blocks * AES_BLOCK_SIZE;
-  std::vector<std::byte> output(byte_length);
-
-  if (1 != EVP_EncryptUpdate(ctx_.get(), reinterpret_cast<std::uint8_t*>(output.data()), &length,
-                             reinterpret_cast<const std::uint8_t*>(input),
-                             number_of_blocks * AES_BLOCK_SIZE)) {
-    throw std::runtime_error("Could not EVP_EncryptUpdate");
-  }
-
+    if (1 != EVP_EncryptUpdate(ctx_.get(), reinterpret_cast<std::uint8_t*>(output.data() + offset), &length,
+                               reinterpret_cast<const std::uint8_t*>(input),
+                               number_of_blocks * AES_BLOCK_SIZE)) {
+      throw std::runtime_error("Could not EVP_EncryptUpdate");
+    }
+    offset += length;
+    in_bytes = std::min(kMax, remaining_bytes);
+    remaining_bytes -= in_bytes;
+  } while(remaining_bytes > 0);
   return output;
 }
 

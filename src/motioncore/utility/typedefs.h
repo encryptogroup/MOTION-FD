@@ -139,6 +139,7 @@ enum class MpcProtocol : unsigned int {
   // MPC protocols
   kArithmeticGmw,
   kAstra,
+  kBooleanAstra,
   kBooleanGmw,
   kBmr,
   kGarbledCircuit,
@@ -155,6 +156,9 @@ inline std::string to_string(MpcProtocol p) {
     }
     case MpcProtocol::kAstra: {
       return "Astra";
+    }
+    case MpcProtocol::kBooleanAstra: {
+      return "BooleanAstra";
     }
     case MpcProtocol::kBooleanGmw: {
       return "BooleanGMW";

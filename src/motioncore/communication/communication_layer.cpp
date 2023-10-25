@@ -44,6 +44,13 @@
 #include "utility/thread.h"
 
 namespace encrypto::motion::communication {
+    
+//Values BufferSignal mean the following:
+//kNoRequestNotEmpty: Nothing has requested to be notified, but buffer was emptied beforehand
+//kNoRequestEmpty:    Nothing has requested to be notified and buffer is not empty
+//kRequestNotEmpty:   Something has requested to be notified, but buffer is not empty yet
+//kRequestEmpty:      Something has requested to be notified and buffer is empty
+enum BufferSignal { kNoRequestNotEmpty, kNoRequestEmpty, kRequestNotEmpty, kRequestEmpty };
 
 struct CommunicationLayer::CommunicationLayerImplementation {
   CommunicationLayerImplementation(std::size_t my_id,
@@ -75,6 +82,10 @@ struct CommunicationLayer::CommunicationLayerImplementation {
   std::vector<std::thread> send_threads_;
 
   std::shared_ptr<Logger> logger_;
+  
+  BufferSignal buffer_signal_;
+  mutable boost::fibers::condition_variable condition_variable_;
+  mutable boost::fibers::mutex mutex_;
 };
 
 CommunicationLayer::CommunicationLayerImplementation::CommunicationLayerImplementation(
@@ -85,7 +96,8 @@ CommunicationLayer::CommunicationLayerImplementation::CommunicationLayerImplemen
       start_sfuture_(start_promise_.get_future().share()),
       transports_(std::move(transports)),
       send_queues_(number_of_parties_),
-      logger_(std::move(logger)) {
+      logger_(std::move(logger)),
+      buffer_signal_(kNoRequestEmpty) {
   for (std::size_t party_id = 0; party_id < number_of_parties_; ++party_id) {
     if (party_id == my_id) {
       receive_threads_.emplace_back();
@@ -114,6 +126,16 @@ void CommunicationLayer::CommunicationLayerImplementation::SendTask(std::size_t 
       assert(queue.IsClosed());
       break;
     }
+    
+    {
+      std::scoped_lock lock(mutex_);
+      if(buffer_signal_ == kNoRequestEmpty) {
+        buffer_signal_ = kNoRequestNotEmpty;
+      } else if(buffer_signal_ == kRequestEmpty) {
+        buffer_signal_ = kRequestNotEmpty;
+      }
+    }
+    
     while (!tmp_queue->empty()) {
       auto& message = tmp_queue->front();
       transport.SendMessage(std::span(message->data(), message->size()));
@@ -122,13 +144,51 @@ void CommunicationLayer::CommunicationLayerImplementation::SendTask(std::size_t 
         logger_->LogDebug(fmt::format("Sent message to party {}", party_id));
       }
     }
+    
+    bool is_empty = true;
+    for(auto& queue: send_queues_) {
+      is_empty &= queue.empty();
+    }
+    
+    bool notify = false;
+    if(is_empty) {
+      std::scoped_lock lock(mutex_);
+      if(buffer_signal_ == kNoRequestNotEmpty) {
+        buffer_signal_ = kNoRequestEmpty;
+      } else if(buffer_signal_ == kRequestNotEmpty) {
+        buffer_signal_ = kRequestEmpty;
+        notify = true;
+      }
+    }
+    
+    if(notify) {
+      condition_variable_.notify_all();
+    }
   }
-
   transport.ShutdownSend();
 
   if (logger_) {
     logger_->LogDebug(fmt::format("SendTask finished for party {}", party_id));
   }
+}
+
+void CommunicationLayer::WaitForEmptyingSendBuffer() {
+  std::unique_lock lock(implementation_->mutex_);
+  if(implementation_->buffer_signal_ == kNoRequestEmpty) {
+    return;
+  }
+  implementation_->buffer_signal_ = kRequestNotEmpty;
+  
+  implementation_->condition_variable_.wait(
+    lock, [this]() { return implementation_->buffer_signal_ == kRequestEmpty; });
+}
+
+bool CommunicationLayer::IsSendBufferEmpty() {
+  bool is_empty = true;
+  for(auto& queue: implementation_->send_queues_) {
+    is_empty &= queue.empty();
+  }
+  return is_empty;
 }
 
 void CommunicationLayer::CommunicationLayerImplementation::ReceiveTask(
@@ -290,6 +350,26 @@ void CommunicationLayer::Synchronize() {
 }
 
 void CommunicationLayer::SendMessage(std::size_t party_id, flatbuffers::DetachedBuffer&& message) {
+  {
+    std::scoped_lock lock(implementation_->mutex_);
+    if(implementation_->buffer_signal_ == kNoRequestEmpty) {
+      implementation_->buffer_signal_ = kNoRequestNotEmpty;
+    }
+  }
+  switch(party_id) {
+    case 0: {
+      AddSendS0Communication(message.size());
+      break;
+    }
+    case 1: {
+      AddSendS1Communication(message.size());
+      break;
+    }
+    case 2: {
+      AddSendS2Communication(message.size());
+      break;
+    }
+  }
   implementation_->send_queues_[party_id].enqueue(
       std::make_shared<flatbuffers::DetachedBuffer>(std::move(message)));
 }
@@ -298,6 +378,29 @@ void CommunicationLayer::BroadcastMessage(flatbuffers::DetachedBuffer&& message)
   if (number_of_parties_ == 2) {
     SendMessage(1 - my_id_, std::move(message));
     return;
+  }
+  {
+    std::scoped_lock lock(implementation_->mutex_);
+    if(implementation_->buffer_signal_ == kNoRequestEmpty) {
+      implementation_->buffer_signal_ = kNoRequestNotEmpty;
+    }
+  }
+  switch(my_id_) {
+    case 0: {
+      AddSendS1Communication(message.size());
+      AddSendS2Communication(message.size());
+      break;
+    }
+    case 1: {
+      AddSendS0Communication(message.size());
+      AddSendS2Communication(message.size());
+      break;
+    }
+    case 2: {
+      AddSendS0Communication(message.size());
+      AddSendS1Communication(message.size());
+      break;
+    }
   }
   auto shared_message = std::make_shared<flatbuffers::DetachedBuffer>(std::move(message));
 

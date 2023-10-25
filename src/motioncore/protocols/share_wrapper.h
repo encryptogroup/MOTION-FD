@@ -29,7 +29,18 @@
 #include <span>
 #include <vector>
 
+#include <boost/numeric/ublas/matrix.hpp>
+
 #include "utility/typedefs.h"
+
+namespace encrypto::motion::proto::astra {
+
+template <typename T>
+class MatrixWire;
+template <typename T>
+using MatrixWirePointer = std::shared_ptr<MatrixWire<T>>;
+
+}  // namespace encrypto::motion::proto::astra
 
 namespace encrypto::motion {
 
@@ -93,7 +104,9 @@ class ShareWrapper {
   }
   
   friend ShareWrapper DotProduct(std::span<ShareWrapper> a, std::span<ShareWrapper> b);
-
+  friend boost::numeric::ublas::matrix<ShareWrapper> MatrixMultiplication(
+    boost::numeric::ublas::matrix<ShareWrapper> const& a, 
+    boost::numeric::ublas::matrix<ShareWrapper> const& b);
 
   ShareWrapper operator==(const ShareWrapper& other) const;
 
@@ -223,6 +236,11 @@ class ShareWrapper {
   
   template <typename T>
   ShareWrapper DotProduct(std::span<ShareWrapper> a, std::span<ShareWrapper> b) const;
+  
+  template <typename T>
+  boost::numeric::ublas::matrix<ShareWrapper> MatrixMultiplication(
+    boost::numeric::ublas::matrix<ShareWrapper> const& a, 
+    boost::numeric::ublas::matrix<ShareWrapper> const& b) const;
 
   ShareWrapper ArithmeticGmwToBmr() const;
 
@@ -236,5 +254,66 @@ class ShareWrapper {
 };
 
 ShareWrapper DotProduct(std::span<ShareWrapper> a, std::span<ShareWrapper> b);
+
+boost::numeric::ublas::matrix<ShareWrapper> MatrixMultiplication(
+  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
+  boost::numeric::ublas::matrix<ShareWrapper> const& b);
+
+boost::numeric::ublas::matrix<ShareWrapper> MaliciousMatrixMultiplication(
+  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
+  boost::numeric::ublas::matrix<ShareWrapper> const& b);
+
+boost::numeric::ublas::matrix<ShareWrapper> FixedPointMatrixMultiplication(
+  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
+  boost::numeric::ublas::matrix<ShareWrapper> const& b,
+  size_t precision);
+
+boost::numeric::ublas::matrix<ShareWrapper> MaliciousFixedPointMatrixMultiplication(
+  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
+  boost::numeric::ublas::matrix<ShareWrapper> const& b,
+  size_t precision);
+
+template<typename T>
+boost::numeric::ublas::matrix<ShareWrapper> FixedPointMatrixConstantMultiplication(
+  T const& constant, 
+  boost::numeric::ublas::matrix<ShareWrapper> const& a,
+  size_t precision);
+
+template<typename T>
+boost::numeric::ublas::matrix<ShareWrapper> MaliciousFixedPointMatrixConstantMultiplication(
+  T const& constant, 
+  boost::numeric::ublas::matrix<ShareWrapper> const& a,
+  size_t precision);
+  
+boost::numeric::ublas::matrix<ShareWrapper> HadamardMultiplication(
+  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
+  boost::numeric::ublas::matrix<ShareWrapper> const& b);
+  
+boost::numeric::ublas::matrix<ShareWrapper> MaliciousHadamardMultiplication(
+  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
+  boost::numeric::ublas::matrix<ShareWrapper> const& b);
+
+ShareWrapper MsbAdd(ShareWrapper a, ShareWrapper b);
+
+ShareWrapper B2A(std::vector<ShareWrapper> a);
+
+ShareWrapper B2A(std::vector<ShareWrapper> a, size_t bitlen);
+
+ShareWrapper MaliciousMsbAdd(ShareWrapper a, ShareWrapper b);
+
+ShareWrapper MatrixMsb(boost::numeric::ublas::matrix<ShareWrapper> const& a);
+
+ShareWrapper MaliciousMatrixMsb(boost::numeric::ublas::matrix<ShareWrapper> const& a);
+
+ShareWrapper ReLU(
+  boost::numeric::ublas::matrix<ShareWrapper> const& a);
+  
+ShareWrapper MaliciousReLU(
+  boost::numeric::ublas::matrix<ShareWrapper> const& a);
+  
+ShareWrapper MaliciousMultiply(ShareWrapper const& a, ShareWrapper const& b);
+
+ShareWrapper MaliciousAnd(ShareWrapper const& a, ShareWrapper const& b);
+
 
 }  // namespace encrypto::motion

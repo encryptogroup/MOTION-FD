@@ -72,4 +72,7 @@ struct RunTimeStatistics {
   std::array<TimePointPair, static_cast<std::size_t>(StatisticsId::kMax) + 1> data;
 };
 
+//TODO: Modify backend s.t. use of global object to store setup statistics is not necessary
+extern RunTimeStatistics g_setup_statistics;
+
 }  // namespace encrypto::motion

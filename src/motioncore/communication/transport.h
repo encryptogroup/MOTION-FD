@@ -22,12 +22,12 @@
 
 #pragma once
 
+#include <cstdint>
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
 #include <span>
 #include <vector>
-#include <cstdint>
 
 namespace encrypto::motion::communication {
 
@@ -37,6 +37,8 @@ struct TransportStatistics {
   std::size_t number_of_bytes_sent = 0;
   std::size_t number_of_bytes_received = 0;
 };
+
+extern std::vector<TransportStatistics> g_setup_transport_statistics;
 
 // underlying transport between two parties
 // e.g. a TCP/QUIC/.. connection, or a pair of local queues

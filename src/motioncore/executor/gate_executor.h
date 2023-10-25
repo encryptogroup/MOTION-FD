@@ -24,6 +24,8 @@
 
 #include <functional>
 #include <memory>
+#include "utility/reusable_future.h"
+#include "base/backend.h"
 
 namespace encrypto::motion {
 
@@ -35,7 +37,7 @@ class Register;
 // Evaluates all registered gates.
 class GateExecutor {
  public:
-  GateExecutor(Register&, std::function<void()> presetup_function, std::shared_ptr<Logger>);
+  GateExecutor(Backend& backend, Register&, std::function<void()> presetup_function, std::shared_ptr<Logger>);
 
   // Run the setup phases first for all gates before starting with the online
   // phases.
@@ -44,12 +46,16 @@ class GateExecutor {
   void Evaluate(RunTimeStatistics& statistics);
 
  private:
+  Backend& backend_;
   Register& register_;
   // Presetup function is run prior to the setup function and is used to provide information about
   // objects that will be used in the setup phase, eg a multiplication triple registers an
   // oblivious transfer object and an OT provider registers base OT objects.
   std::function<void()> presetup_function_;
   std::shared_ptr<Logger> logger_;
+  motion::ReusableFiberFuture<std::vector<std::uint8_t>> executor_future_setup_previous_party_;
+  motion::ReusableFiberFuture<std::vector<std::uint8_t>> executor_future_setup_next_party_;
+  uint64_t gate_id_;
 };
 
 }  // namespace encrypto::motion

@@ -24,9 +24,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <cstddef>
 #include <string_view>
-#include <cstdint>
 
 namespace encrypto::motion {
 

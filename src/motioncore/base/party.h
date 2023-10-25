@@ -82,6 +82,9 @@ class Party {
       case MpcProtocol::kGarbledCircuit: {
         return backend_->GarbledCircuitInput(party_id, input);
       }
+      case MpcProtocol::kBooleanAstra: {
+        return backend_->BooleanAstraInput(party_id, input);
+      }
       default: {
         throw(std::runtime_error(
             fmt::format("Unknown MPC protocol with id {}", static_cast<unsigned int>(P))));
@@ -139,6 +142,9 @@ class Party {
       case MpcProtocol::kGarbledCircuit: {
         return backend_->GarbledCircuitInput(party_id, input);
       }
+      case MpcProtocol::kBooleanAstra: {
+        return backend_->BooleanAstraInput(party_id, input);
+      }
       default: {
         throw(std::runtime_error(
             fmt::format("Unknown MPC protocol with id {}", static_cast<unsigned int>(P))));
@@ -164,6 +170,9 @@ class Party {
       case MpcProtocol::kBmr: {
         return backend_->BmrInput(party_id, input);
       }
+      case MpcProtocol::kBooleanAstra: {
+        return backend_->BooleanAstraInput(party_id, input);
+      }
       default: {
         throw(std::runtime_error(
             fmt::format("Unknown MPC protocol with id {}", static_cast<unsigned int>(P))));
@@ -188,6 +197,9 @@ class Party {
       }
       case MpcProtocol::kBmr: {
         return backend_->BmrInput(party_id, input);
+      }
+      case MpcProtocol::kBooleanAstra: {
+        return backend_->BooleanAstraInput(party_id, input);
       }
       default: {
         throw(std::runtime_error(
@@ -229,6 +241,11 @@ class Party {
             "Non-binary types have to be converted to BitVectors in BMR, "
             "consider using TODO function for the input");
       }
+      case MpcProtocol::kBooleanAstra: {
+        throw(std::runtime_error(
+            fmt::format("Non-binary types have to be converted to BitVectors in BooleanAstra, "
+                        "consider using TODO function for the input")));
+      }
       default: {
         throw(std::runtime_error(
             fmt::format("Unknown MPC protocol with id {}", static_cast<unsigned int>(P))));
@@ -267,6 +284,11 @@ class Party {
       case MpcProtocol::kBmr: {
         throw(std::runtime_error(
             fmt::format("Non-binary types have to be converted to BitVectors in BMR, "
+                        "consider using TODO function for the input")));
+      }
+      case MpcProtocol::kBooleanAstra: {
+        throw(std::runtime_error(
+            fmt::format("Non-binary types have to be converted to BitVectors in BooleanAstra, "
                         "consider using TODO function for the input")));
       }
       default: {
@@ -318,6 +340,11 @@ class Party {
             "Non-binary types have to be converted to BitVectors in BMR, "
             "consider using TODO function for the input");
       }
+      case MpcProtocol::kBooleanAstra: {
+        throw(std::runtime_error(
+            fmt::format("Non-binary types have to be converted to BitVectors in BooleanAstra, "
+                        "consider using TODO function for the input")));
+      }
       default: {
         throw(std::runtime_error(
             fmt::format("Unknown MPC protocol with id {}", static_cast<unsigned int>(P))));
@@ -354,6 +381,11 @@ class Party {
         throw std::runtime_error(
             "Non-binary types have to be converted to BitVectors in BMR, "
             "consider using TODO function for the input");
+      }
+      case MpcProtocol::kBooleanAstra: {
+        throw(std::runtime_error(
+            fmt::format("Non-binary types have to be converted to BitVectors in BooleanAstra, "
+                        "consider using TODO function for the input")));
       }
       default: {
         throw(std::runtime_error(

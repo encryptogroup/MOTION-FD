@@ -8,6 +8,7 @@ add_executable(motiontest
         test_bitvector.cpp
         test_bmr.cpp
         test_boolean_algorithms.cpp
+        test_boolean_astra.cpp
         test_communication_layer.cpp
         test_conversions.cpp
         test_dummy_transport.cpp
@@ -27,6 +28,7 @@ add_executable(motiontest
         test_simdify_gate.cpp
         test_sp.cpp
         test_subset_gate.cpp
+        test_swift.cpp
         test_tcp_transport.cpp
         test_unsimdify_gate.cpp
         )

@@ -38,10 +38,14 @@ add_library(motion
         protocols/astra/astra_gate.cpp
         protocols/astra/astra_wire.cpp
         protocols/astra/astra_share.cpp
+        protocols/astra/astra_verifier.cpp
         protocols/bmr/bmr_gate.cpp
         protocols/bmr/bmr_provider.cpp
         protocols/bmr/bmr_share.cpp
         protocols/bmr/bmr_wire.cpp
+        protocols/boolean_astra/boolean_astra_gate.cpp
+        protocols/boolean_astra/boolean_astra_share.cpp
+        protocols/boolean_astra/boolean_astra_wire.cpp
         protocols/boolean_gmw/boolean_gmw_gate.cpp
         protocols/boolean_gmw/boolean_gmw_share.cpp
         protocols/boolean_gmw/boolean_gmw_wire.cpp
@@ -59,6 +63,10 @@ add_library(motion
         protocols/gate.cpp
         protocols/share.cpp
         protocols/share_wrapper.cpp
+        protocols/swift/swift_wire.cpp
+        protocols/swift/swift_gate.cpp
+        protocols/swift/swift_truncation.cpp
+        protocols/swift/swift_verifier.cpp
         protocols/wire.cpp
         secure_type/secure_signed_integer.cpp
         secure_type/secure_unsigned_integer.cpp

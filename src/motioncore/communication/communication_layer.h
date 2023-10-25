@@ -40,6 +40,7 @@
 
 #include "fbs_headers/message_generated.h"
 #include "transport.h"
+#include "utility/fiber_condition.h"
 #include "utility/reusable_future.h"
 
 namespace encrypto::motion {
@@ -90,6 +91,34 @@ class CommunicationLayer {
   void SetLogger(std::shared_ptr<Logger> logger);
 
   MessageManager& GetMessageManager() { return *message_manager_; }
+  
+  
+  size_t GetSendS0Communication() { 
+    return communication_send_s0_.load(std::memory_order_relaxed); 
+  }
+  size_t GetSendS1Communication() { 
+    return communication_send_s1_.load(std::memory_order_relaxed); 
+  }
+  size_t GetSendS2Communication() { 
+    return communication_send_s2_.load(std::memory_order_relaxed); 
+  }
+  
+  void AddSendS0Communication(size_t bytes) { 
+    communication_send_s0_.fetch_add(bytes, std::memory_order_relaxed); 
+  }
+  void AddSendS1Communication(size_t bytes) { 
+    communication_send_s1_.fetch_add(bytes, std::memory_order_relaxed); 
+  }
+  void AddSendS2Communication(size_t bytes) { 
+    communication_send_s2_.fetch_add(bytes, std::memory_order_relaxed); 
+  }
+  
+  //This method should only be called when one can make sure, that no
+  //thread/Fiber running in parallel will increase the SendTask buffer
+  //NOTE Can currently only be called once
+  void WaitForEmptyingSendBuffer();
+  
+  bool IsSendBufferEmpty();
 
  private:
   struct CommunicationLayerImplementation;
@@ -101,8 +130,11 @@ class CommunicationLayer {
   bool is_shutdown_;
   std::shared_ptr<Logger> logger_;
   std::shared_ptr<MessageManager> message_manager_;
-
+  
   std::size_t sync_state_{0};
+  std::atomic_size_t communication_send_s0_ = 0;
+  std::atomic_size_t communication_send_s1_ = 0;
+  std::atomic_size_t communication_send_s2_ = 0;
 };
 
 // Create a set of communication layers connected by dummy transports

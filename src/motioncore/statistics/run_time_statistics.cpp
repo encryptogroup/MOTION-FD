@@ -80,4 +80,6 @@ std::string RunTimeStatistics::PrintHumanReadable() const {
   return ss.str();
 }
 
+RunTimeStatistics g_setup_statistics{};
+
 }  // namespace encrypto::motion

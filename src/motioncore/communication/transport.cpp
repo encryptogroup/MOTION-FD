@@ -33,4 +33,7 @@ void Transport::ResetStatistics() {
   statistics_.number_of_bytes_received = 0;
 }
 
+//TODO: Modify backend s.t. use of global object to store setup statistics is not necessary
+std::vector<TransportStatistics> g_setup_transport_statistics{};
+
 }  // namespace encrypto::motion::communication

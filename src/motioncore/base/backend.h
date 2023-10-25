@@ -67,6 +67,13 @@ using SharePointer = std::shared_ptr<Share<T>>;
 
 }  // namespace encrypto::motion::proto::astra
 
+namespace encrypto::motion::proto::boolean_astra {
+
+class Share;
+using SharePointer = std::shared_ptr<Share>;
+
+}  // namespace encrypto::motion::proto::astra
+
 namespace encrypto::motion {
 
 class BaseOtProvider;
@@ -101,6 +108,17 @@ class Register;
 using RegisterPointer = std::shared_ptr<Register>;
 
 class GateExecutor;
+
+class AstraSacrificeVerifier;
+class SwiftSacrificeVerifier;
+class SociumSacrificeVerifier;
+class SwiftHashVerifier;
+class SwiftTruncation;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+typedef unsigned __int128 UInt128;
+#pragma GCC diagnostic pop
 
 class Backend : public std::enable_shared_from_this<Backend> {
  public:
@@ -218,6 +236,20 @@ class Backend : public std::enable_shared_from_this<Backend> {
                       std::size_t number_of_simd);
 
   SharePointer GarbledCircuitOutput(const SharePointer& parent, std::size_t output_owner);
+  
+  //BooleanAstra interface
+  
+  SharePointer BooleanAstraInput(std::size_t party_id, bool input = false);
+
+  SharePointer BooleanAstraInput(std::size_t party_id, const BitVector<>& input);
+
+  SharePointer BooleanAstraInput(std::size_t party_id, BitVector<>&& input);
+
+  SharePointer BooleanAstraInput(std::size_t party_id, std::span<const BitVector<>> input);
+
+  SharePointer BooleanAstraInput(std::size_t party_id, std::vector<BitVector<>>&& input);
+  
+  SharePointer BooleanAstraOutput(const SharePointer& parent, std::size_t output_owner);
 
   /// \brief Blocking wait for synchronizing between parties. Called in Clear() and Reset()
   void Synchronize();
@@ -253,6 +285,20 @@ class Backend : public std::enable_shared_from_this<Backend> {
   const auto& GetRunTimeStatistics() const { return run_time_statistics_; }
 
   auto& GetMutableRunTimeStatistics() { return run_time_statistics_; }
+  
+  AstraSacrificeVerifier* GetAstraVerifier() { return astra_verifier_.get(); }
+  
+  SwiftSacrificeVerifier* GetSwiftVerifier() { return swift_verifier_.get(); }
+  
+  SociumSacrificeVerifier* GetSociumVerifier() { return socium_verifier_.get(); }
+  
+  SwiftHashVerifier* GetSwiftInputHashVerifier() { return input_swift_hash_verifier_.get(); }
+  
+  SwiftHashVerifier* GetSwiftOutputHashVerifier() { return output_swift_hash_verifier_.get(); }
+  
+  SwiftHashVerifier* GetSwiftMultiplyHashVerifier() { return multiply_swift_hash_verifier_.get(); }
+  
+  SwiftTruncation* GetSwiftTruncation() { return swift_truncation_.get(); }
 
  private:
   std::list<RunTimeStatistics> run_time_statistics_;
@@ -272,6 +318,13 @@ class Backend : public std::enable_shared_from_this<Backend> {
   std::shared_ptr<SpProvider> sp_provider_;
   std::shared_ptr<SbProvider> sb_provider_;
   std::unique_ptr<proto::bmr::Provider> bmr_provider_;
+  std::unique_ptr<AstraSacrificeVerifier> astra_verifier_;
+  std::unique_ptr<SwiftSacrificeVerifier> swift_verifier_;
+  std::unique_ptr<SociumSacrificeVerifier> socium_verifier_;
+  std::unique_ptr<SwiftHashVerifier> input_swift_hash_verifier_;
+  std::unique_ptr<SwiftHashVerifier> output_swift_hash_verifier_;
+  std::unique_ptr<SwiftHashVerifier> multiply_swift_hash_verifier_;
+  std::unique_ptr<SwiftTruncation> swift_truncation_;
 };
 
 using BackendPointer = std::shared_ptr<Backend>;

@@ -50,6 +50,8 @@
 #include "protocols/arithmetic_gmw/arithmetic_gmw_share.h"
 #include "protocols/astra/astra_gate.h"
 #include "protocols/astra/astra_share.h"
+#include "protocols/boolean_astra/boolean_astra_gate.h"
+#include "protocols/boolean_astra/boolean_astra_share.h"
 #include "protocols/bmr/bmr_gate.h"
 #include "protocols/bmr/bmr_provider.h"
 #include "protocols/bmr/bmr_share.h"
@@ -62,6 +64,9 @@
 #include "register.h"
 #include "statistics/run_time_statistics.h"
 #include "utility/constants.h"
+#include "protocols/astra/astra_verifier.h"
+#include "protocols/swift/swift_verifier.h"
+#include "protocols/swift/swift_truncation.h"
 
 using namespace std::chrono_literals;
 
@@ -75,7 +80,7 @@ Backend::Backend(std::unique_ptr<communication::CommunicationLayer> communicatio
       configuration_(configuration),
       register_(std::make_shared<Register>(logger_)),
       gate_executor_(std::make_unique<GateExecutor>(
-          *register_, [this] { RunPreprocessing(); }, logger_)) {
+          *this, *register_, [this] { RunPreprocessing(); }, logger_)) {
   motion_base_provider_ = std::make_unique<BaseProvider>(*communication_layer_);
   base_ot_provider_ = std::make_unique<BaseOtProvider>(*communication_layer_);
   communication_layer_->SetLogger(logger_);
@@ -98,6 +103,13 @@ Backend::Backend(std::unique_ptr<communication::CommunicationLayer> communicatio
     garbled_circuit_provider_ =
         proto::garbled_circuit::Provider::MakeProvider(*communication_layer_);
   }
+  astra_verifier_ = std::make_unique<AstraSacrificeVerifier>(*this);
+  swift_verifier_ = std::make_unique<SwiftSacrificeVerifier>(*this);
+  socium_verifier_ = std::make_unique<SociumSacrificeVerifier>(*this);
+  input_swift_hash_verifier_ = std::make_unique<SwiftHashVerifier>(*this);
+  output_swift_hash_verifier_ = std::make_unique<SwiftHashVerifier>(*this);
+  multiply_swift_hash_verifier_ = std::make_unique<SwiftHashVerifier>(*this);
+  swift_truncation_ = std::make_unique<SwiftTruncation>(*this, 16);
 
   // TODO should probably throw if it has been already started
   communication_layer_->Start();
@@ -347,7 +359,6 @@ template SharePointer Backend::AstraInput<std::uint8_t>(std::size_t party_id, st
 template SharePointer Backend::AstraInput<std::uint16_t>(std::size_t party_id, std::uint16_t input);
 template SharePointer Backend::AstraInput<std::uint32_t>(std::size_t party_id, std::uint32_t input);
 template SharePointer Backend::AstraInput<std::uint64_t>(std::size_t party_id, std::uint64_t input);
-template SharePointer Backend::AstraInput<__uint128_t>(std::size_t party_id, __uint128_t input);
 
 template <typename T>
 SharePointer Backend::AstraInput(std::size_t party_id, std::vector<T> input) {
@@ -364,8 +375,6 @@ template SharePointer Backend::AstraInput<std::uint32_t>(std::size_t party_id,
                                                          std::vector<std::uint32_t> input);
 template SharePointer Backend::AstraInput<std::uint64_t>(std::size_t party_id,
                                                          std::vector<std::uint64_t> input);
-template SharePointer Backend::AstraInput<__uint128_t>(std::size_t party_id,
-                                                       std::vector<__uint128_t> input);
 
 template <typename T>
 SharePointer Backend::AstraOutput(const proto::astra::SharePointer<T>& parent,
@@ -383,8 +392,6 @@ template SharePointer Backend::AstraOutput<std::uint32_t>(
     const proto::astra::SharePointer<std::uint32_t>& parent, std::size_t output_owner);
 template SharePointer Backend::AstraOutput<std::uint64_t>(
     const proto::astra::SharePointer<std::uint64_t>& parent, std::size_t output_owner);
-template SharePointer Backend::AstraOutput<__uint128_t>(
-    const proto::astra::SharePointer<__uint128_t>& parent, std::size_t output_owner);
 
 template <typename T>
 SharePointer Backend::AstraOutput(const SharePointer& parent, std::size_t output_owner) {
@@ -402,8 +409,6 @@ template SharePointer Backend::AstraOutput<std::uint32_t>(const SharePointer& pa
                                                           std::size_t output_owner);
 template SharePointer Backend::AstraOutput<std::uint64_t>(const SharePointer& parent,
                                                           std::size_t output_owner);
-template SharePointer Backend::AstraOutput<__uint128_t>(const SharePointer& parent,
-                                                        std::size_t output_owner);
 
 SharePointer Backend::GarbledCircuitInput(std::size_t party_id,
                                           std::span<const BitVector<>> input) {
@@ -438,6 +443,36 @@ SharePointer Backend::GarbledCircuitOutput(const SharePointer& parent, std::size
   const auto output_gate =
       GetRegister()->EmplaceGate<proto::garbled_circuit::OutputGate>(parent, output_owner);
   return output_gate->GetOutputAsConstantShare();
+}
+
+
+//BooleanAstra interface
+
+SharePointer Backend::BooleanAstraInput(std::size_t party_id, bool input) {
+  return BooleanAstraInput(party_id, BitVector(1, input));
+}
+
+SharePointer Backend::BooleanAstraInput(std::size_t party_id, const BitVector<>& input) {
+  return BooleanAstraInput(party_id, std::vector<BitVector<>>{input});
+}
+
+SharePointer Backend::BooleanAstraInput(std::size_t party_id, BitVector<>&& input) {
+  return BooleanAstraInput(party_id, std::vector<BitVector<>>{std::move(input)});
+}
+
+SharePointer Backend::BooleanAstraInput(std::size_t party_id, std::span<const BitVector<>> input) {
+  return BooleanAstraInput(party_id, std::vector<BitVector<>>{input.begin(), input.end()});
+}
+
+SharePointer Backend::BooleanAstraInput(std::size_t party_id, std::vector<BitVector<>>&& input) {
+  const auto input_gate = register_->EmplaceGate<proto::boolean_astra::InputGate>(std::move(input), party_id, *this);
+  return std::static_pointer_cast<Share>(input_gate->GetOutputAsBooleanAstraShare());
+}
+
+SharePointer Backend::BooleanAstraOutput(const SharePointer& parent, std::size_t output_owner) {
+  assert(parent);
+  const auto output_gate = register_->EmplaceGate<proto::boolean_astra::OutputGate>(parent, output_owner);
+  return std::static_pointer_cast<Share>(output_gate->GetOutputAsBooleanAstraShare());
 }
 
 void Backend::Synchronize() { communication_layer_->Synchronize(); }

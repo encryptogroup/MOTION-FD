@@ -27,16 +27,39 @@
 #include "statistics/run_time_statistics.h"
 #include "utility/fiber_thread_pool/fiber_thread_pool.hpp"
 #include "utility/logger.h"
+#include "communication/transport.h"
+#include "protocols/wire.h"
+#include "base/backend.h"
+#include "protocols/astra/astra_verifier.h"
+#include "protocols/swift/swift_verifier.h"
+#include "protocols/swift/swift_truncation.h"
 
 namespace encrypto::motion {
 
-GateExecutor::GateExecutor(Register& reg, std::function<void(void)> presetup_function,
+GateExecutor::GateExecutor(Backend& backend, Register& reg, std::function<void(void)> presetup_function,
                            std::shared_ptr<Logger> logger)
-    : register_(reg),
+    : backend_(backend),
+      register_(reg),
       presetup_function_(std::move(presetup_function)),
-      logger_(std::move(logger)) {}
+      logger_(std::move(logger)),
+      gate_id_(backend.GetRegister()->NextGateId()) {
+  using communication::MessageType::kGateExecutorSynchronizeSetup;
+  
+  auto& communication_layer = backend_.GetCommunicationLayer();
+  auto& message_manager = communication_layer.GetMessageManager();
+  uint64_t my_id = communication_layer.GetMyId();
+  uint64_t next_id = (my_id + 1) % 3;
+  uint64_t previous_id = (my_id + 2) % 3;
+  
+  executor_future_setup_previous_party_ = 
+    message_manager.RegisterReceive(previous_id, kGateExecutorSynchronizeSetup, gate_id_);
+  executor_future_setup_next_party_ = 
+    message_manager.RegisterReceive(next_id, kGateExecutorSynchronizeSetup, gate_id_);
+}
 
 void GateExecutor::EvaluateSetupOnline(RunTimeStatistics& statistics) {
+  using namespace std::chrono;
+  using communication::MessageType::kGateExecutorSynchronizeSetup;
   statistics.RecordStart<RunTimeStatistics::StatisticsId::kEvaluate>();
 
   presetup_function_();
@@ -49,11 +72,20 @@ void GateExecutor::EvaluateSetupOnline(RunTimeStatistics& statistics) {
   // create a pool with std::thread::hardware_concurrency() no. of threads
   // to execute fibers
   FiberThreadPool fiber_pool(0, 2 * register_.GetTotalNumberOfGates());
+  auto& communication_layer = backend_.GetCommunicationLayer();
 
-  // ------------------------------ setup phase ------------------------------
+  // ------------------------------ setup phase ------------------------------ 
   statistics.RecordStart<RunTimeStatistics::StatisticsId::kGatesSetup>();
+  auto setup_start = steady_clock::now();
+  backend_.GetSwiftTruncation()->InitializeRandom();
 
   // Evaluate the setup phase of all the gates
+  fiber_pool.post([&] {
+    backend_.GetSwiftTruncation()->GenerateR();
+  });
+  fiber_pool.post([&] {
+    backend_.GetSwiftTruncation()->GenerateRd();
+  });
   for (auto& gate : register_.GetGates()) {
     if (gate->NeedsSetup()) {
       fiber_pool.post([&] {
@@ -69,12 +101,64 @@ void GateExecutor::EvaluateSetupOnline(RunTimeStatistics& statistics) {
 
   register_.CheckSetupCondition();
   register_.GetGatesSetupDoneCondition()->Wait();
+  backend_.GetAstraVerifier()->SetReady();
+  backend_.GetSwiftVerifier()->SetReady();
+  backend_.GetSociumVerifier()->SetReady();
+  backend_.GetSwiftInputHashVerifier()->SetReady();
+  backend_.GetSwiftOutputHashVerifier()->SetReady();
+  backend_.GetSwiftMultiplyHashVerifier()->SetReady();
+  backend_.GetAstraVerifier()->GetIsReadyCondition().Wait();
+  backend_.GetSwiftVerifier()->GetIsReadyCondition().Wait();
+  backend_.GetSociumVerifier()->GetIsReadyCondition().Wait();
   assert(register_.GetNumberOfEvaluatedGatesSetup() == register_.GetNumberOfGatesSetup());
-
+  communication_layer.WaitForEmptyingSendBuffer();
+  assert(communication_layer.IsSendBufferEmpty());
+  auto setup_end = steady_clock::now();
   statistics.RecordEnd<RunTimeStatistics::StatisticsId::kGatesSetup>();
-
+  duration<double> setup_diff = setup_end - setup_start;
+  std::cout << "CONTROL Setup Evaluation took: " << double(setup_diff.count() * 1'000) << " ms" << std::endl;
+  uint64_t my_id = communication_layer.GetMyId();
+  size_t bytes_sent_to_s0 = 0;
+  size_t bytes_sent_to_s1 = 0;
+  size_t bytes_sent_to_s2 = 0;
+  switch(my_id) {
+    case 0: {
+      bytes_sent_to_s1 = communication_layer.GetSendS1Communication();
+      bytes_sent_to_s2 = communication_layer.GetSendS2Communication();
+      std::cout << "CONTROL Setup bytes sent to S1: " << bytes_sent_to_s1 << std::endl;
+      std::cout << "CONTROL Setup bytes sent to S2: " << bytes_sent_to_s2 << std::endl;
+      break;
+    }
+    case 1: {
+      bytes_sent_to_s0 = communication_layer.GetSendS0Communication();
+      bytes_sent_to_s2 = communication_layer.GetSendS2Communication();
+      std::cout << "CONTROL Setup bytes sent to S0: " << bytes_sent_to_s0 << std::endl;
+      std::cout << "CONTROL Setup bytes sent to S2: " << bytes_sent_to_s2 << std::endl;
+      break;
+    }
+    case 2: {
+      bytes_sent_to_s0 = communication_layer.GetSendS0Communication();
+      bytes_sent_to_s1 = communication_layer.GetSendS1Communication();
+      std::cout << "CONTROL Setup bytes sent to S0: " << bytes_sent_to_s0 << std::endl;
+      std::cout << "CONTROL Setup bytes sent to S1: " << bytes_sent_to_s1 << std::endl;
+      break;
+    }
+  }
+  
+  g_setup_statistics = statistics;
+  communication::g_setup_transport_statistics = backend_.GetCommunicationLayer().GetTransportStatistics();
+  
+  std::vector<uint8_t> synchronize_message{uint8_t(42)};
+  {
+    auto message = communication::BuildMessage(kGateExecutorSynchronizeSetup, gate_id_, synchronize_message);
+    communication_layer.BroadcastMessage(message.Release());
+  }
+  executor_future_setup_previous_party_.get();
+  executor_future_setup_next_party_.get();
+  
   // ------------------------------ online phase ------------------------------
   statistics.RecordStart<RunTimeStatistics::StatisticsId::kGatesOnline>();
+  auto online_start = steady_clock::now();
 
   // Evaluate the online phase of all the gates
   for (auto& gate : register_.GetGates()) {
@@ -92,8 +176,12 @@ void GateExecutor::EvaluateSetupOnline(RunTimeStatistics& statistics) {
 
   register_.CheckOnlineCondition();
   register_.GetGatesOnlineDoneCondition()->Wait();
+  backend_.GetSwiftInputHashVerifier()->GetIsReadyCondition().Wait();
+  backend_.GetSwiftOutputHashVerifier()->GetIsReadyCondition().Wait();
+  backend_.GetSwiftMultiplyHashVerifier()->GetIsReadyCondition().Wait();
   assert(register_.GetNumberOfGatesOnline() == register_.GetNumberOfGatesOnline());
 
+  auto online_end = steady_clock::now();
   statistics.RecordEnd<RunTimeStatistics::StatisticsId::kGatesOnline>();
 
   // --------------------------------------------------------------------------
@@ -101,6 +189,32 @@ void GateExecutor::EvaluateSetupOnline(RunTimeStatistics& statistics) {
   fiber_pool.join();
 
   statistics.RecordEnd<RunTimeStatistics::StatisticsId::kEvaluate>();
+  
+  duration<double> online_diff = online_end - online_start;
+  std::cout << "CONTROL Online Evaluation took: " << double(online_diff.count() * 1'000) << " ms" << std::endl;
+  switch(my_id) {
+    case 0: {
+      bytes_sent_to_s1 = communication_layer.GetSendS1Communication() - bytes_sent_to_s1;
+      bytes_sent_to_s2 = communication_layer.GetSendS2Communication() - bytes_sent_to_s2;
+      std::cout << "CONTROL Online bytes sent to S1: " << bytes_sent_to_s1 << std::endl;
+      std::cout << "CONTROL Online bytes sent to S2: " << bytes_sent_to_s2 << std::endl;
+      break;
+    }
+    case 1: {
+      bytes_sent_to_s0 = communication_layer.GetSendS0Communication() - bytes_sent_to_s0;
+      bytes_sent_to_s2 = communication_layer.GetSendS2Communication() - bytes_sent_to_s2;
+      std::cout << "CONTROL Online bytes sent to S0: " << bytes_sent_to_s0 << std::endl;
+      std::cout << "CONTROL Online bytes sent to S2: " << bytes_sent_to_s2 << std::endl;
+      break;
+    }
+    case 2: {
+      bytes_sent_to_s0 = communication_layer.GetSendS0Communication() - bytes_sent_to_s0;
+      bytes_sent_to_s1 = communication_layer.GetSendS1Communication() - bytes_sent_to_s1;
+      std::cout << "CONTROL Online bytes sent to S0: " << bytes_sent_to_s0 << std::endl;
+      std::cout << "CONTROL Online bytes sent to S1: " << bytes_sent_to_s1 << std::endl;
+      break;
+    }
+  }
 }
 
 void GateExecutor::Evaluate(RunTimeStatistics& statistics) {
