@@ -9,10 +9,12 @@
 #add_subdirectory(tutorial/mult3)
 #add_subdirectory(millionaires_problem)
 
-add_executable(astra_benchmark astra_benchmark.cpp DEtI_benchmarks.cpp)
-add_executable(auxiliator_benchmark auxiliator_benchmark.cpp DEtI_benchmarks.cpp)
-add_executable(socium_benchmark socium_benchmark.cpp DEtI_benchmarks.cpp)
-add_executable(swift_benchmark swift_benchmark.cpp DEtI_benchmarks.cpp)
+add_library(DEtI OBJECT DEtI_benchmarks.cpp)
+target_link_libraries(DEtI MOTION::motion Boost::program_options)
+add_executable(astra_benchmark astra_benchmark.cpp)
+add_executable(auxiliator_benchmark auxiliator_benchmark.cpp)
+add_executable(socium_benchmark socium_benchmark.cpp)
+add_executable(swift_benchmark swift_benchmark.cpp)
 
 if (NOT MOTION_BUILD_BOOST_FROM_SOURCES)
     find_package(Boost
@@ -21,22 +23,7 @@ if (NOT MOTION_BUILD_BOOST_FROM_SOURCES)
             REQUIRED)
 endif ()
 
-target_link_libraries(astra_benchmark
-        MOTION::motion
-        Boost::program_options
-        )
-
-target_link_libraries(auxiliator_benchmark
-        MOTION::motion
-        Boost::program_options
-        )
-
-target_link_libraries(socium_benchmark
-        MOTION::motion
-        Boost::program_options
-        )
-
-target_link_libraries(swift_benchmark
-        MOTION::motion
-        Boost::program_options
-        )
+target_link_libraries(astra_benchmark DEtI)
+target_link_libraries(auxiliator_benchmark DEtI)
+target_link_libraries(socium_benchmark DEtI)
+target_link_libraries(swift_benchmark DEtI)

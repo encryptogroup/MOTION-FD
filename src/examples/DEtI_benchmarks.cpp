@@ -31,7 +31,8 @@ std::pair<program_options::variables_map, bool> ParseProgramOptions(int ac, char
 
 encrypto::motion::PartyPointer CreateParty(const program_options::variables_map& user_options);
 
-ublas::matrix<ShareWrapper> AstraMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
+ublas::matrix<ShareWrapper> 
+AstraMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
   auto backend = party->GetBackend();
   auto reg = backend->GetRegister();
   
@@ -48,7 +49,8 @@ ublas::matrix<ShareWrapper> AstraMakeDummyInputMatrix(PartyPointer& party, size_
   return result;
 }
 
-ublas::matrix<proto::swift::WirePointer<TypeParam>> SwiftMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
+ublas::matrix<proto::swift::WirePointer<TypeParam>> 
+SwiftMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
   auto backend = party->GetBackend();
   auto reg = backend->GetRegister();
   
@@ -355,7 +357,7 @@ ublas::matrix<ShareWrapper> MaliciousAvgPool(ublas::matrix<ShareWrapper> P,
   return MaliciousFixedPointMatrixConstantMultiplication(w_inv_square, S, precision);
 }
 
-void Benchmark_MNIST_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_MNIST_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -375,14 +377,14 @@ void Benchmark_MNIST_1(program_options::variables_map& user_options, size_t numb
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_1: Conv(28x28, 16x25, 1, 5) - Setup Only",
+    "Benchmark_Astra_MNIST_1: Conv(28x28, 16x25, 1, 5) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_1: Conv(28x28, 16x25, 1, 5)",
+    "Benchmark_Astra_MNIST_1: Conv(28x28, 16x25, 1, 5)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_MNIST_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_MNIST_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -401,14 +403,14 @@ void Benchmark_MNIST_2(program_options::variables_map& user_options, size_t numb
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_2: ReLU(16x576) - Setup Only",
+    "Benchmark_Astra_MNIST_2: ReLU(16x576) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_2: ReLU(16x576)",
+    "Benchmark_Astra_MNIST_2: ReLU(16x576)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_MNIST_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_MNIST_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -427,14 +429,14 @@ void Benchmark_MNIST_3(program_options::variables_map& user_options, size_t numb
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_3: Avg(24x24, ... (16 times in parallel), 2) - Setup Only",
+    "Benchmark_Astra_MNIST_3: Avg(24x24, ... (16 times in parallel), 2) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_3: Avg(24x24, ... (16 times in parallel), 2)",
+    "Benchmark_Astra_MNIST_3: Avg(24x24, ... (16 times in parallel), 2)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_MNIST_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_MNIST_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -458,14 +460,14 @@ void Benchmark_MNIST_4(program_options::variables_map& user_options, size_t numb
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_4: Conv(16x16, ... (16 times), 16x400, 16, 5) - Setup Only",
+    "Benchmark_Astra_MNIST_4: Conv(16x16, ... (16 times), 16x400, 16, 5) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_4: Conv(16x16, ... (16 times), 16x400, 16, 5)",
+    "Benchmark_Astra_MNIST_4: Conv(16x16, ... (16 times), 16x400, 16, 5)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_MNIST_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_MNIST_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -484,14 +486,14 @@ void Benchmark_MNIST_5(program_options::variables_map& user_options, size_t numb
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_5: ReLU(16x64) - Setup Only",
+    "Benchmark_Astra_MNIST_5: ReLU(16x64) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_5: ReLU(16x64)",
+    "Benchmark_Astra_MNIST_5: ReLU(16x64)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_MNIST_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_MNIST_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -510,14 +512,14 @@ void Benchmark_MNIST_6(program_options::variables_map& user_options, size_t numb
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_6: Avg(8x8, ... (16 times in parallel), 2) - Setup Only",
+    "Benchmark_Astra_MNIST_6: Avg(8x8, ... (16 times in parallel), 2) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_6: Avg(8x8, ... (16 times in parallel), 2)",
+    "Benchmark_Astra_MNIST_6: Avg(8x8, ... (16 times in parallel), 2)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_MNIST_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_MNIST_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -537,14 +539,14 @@ void Benchmark_MNIST_7(program_options::variables_map& user_options, size_t numb
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_7: FPA Matrix prod(100x256, 256x1) - Setup Only",
+    "Benchmark_Astra_MNIST_7: FPA Matrix prod(100x256, 256x1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_7: FPA Matrix prod(100x256, 256x1)",
+    "Benchmark_Astra_MNIST_7: FPA Matrix prod(100x256, 256x1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_MNIST_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_MNIST_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -563,14 +565,14 @@ void Benchmark_MNIST_8(program_options::variables_map& user_options, size_t numb
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_8: ReLU(100x1) - Setup Only",
+    "Benchmark_Astra_MNIST_8: ReLU(100x1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_8: ReLU(100x1)",
+    "Benchmark_Astra_MNIST_8: ReLU(100x1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_MNIST_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_MNIST_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -590,14 +592,14 @@ void Benchmark_MNIST_9(program_options::variables_map& user_options, size_t numb
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_9: FPA Matrix prod(10x100, 100x1) - Setup Only",
+    "Benchmark_Astra_MNIST_9: FPA Matrix prod(10x100, 100x1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_MNIST_9: FPA Matrix prod(10x100, 100x1)",
+    "Benchmark_Astra_MNIST_9: FPA Matrix prod(10x100, 100x1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -621,14 +623,14 @@ void Benchmark_CIFAR_10_1(program_options::variables_map& user_options, size_t n
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_1: Conv(34x34, ... (3 times), 64x27, 3, 3) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_1: Conv(34x34, ... (3 times), 64x27, 3, 3) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_1: Conv(34x34, ... (3 times), 64x27, 3, 3)",
+    "Benchmark_Astra_CIFAR_10_1: Conv(34x34, ... (3 times), 64x27, 3, 3)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -647,14 +649,14 @@ void Benchmark_CIFAR_10_2(program_options::variables_map& user_options, size_t n
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_2: ReLU(64x1024) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_2: ReLU(64x1024) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_2: ReLU(64x1024)",
+    "Benchmark_Astra_CIFAR_10_2: ReLU(64x1024)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -678,14 +680,14 @@ void Benchmark_CIFAR_10_3(program_options::variables_map& user_options, size_t n
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_3: Conv(34x34, ... (64 times), 64x576, 64, 3) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_3: Conv(34x34, ... (64 times), 64x576, 64, 3) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_3: Conv(34x34, ... (64 times), 64x576, 64, 3)",
+    "Benchmark_Astra_CIFAR_10_3: Conv(34x34, ... (64 times), 64x576, 64, 3)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -704,14 +706,14 @@ void Benchmark_CIFAR_10_4(program_options::variables_map& user_options, size_t n
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_4: ReLU(64x1024) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_4: ReLU(64x1024) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_4: ReLU(64x1024)",
+    "Benchmark_Astra_CIFAR_10_4: ReLU(64x1024)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -730,14 +732,14 @@ void Benchmark_CIFAR_10_5(program_options::variables_map& user_options, size_t n
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_5: Avg(32x32, ... (64 times in parallel), 2) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_5: Avg(32x32, ... (64 times in parallel), 2) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_5: Avg(32x32, ... (64 times in parallel), 2)",
+    "Benchmark_Astra_CIFAR_10_5: Avg(32x32, ... (64 times in parallel), 2)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -761,14 +763,14 @@ void Benchmark_CIFAR_10_6(program_options::variables_map& user_options, size_t n
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_6: Conv(18x18, ... (64 times), 64x576, 64, 3) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_6: Conv(18x18, ... (64 times), 64x576, 64, 3) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_6: Conv(18x18, ... (64 times), 64x576, 64, 3)",
+    "Benchmark_Astra_CIFAR_10_6: Conv(18x18, ... (64 times), 64x576, 64, 3)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -787,14 +789,14 @@ void Benchmark_CIFAR_10_7(program_options::variables_map& user_options, size_t n
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_7: ReLU(64x256) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_7: ReLU(64x256) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_7: ReLU(64x256)",
+    "Benchmark_Astra_CIFAR_10_7: ReLU(64x256)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -818,14 +820,14 @@ void Benchmark_CIFAR_10_8(program_options::variables_map& user_options, size_t n
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_8: Conv(18x18, ... (64 times), 64x576, 64, 3) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_8: Conv(18x18, ... (64 times), 64x576, 64, 3) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_8: Conv(18x18, ... (64 times), 64x576, 64, 3)",
+    "Benchmark_Astra_CIFAR_10_8: Conv(18x18, ... (64 times), 64x576, 64, 3)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -844,14 +846,14 @@ void Benchmark_CIFAR_10_9(program_options::variables_map& user_options, size_t n
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_9: ReLU(64x256) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_9: ReLU(64x256) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_9: ReLU(64x256)",
+    "Benchmark_Astra_CIFAR_10_9: ReLU(64x256)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_10(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_10(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -870,14 +872,14 @@ void Benchmark_CIFAR_10_10(program_options::variables_map& user_options, size_t 
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_10: Avg(16x16, ... (64 times in parallel), 2) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_10: Avg(16x16, ... (64 times in parallel), 2) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_10: Avg(16x16, ... (64 times in parallel), 2)",
+    "Benchmark_Astra_CIFAR_10_10: Avg(16x16, ... (64 times in parallel), 2)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_11(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_11(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -901,14 +903,14 @@ void Benchmark_CIFAR_10_11(program_options::variables_map& user_options, size_t 
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_11: Conv(10x10, ... (64 times), 64x576, 64, 3) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_11: Conv(10x10, ... (64 times), 64x576, 64, 3) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_11: Conv(10x10, ... (64 times), 64x576, 64, 3)",
+    "Benchmark_Astra_CIFAR_10_11: Conv(10x10, ... (64 times), 64x576, 64, 3)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_12(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_12(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -927,14 +929,14 @@ void Benchmark_CIFAR_10_12(program_options::variables_map& user_options, size_t 
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_12: ReLU(64x64) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_12: ReLU(64x64) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_12: ReLU(64x64)",
+    "Benchmark_Astra_CIFAR_10_12: ReLU(64x64)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_13(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_13(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -958,14 +960,14 @@ void Benchmark_CIFAR_10_13(program_options::variables_map& user_options, size_t 
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_13: Conv(8x8, ... (64 times), 64x64, 64, 1) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_13: Conv(8x8, ... (64 times), 64x64, 64, 1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_13: Conv(8x8, ... (64 times), 64x64, 64, 1)",
+    "Benchmark_Astra_CIFAR_10_13: Conv(8x8, ... (64 times), 64x64, 64, 1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_14(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_14(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -984,14 +986,14 @@ void Benchmark_CIFAR_10_14(program_options::variables_map& user_options, size_t 
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_14: ReLU(64x64) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_14: ReLU(64x64) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_14: ReLU(64x64)",
+    "Benchmark_Astra_CIFAR_10_14: ReLU(64x64)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_15(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_15(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1015,14 +1017,14 @@ void Benchmark_CIFAR_10_15(program_options::variables_map& user_options, size_t 
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_15: Conv(8x8, ... (64 times), 16x64, 64, 1) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_15: Conv(8x8, ... (64 times), 16x64, 64, 1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_15: Conv(8x8, ... (64 times), 16x64, 64, 1)",
+    "Benchmark_Astra_CIFAR_10_15: Conv(8x8, ... (64 times), 16x64, 64, 1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_16(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_16(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1041,14 +1043,14 @@ void Benchmark_CIFAR_10_16(program_options::variables_map& user_options, size_t 
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_16: ReLU(16x64) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_16: ReLU(16x64) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_16: ReLU(16x64)",
+    "Benchmark_Astra_CIFAR_10_16: ReLU(16x64)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_CIFAR_10_17(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_CIFAR_10_17(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1068,15 +1070,1060 @@ void Benchmark_CIFAR_10_17(program_options::variables_map& user_options, size_t 
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_17: FPA Matrix prod(10x1024, 1024x1) - Setup Only",
+    "Benchmark_Astra_CIFAR_10_17: FPA Matrix prod(10x1024, 1024x1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
     
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_CIFAR_10_17: FPA Matrix prod(10x1024, 1024x1)",
+    "Benchmark_Astra_CIFAR_10_17: FPA Matrix prod(10x1024, 1024x1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_MNIST_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Astra_VGG16_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(3);
+    for(size_t i = 0; i != 3; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 34, 34));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 64, 27);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_1: Conv(34x34, ... (3 times), 64x27, 3, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_1: Conv(34x34, ... (3 times), 64x27, 3, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 64, 1024);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_2: ReLU(64x1024) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_2: ReLU(64x1024)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(64);
+    for(size_t i = 0; i != 64; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 34, 34));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 64, 576);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_3: Conv(34x34, ... (64 times), 64x576, 64, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_3: Conv(34x34, ... (64 times), 64x576, 64, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 64, 1024);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_4: ReLU(64x1024) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_4: ReLU(64x1024)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = AstraMakeDummyInputSimdMatrices(party, 32, 32, 64);
+    auto result = AvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_5: Avg(32x32, ... (64 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_5: Avg(32x32, ... (64 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(64);
+    for(size_t i = 0; i != 64; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 18, 18));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 128, 576);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_6: Conv(18x18, ... (64 times), 128x576, 64, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_6: Conv(18x18, ... (64 times), 128x576, 64, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 128, 256);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_7: ReLU(128x256) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_7: ReLU(128x256)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(128);
+    for(size_t i = 0; i != 128; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 18, 18));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 128, 1152);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_8: Conv(18x18, ... (128 times), 128x1152, 128, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_8: Conv(18x18, ... (128 times), 128x1152, 128, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 128, 256);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_9: ReLU(128x256) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_9: ReLU(128x256)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_10(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = AstraMakeDummyInputSimdMatrices(party, 16, 16, 128);
+    auto result = AvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_10: Avg(16x16, ... (128 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_10: Avg(16x16, ... (128 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_11(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(128);
+    for(size_t i = 0; i != 128; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 256, 1152);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_11: Conv(10x10, ... (128 times), 256x1152, 128, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_11: Conv(10x10, ... (128 times), 256x1152, 128, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_12(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 256, 64);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_12: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_12: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_13(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 256, 2304);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_13: Conv(10x10, ... (256 times), 256x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_13: Conv(10x10, ... (256 times), 256x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_14(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 256, 64);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_14: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_14: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_15(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 256, 2304);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_15: Conv(10x10, ... (256 times), 256x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_15: Conv(10x10, ... (256 times), 256x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_16(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 256, 64);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_16: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_16: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_17(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = AstraMakeDummyInputSimdMatrices(party, 8, 8, 256);
+    auto result = AvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_17: Avg(8x8, ... (256 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_17: Avg(8x8, ... (256 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_18(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 2304);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_18: Conv(6x6, ... (256 times), 512x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_18: Conv(6x6, ... (256 times), 512x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_19(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 16);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_19: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_19: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_20(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_20: Conv(6x6, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_20: Conv(6x6, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_21(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 16);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_21: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_21: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_22(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_22: Conv(6x6, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_22: Conv(6x6, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_23(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 16);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_23: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_23: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_24(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = AstraMakeDummyInputSimdMatrices(party, 4, 4, 512);
+    auto result = AvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_24: Avg(4x4, ... (512 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_24: Avg(4x4, ... (512 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_25(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_25: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_25: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_26(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 4);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_26: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_26: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_27(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_27: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_27: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_28(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 4);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_28: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_28: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_29(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_29: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_29: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_30(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 4);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_30: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_30: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_31(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = AstraMakeDummyInputSimdMatrices(party, 2, 2, 512);
+    auto result = AvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_31: Avg(2x2, ... (512 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_31: Avg(2x2, ... (512 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_32(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = AstraMakeDummyInputMatrix(party, 4096, 512);
+    auto b = AstraMakeDummyInputMatrix(party, 512, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_32: FPA Matrix prod(4096x512, 512x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_32: FPA Matrix prod(4096x512, 512x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_33(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 4096, 1);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_33: ReLU(4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_33: ReLU(4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_34(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = AstraMakeDummyInputMatrix(party, 4096, 4096);
+    auto b = AstraMakeDummyInputMatrix(party, 4096, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_34: FPA Matrix prod(4096x4096, 4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_34: FPA Matrix prod(4096x4096, 4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_35(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 4096, 1);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_35: ReLU(4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_35: ReLU(4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_36(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = AstraMakeDummyInputMatrix(party, 1000, 4096);
+    auto b = AstraMakeDummyInputMatrix(party, 4096, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_36: FPA Matrix prod(1000x4096, 4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_36: FPA Matrix prod(1000x4096, 4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Astra_VGG16_37(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 1000, 1);
+    auto result = encrypto::motion::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_37: ReLU(1000x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Astra_VGG16_37: ReLU(1000x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// End: Astra /////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Auxiliator /////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Benchmark_Auxiliator_MNIST_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1096,14 +2143,14 @@ void Benchmark_Malicious_MNIST_1(program_options::variables_map& user_options, s
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_1: Conv(28x28, 16x25, 1, 5) - Setup Only",
+    "Benchmark_Auxiliator_MNIST_1: Conv(28x28, 16x25, 1, 5) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_1: Conv(28x28, 16x25, 1, 5)",
+    "Benchmark_Auxiliator_MNIST_1: Conv(28x28, 16x25, 1, 5)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_MNIST_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_MNIST_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1122,14 +2169,14 @@ void Benchmark_Malicious_MNIST_2(program_options::variables_map& user_options, s
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_2: ReLU(16x576) - Setup Only",
+    "Benchmark_Auxiliator_MNIST_2: ReLU(16x576) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_2: ReLU(16x576)",
+    "Benchmark_Auxiliator_MNIST_2: ReLU(16x576)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_MNIST_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_MNIST_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1148,14 +2195,14 @@ void Benchmark_Malicious_MNIST_3(program_options::variables_map& user_options, s
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_3: Avg(24x24, ... (16 times in parallel), 2) - Setup Only",
+    "Benchmark_Auxiliator_MNIST_3: Avg(24x24, ... (16 times in parallel), 2) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_3: Avg(24x24, ... (16 times in parallel), 2)",
+    "Benchmark_Auxiliator_MNIST_3: Avg(24x24, ... (16 times in parallel), 2)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_MNIST_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_MNIST_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1179,14 +2226,14 @@ void Benchmark_Malicious_MNIST_4(program_options::variables_map& user_options, s
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_4: Conv(16x16, ... (16 times), 16x400, 16, 5) - Setup Only",
+    "Benchmark_Auxiliator_MNIST_4: Conv(16x16, ... (16 times), 16x400, 16, 5) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_4: Conv(16x16, ... (16 times), 16x400, 16, 5)",
+    "Benchmark_Auxiliator_MNIST_4: Conv(16x16, ... (16 times), 16x400, 16, 5)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_MNIST_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_MNIST_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1205,14 +2252,14 @@ void Benchmark_Malicious_MNIST_5(program_options::variables_map& user_options, s
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_5: ReLU(16x64) - Setup Only",
+    "Benchmark_Auxiliator_MNIST_5: ReLU(16x64) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_5: ReLU(16x64)",
+    "Benchmark_Auxiliator_MNIST_5: ReLU(16x64)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_MNIST_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_MNIST_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1231,14 +2278,14 @@ void Benchmark_Malicious_MNIST_6(program_options::variables_map& user_options, s
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_6: Avg(8x8, ... (16 times in parallel), 2) - Setup Only",
+    "Benchmark_Auxiliator_MNIST_6: Avg(8x8, ... (16 times in parallel), 2) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_6: Avg(8x8, ... (16 times in parallel), 2)",
+    "Benchmark_Auxiliator_MNIST_6: Avg(8x8, ... (16 times in parallel), 2)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_MNIST_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_MNIST_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1258,14 +2305,14 @@ void Benchmark_Malicious_MNIST_7(program_options::variables_map& user_options, s
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_7: FPA Matrix prod(100x256, 256x1) - Setup Only",
+    "Benchmark_Auxiliator_MNIST_7: FPA Matrix prod(100x256, 256x1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_7: FPA Matrix prod(100x256, 256x1)",
+    "Benchmark_Auxiliator_MNIST_7: FPA Matrix prod(100x256, 256x1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_MNIST_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_MNIST_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1284,14 +2331,14 @@ void Benchmark_Malicious_MNIST_8(program_options::variables_map& user_options, s
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_8: ReLU(100x1) - Setup Only",
+    "Benchmark_Auxiliator_MNIST_8: ReLU(100x1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_8: ReLU(100x1)",
+    "Benchmark_Auxiliator_MNIST_8: ReLU(100x1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_MNIST_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_MNIST_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1311,14 +2358,14 @@ void Benchmark_Malicious_MNIST_9(program_options::variables_map& user_options, s
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_9: FPA Matrix prod(10x100, 100x1) - Setup Only",
+    "Benchmark_Auxiliator_MNIST_9: FPA Matrix prod(10x100, 100x1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_MNIST_9: FPA Matrix prod(10x100, 100x1)",
+    "Benchmark_Auxiliator_MNIST_9: FPA Matrix prod(10x100, 100x1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1342,14 +2389,14 @@ void Benchmark_Malicious_CIFAR_10_1(program_options::variables_map& user_options
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_1: Conv(34x34, ... (3 times), 64x27, 3, 3) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_1: Conv(34x34, ... (3 times), 64x27, 3, 3) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_1: Conv(34x34, ... (3 times), 64x27, 3, 3)",
+    "Benchmark_Auxiliator_CIFAR_10_1: Conv(34x34, ... (3 times), 64x27, 3, 3)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1368,14 +2415,14 @@ void Benchmark_Malicious_CIFAR_10_2(program_options::variables_map& user_options
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_2: ReLU(64x1024) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_2: ReLU(64x1024) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_2: ReLU(64x1024)",
+    "Benchmark_Auxiliator_CIFAR_10_2: ReLU(64x1024)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1399,14 +2446,14 @@ void Benchmark_Malicious_CIFAR_10_3(program_options::variables_map& user_options
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_3: Conv(34x34, ... (64 times), 64x576, 64, 3) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_3: Conv(34x34, ... (64 times), 64x576, 64, 3) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_3: Conv(34x34, ... (64 times), 64x576, 64, 3)",
+    "Benchmark_Auxiliator_CIFAR_10_3: Conv(34x34, ... (64 times), 64x576, 64, 3)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1425,14 +2472,14 @@ void Benchmark_Malicious_CIFAR_10_4(program_options::variables_map& user_options
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_4: ReLU(64x1024) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_4: ReLU(64x1024) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_4: ReLU(64x1024)",
+    "Benchmark_Auxiliator_CIFAR_10_4: ReLU(64x1024)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1451,14 +2498,14 @@ void Benchmark_Malicious_CIFAR_10_5(program_options::variables_map& user_options
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_5: Avg(32x32, ... (64 times in parallel), 2) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_5: Avg(32x32, ... (64 times in parallel), 2) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_5: Avg(32x32, ... (64 times in parallel), 2)",
+    "Benchmark_Auxiliator_CIFAR_10_5: Avg(32x32, ... (64 times in parallel), 2)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1482,14 +2529,14 @@ void Benchmark_Malicious_CIFAR_10_6(program_options::variables_map& user_options
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_6: Conv(18x18, ... (64 times), 64x576, 64, 3) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_6: Conv(18x18, ... (64 times), 64x576, 64, 3) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_6: Conv(18x18, ... (64 times), 64x576, 64, 3)",
+    "Benchmark_Auxiliator_CIFAR_10_6: Conv(18x18, ... (64 times), 64x576, 64, 3)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1508,14 +2555,14 @@ void Benchmark_Malicious_CIFAR_10_7(program_options::variables_map& user_options
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_7: ReLU(64x256) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_7: ReLU(64x256) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_7: ReLU(64x256)",
+    "Benchmark_Auxiliator_CIFAR_10_7: ReLU(64x256)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1539,14 +2586,14 @@ void Benchmark_Malicious_CIFAR_10_8(program_options::variables_map& user_options
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_8: Conv(18x18, ... (64 times), 64x576, 64, 3) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_8: Conv(18x18, ... (64 times), 64x576, 64, 3) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_8: Conv(18x18, ... (64 times), 64x576, 64, 3)",
+    "Benchmark_Auxiliator_CIFAR_10_8: Conv(18x18, ... (64 times), 64x576, 64, 3)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1565,14 +2612,14 @@ void Benchmark_Malicious_CIFAR_10_9(program_options::variables_map& user_options
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_9: ReLU(64x256) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_9: ReLU(64x256) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_9: ReLU(64x256)",
+    "Benchmark_Auxiliator_CIFAR_10_9: ReLU(64x256)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_10(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_10(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1591,14 +2638,14 @@ void Benchmark_Malicious_CIFAR_10_10(program_options::variables_map& user_option
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_10: Avg(16x16, ... (64 times in parallel), 2) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_10: Avg(16x16, ... (64 times in parallel), 2) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_10: Avg(16x16, ... (64 times in parallel), 2)",
+    "Benchmark_Auxiliator_CIFAR_10_10: Avg(16x16, ... (64 times in parallel), 2)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_11(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_11(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1622,14 +2669,14 @@ void Benchmark_Malicious_CIFAR_10_11(program_options::variables_map& user_option
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_11: Conv(10x10, ... (64 times), 64x576, 64, 3) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_11: Conv(10x10, ... (64 times), 64x576, 64, 3) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_11: Conv(10x10, ... (64 times), 64x576, 64, 3)",
+    "Benchmark_Auxiliator_CIFAR_10_11: Conv(10x10, ... (64 times), 64x576, 64, 3)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_12(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_12(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1648,14 +2695,14 @@ void Benchmark_Malicious_CIFAR_10_12(program_options::variables_map& user_option
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_12: ReLU(64x64) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_12: ReLU(64x64) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_12: ReLU(64x64)",
+    "Benchmark_Auxiliator_CIFAR_10_12: ReLU(64x64)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_13(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_13(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1679,14 +2726,14 @@ void Benchmark_Malicious_CIFAR_10_13(program_options::variables_map& user_option
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_13: Conv(8x8, ... (64 times), 64x64, 64, 1) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_13: Conv(8x8, ... (64 times), 64x64, 64, 1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_13: Conv(8x8, ... (64 times), 64x64, 64, 1)",
+    "Benchmark_Auxiliator_CIFAR_10_13: Conv(8x8, ... (64 times), 64x64, 64, 1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_14(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_14(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1705,14 +2752,14 @@ void Benchmark_Malicious_CIFAR_10_14(program_options::variables_map& user_option
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_14: ReLU(64x64) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_14: ReLU(64x64) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_14: ReLU(64x64)",
+    "Benchmark_Auxiliator_CIFAR_10_14: ReLU(64x64)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_15(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_15(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1736,14 +2783,14 @@ void Benchmark_Malicious_CIFAR_10_15(program_options::variables_map& user_option
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_15: Conv(8x8, ... (64 times), 16x64, 64, 1) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_15: Conv(8x8, ... (64 times), 16x64, 64, 1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_15: Conv(8x8, ... (64 times), 16x64, 64, 1)",
+    "Benchmark_Auxiliator_CIFAR_10_15: Conv(8x8, ... (64 times), 16x64, 64, 1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_16(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_16(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1762,14 +2809,14 @@ void Benchmark_Malicious_CIFAR_10_16(program_options::variables_map& user_option
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_16: ReLU(16x64) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_16: ReLU(16x64) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_16: ReLU(16x64)",
+    "Benchmark_Auxiliator_CIFAR_10_16: ReLU(16x64)",
     accumulated_statistics, accumulated_communication_statistics);
 }
 
-void Benchmark_Malicious_CIFAR_10_17(program_options::variables_map& user_options, size_t number_of_repetitions) {
+void Benchmark_Auxiliator_CIFAR_10_17(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
@@ -1789,13 +2836,1052 @@ void Benchmark_Malicious_CIFAR_10_17(program_options::variables_map& user_option
     accumulated_communication_statistics.Add(communication_statistics);
   }
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_17: FPA Matrix prod(10x1024, 1024x1) - Setup Only",
+    "Benchmark_Auxiliator_CIFAR_10_17: FPA Matrix prod(10x1024, 1024x1) - Setup Only",
     accumulated_setup_statistics, accumulated_setup_communication_statistics);
     
   std::cout << encrypto::motion::PrintStatistics(
-    "Benchmark_Malicious_CIFAR_10_17: FPA Matrix prod(10x1024, 1024x1)",
+    "Benchmark_Auxiliator_CIFAR_10_17: FPA Matrix prod(10x1024, 1024x1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
+
+void Benchmark_Auxiliator_VGG16_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(3);
+    for(size_t i = 0; i != 3; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 34, 34));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 64, 27);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_1: Conv(34x34, ... (3 times), 64x27, 3, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_1: Conv(34x34, ... (3 times), 64x27, 3, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 64, 1024);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_2: ReLU(64x1024) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_2: ReLU(64x1024)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(64);
+    for(size_t i = 0; i != 64; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 34, 34));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 64, 576);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_3: Conv(34x34, ... (64 times), 64x576, 64, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_3: Conv(34x34, ... (64 times), 64x576, 64, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 64, 1024);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_4: ReLU(64x1024) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_4: ReLU(64x1024)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = AstraMakeDummyInputSimdMatrices(party, 32, 32, 64);
+    auto result = MaliciousAvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_5: Avg(32x32, ... (64 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_5: Avg(32x32, ... (64 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(64);
+    for(size_t i = 0; i != 64; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 18, 18));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 128, 576);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_6: Conv(18x18, ... (64 times), 128x576, 64, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_6: Conv(18x18, ... (64 times), 128x576, 64, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 128, 256);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_7: ReLU(128x256) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_7: ReLU(128x256)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(128);
+    for(size_t i = 0; i != 128; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 18, 18));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 128, 1152);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_8: Conv(18x18, ... (128 times), 128x1152, 128, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_8: Conv(18x18, ... (128 times), 128x1152, 128, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 128, 256);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_9: ReLU(128x256) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_9: ReLU(128x256)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_10(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = AstraMakeDummyInputSimdMatrices(party, 16, 16, 128);
+    auto result = MaliciousAvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_10: Avg(16x16, ... (128 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_10: Avg(16x16, ... (128 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_11(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(128);
+    for(size_t i = 0; i != 128; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 256, 1152);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_11: Conv(10x10, ... (128 times), 256x1152, 128, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_11: Conv(10x10, ... (128 times), 256x1152, 128, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_12(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 256, 64);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_12: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_12: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_13(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 256, 2304);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_13: Conv(10x10, ... (256 times), 256x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_13: Conv(10x10, ... (256 times), 256x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_14(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 256, 64);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_14: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_14: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_15(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 256, 2304);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_15: Conv(10x10, ... (256 times), 256x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_15: Conv(10x10, ... (256 times), 256x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_16(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 256, 64);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_16: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_16: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_17(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = AstraMakeDummyInputSimdMatrices(party, 8, 8, 256);
+    auto result = MaliciousAvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_17: Avg(8x8, ... (256 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_17: Avg(8x8, ... (256 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_18(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 2304);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_18: Conv(6x6, ... (256 times), 512x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_18: Conv(6x6, ... (256 times), 512x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_19(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 16);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_19: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_19: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_20(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_20: Conv(6x6, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_20: Conv(6x6, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_21(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 16);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_21: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_21: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_22(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_22: Conv(6x6, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_22: Conv(6x6, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_23(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 16);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_23: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_23: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_24(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = AstraMakeDummyInputSimdMatrices(party, 4, 4, 512);
+    auto result = MaliciousAvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_24: Avg(4x4, ... (512 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_24: Avg(4x4, ... (512 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_25(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_25: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_25: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_26(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 4);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_26: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_26: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_27(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_27: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_27: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_28(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 4);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_28: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_28: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_29(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<ShareWrapper>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
+    auto result = MaliciousConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_29: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_29: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_30(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 512, 4);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_30: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_30: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_31(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = AstraMakeDummyInputSimdMatrices(party, 2, 2, 512);
+    auto result = MaliciousAvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_31: Avg(2x2, ... (512 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_31: Avg(2x2, ... (512 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_32(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = AstraMakeDummyInputMatrix(party, 4096, 512);
+    auto b = AstraMakeDummyInputMatrix(party, 512, 1);
+    auto result = MaliciousFixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_32: FPA Matrix prod(4096x512, 512x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_32: FPA Matrix prod(4096x512, 512x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_33(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 4096, 1);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_33: ReLU(4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_33: ReLU(4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_34(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = AstraMakeDummyInputMatrix(party, 4096, 4096);
+    auto b = AstraMakeDummyInputMatrix(party, 4096, 1);
+    auto result = MaliciousFixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_34: FPA Matrix prod(4096x4096, 4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_34: FPA Matrix prod(4096x4096, 4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_35(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 4096, 1);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_35: ReLU(4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_35: ReLU(4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_36(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = AstraMakeDummyInputMatrix(party, 1000, 4096);
+    auto b = AstraMakeDummyInputMatrix(party, 4096, 1);
+    auto result = MaliciousFixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_36: FPA Matrix prod(1000x4096, 4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_36: FPA Matrix prod(1000x4096, 4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Auxiliator_VGG16_37(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = AstraMakeDummyInputMatrix(party, 1000, 1);
+    auto result = encrypto::motion::MaliciousReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_37: ReLU(1000x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Auxiliator_VGG16_37: ReLU(1000x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// End: Auxiliator ////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Benchmark_ELSA(auto& user_options, size_t c, size_t m, size_t number_of_repetitions) {
   using std::to_string;
@@ -2537,7 +4623,11 @@ void Benchmark_TripleMatrixTripleSacrifice128(auto& user_options, size_t number_
   }
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Swift //////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Benchmark_Swift_MNIST_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
@@ -3259,6 +5349,1046 @@ void Benchmark_Swift_CIFAR_10_17(program_options::variables_map& user_options, s
     "Benchmark_SWIFT_CIFAR_10_17: FPA Matrix prod(10x1024, 1024x1)",
     accumulated_statistics, accumulated_communication_statistics);
 }
+
+void Benchmark_Swift_VGG16_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(3);
+    for(size_t i = 0; i != 3; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 34, 34));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 64, 27);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_1: Conv(34x34, ... (3 times), 64x27, 3, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_1: Conv(34x34, ... (3 times), 64x27, 3, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 64, 1024);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_2: ReLU(64x1024) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_2: ReLU(64x1024)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(64);
+    for(size_t i = 0; i != 64; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 34, 34));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 64, 576);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_3: Conv(34x34, ... (64 times), 64x576, 64, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_3: Conv(34x34, ... (64 times), 64x576, 64, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 64, 1024);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_4: ReLU(64x1024) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_4: ReLU(64x1024)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = SwiftMakeDummyInputSimdMatrices(party, 32, 32, 64);
+    auto result = AvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_5: Avg(32x32, ... (64 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_5: Avg(32x32, ... (64 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(64);
+    for(size_t i = 0; i != 64; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 18, 18));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 128, 576);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_6: Conv(18x18, ... (64 times), 128x576, 64, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_6: Conv(18x18, ... (64 times), 128x576, 64, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 128, 256);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_7: ReLU(128x256) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_7: ReLU(128x256)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(128);
+    for(size_t i = 0; i != 128; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 18, 18));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 128, 1152);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_8: Conv(18x18, ... (128 times), 128x1152, 128, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_8: Conv(18x18, ... (128 times), 128x1152, 128, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 128, 256);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_9: ReLU(128x256) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_9: ReLU(128x256)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_10(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = SwiftMakeDummyInputSimdMatrices(party, 16, 16, 128);
+    auto result = AvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_10: Avg(16x16, ... (128 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_10: Avg(16x16, ... (128 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_11(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(128);
+    for(size_t i = 0; i != 128; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 256, 1152);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_11: Conv(10x10, ... (128 times), 256x1152, 128, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_11: Conv(10x10, ... (128 times), 256x1152, 128, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_12(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 256, 64);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_12: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_12: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_13(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 256, 2304);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_13: Conv(10x10, ... (256 times), 256x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_13: Conv(10x10, ... (256 times), 256x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_14(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 256, 64);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_14: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_14: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_15(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 256, 2304);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_15: Conv(10x10, ... (256 times), 256x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_15: Conv(10x10, ... (256 times), 256x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_16(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 256, 64);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_16: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_16: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_17(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = SwiftMakeDummyInputSimdMatrices(party, 8, 8, 256);
+    auto result = AvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_17: Avg(8x8, ... (256 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_17: Avg(8x8, ... (256 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_18(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 2304);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_18: Conv(6x6, ... (256 times), 512x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_18: Conv(6x6, ... (256 times), 512x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_19(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 16);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_19: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_19: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_20(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_20: Conv(6x6, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_20: Conv(6x6, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_21(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 16);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_21: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_21: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_22(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_22: Conv(6x6, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_22: Conv(6x6, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_23(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 16);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_23: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_23: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_24(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = SwiftMakeDummyInputSimdMatrices(party, 4, 4, 512);
+    auto result = AvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_24: Avg(4x4, ... (512 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_24: Avg(4x4, ... (512 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_25(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_25: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_25: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_26(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 4);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_26: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_26: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_27(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_27: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_27: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_28(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 4);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_28: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_28: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_29(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_29: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_29: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_30(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 4);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_30: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_30: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_31(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = SwiftMakeDummyInputSimdMatrices(party, 2, 2, 512);
+    auto result = AvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_31: Avg(2x2, ... (512 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_31: Avg(2x2, ... (512 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_32(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = SwiftMakeDummyInputMatrix(party, 4096, 512);
+    auto b = SwiftMakeDummyInputMatrix(party, 512, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_32: FPA Matrix prod(4096x512, 512x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_32: FPA Matrix prod(4096x512, 512x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_33(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 4096, 1);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_33: ReLU(4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_33: ReLU(4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_34(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = SwiftMakeDummyInputMatrix(party, 4096, 4096);
+    auto b = SwiftMakeDummyInputMatrix(party, 4096, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_34: FPA Matrix prod(4096x4096, 4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_34: FPA Matrix prod(4096x4096, 4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_35(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 4096, 1);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_35: ReLU(4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_35: ReLU(4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_36(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = SwiftMakeDummyInputMatrix(party, 1000, 4096);
+    auto b = SwiftMakeDummyInputMatrix(party, 4096, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_36: FPA Matrix prod(1000x4096, 4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_36: FPA Matrix prod(1000x4096, 4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Swift_VGG16_37(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 1000, 1);
+    auto result = proto::swift::ReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_37: ReLU(1000x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Swift_VGG16_37: ReLU(1000x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// End: Swift /////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4085,6 +7215,1040 @@ void Benchmark_Socium_CIFAR_10_17(program_options::variables_map& user_options, 
     accumulated_statistics, accumulated_communication_statistics);
 }
 
+
+void Benchmark_Socium_VGG16_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(3);
+    for(size_t i = 0; i != 3; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 34, 34));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 64, 27);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_1: Conv(34x34, ... (3 times), 64x27, 3, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_1: Conv(34x34, ... (3 times), 64x27, 3, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_2(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 64, 1024);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_2: ReLU(64x1024) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_2: ReLU(64x1024)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_3(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(64);
+    for(size_t i = 0; i != 64; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 34, 34));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 64, 576);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_3: Conv(34x34, ... (64 times), 64x576, 64, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_3: Conv(34x34, ... (64 times), 64x576, 64, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_4(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 64, 1024);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_4: ReLU(64x1024) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_4: ReLU(64x1024)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_5(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = SwiftMakeDummyInputSimdMatrices(party, 32, 32, 64);
+    auto result = SociumAvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_5: Avg(32x32, ... (64 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_5: Avg(32x32, ... (64 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_6(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(64);
+    for(size_t i = 0; i != 64; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 18, 18));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 128, 576);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_6: Conv(18x18, ... (64 times), 128x576, 64, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_6: Conv(18x18, ... (64 times), 128x576, 64, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_7(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 128, 256);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_7: ReLU(128x256) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_7: ReLU(128x256)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_8(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(128);
+    for(size_t i = 0; i != 128; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 18, 18));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 128, 1152);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_8: Conv(18x18, ... (128 times), 128x1152, 128, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_8: Conv(18x18, ... (128 times), 128x1152, 128, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_9(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 128, 256);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_9: ReLU(128x256) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_9: ReLU(128x256)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_10(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = SwiftMakeDummyInputSimdMatrices(party, 16, 16, 128);
+    auto result = SociumAvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_10: Avg(16x16, ... (128 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_10: Avg(16x16, ... (128 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_11(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(128);
+    for(size_t i = 0; i != 128; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 256, 1152);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_11: Conv(10x10, ... (128 times), 64x576, 128, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_11: Conv(10x10, ... (128 times), 64x576, 128, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_12(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 256, 64);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_12: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_12: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_13(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 256, 2304);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_13: Conv(10x10, ... (256 times), 256x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_13: Conv(10x10, ... (256 times), 256x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_14(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 256, 64);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_14: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_14: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_15(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 10, 10));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 256, 2304);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_15: Conv(10x10, ... (256 times), 256x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_15: Conv(10x10, ... (256 times), 256x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_16(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 256, 64);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_16: ReLU(256x64) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_16: ReLU(256x64)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_17(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = SwiftMakeDummyInputSimdMatrices(party, 8, 8, 256);
+    auto result = SociumAvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_17: Avg(8x8, ... (256 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_17: Avg(8x8, ... (256 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_18(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(256);
+    for(size_t i = 0; i != 256; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 2304);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_18: Conv(6x6, ... (256 times), 512x2304, 256, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_18: Conv(6x6, ... (256 times), 512x2304, 256, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_19(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 16);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_19: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_19: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_20(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_20: Conv(6x6, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_20: Conv(6x6, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_21(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 16);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_21: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_21: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_22(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 6, 6));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_22: Conv(6x6, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_22: Conv(6x6, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_23(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 16);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_23: ReLU(512x16) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_23: ReLU(512x16)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_24(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = SwiftMakeDummyInputSimdMatrices(party, 4, 4, 512);
+    auto result = SociumAvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_24: Avg(4x4, ... (512 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_24: Avg(4x4, ... (512 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_25(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_25: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_25: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_26(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 4);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_26: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_26: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_27(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_27: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_27: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_28(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 4);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_28: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_28: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_29(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    C_ks.reserve(512);
+    for(size_t i = 0; i != 512; ++i) {
+      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 4, 4));
+    }
+    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto result = SociumConv(C_ks, K, 3);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_29: Conv(4x4, ... (512 times), 512x4608, 512, 3) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_29: Conv(4x4, ... (512 times), 512x4608, 512, 3)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_30(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 512, 4);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_30: ReLU(512x4) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_30: ReLU(512x4)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_31(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto S = SwiftMakeDummyInputSimdMatrices(party, 2, 2, 512);
+    auto result = SociumAvgPool(S, 2, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_31: Avg(2x2, ... (512 times in parallel), 2) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_31: Avg(2x2, ... (512 times in parallel), 2)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_32(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = SwiftMakeDummyInputMatrix(party, 4096, 512);
+    auto b = SwiftMakeDummyInputMatrix(party, 512, 1);
+    auto result = SociumFixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_32: FPA Matrix prod(4096x512, 512x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_32: FPA Matrix prod(4096x512, 512x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_33(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 4096, 1);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_33: ReLU(4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_33: ReLU(4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_34(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = SwiftMakeDummyInputMatrix(party, 4096, 4096);
+    auto b = SwiftMakeDummyInputMatrix(party, 4096, 1);
+    auto result = SociumFixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_34: FPA Matrix prod(4096x4096, 4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_34: FPA Matrix prod(4096x4096, 4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_35(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 4096, 1);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_35: ReLU(4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_35: ReLU(4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_36(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto a = SwiftMakeDummyInputMatrix(party, 1000, 4096);
+    auto b = SwiftMakeDummyInputMatrix(party, 4096, 1);
+    auto result = SociumFixedPointMatrixMultiplication(a, b, 16);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_36: FPA Matrix prod(1000x4096, 4096x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+    
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_36: FPA Matrix prod(1000x4096, 4096x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
+void Benchmark_Socium_VGG16_37(program_options::variables_map& user_options, size_t number_of_repetitions) {
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
+  encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_setup_communication_statistics;
+  encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
+  for (std::size_t i = 0; i != number_of_repetitions; ++i) {
+    PartyPointer party{CreateParty(user_options)};
+    auto m = SwiftMakeDummyInputMatrix(party, 1000, 1);
+    auto result = proto::swift::SociumReLU(m);
+    party->Run();
+    accumulated_setup_statistics.Add(g_setup_statistics);
+    auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
+    accumulated_statistics.Add(statistics);
+    accumulated_setup_communication_statistics.Add(g_setup_transport_statistics);
+    auto communication_statistics =
+      party->GetBackend()->GetCommunicationLayer().GetTransportStatistics();
+    accumulated_communication_statistics.Add(communication_statistics);
+  }
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_37: ReLU(1000x1) - Setup Only",
+    accumulated_setup_statistics, accumulated_setup_communication_statistics);
+  std::cout << encrypto::motion::PrintStatistics(
+    "Benchmark_Socium_VGG16_37: ReLU(1000x1)",
+    accumulated_statistics, accumulated_communication_statistics);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// End: Socium (Malicious Evaluator) //////////////////////////////////////////////////////////////////////////
@@ -4126,7 +8290,7 @@ std::pair<program_options::variables_map, bool> ParseProgramOptions(int ac, char
       ("parties", program_options::value<std::vector<std::string>>()->multitoken(), "info (id,IP,port) for each party e.g., --parties 0,127.0.0.1,23000 1,127.0.0.1,23001")
       ("online-after-setup", program_options::value<bool>()->default_value(true), "compute the online phase of the gate evaluations after the setup phase for all of them is completed (true/1 or false/0)")
       ("repetitions", program_options::value<std::size_t>()->default_value(1), "number of repetitions")
-      ("cnn", program_options::value<std::string>()->default_value("mnist"), "CNN (mnist or cifar10)");
+      ("cnn", program_options::value<std::string>()->default_value("mnist"), "CNN (mnist, cifar10 or vgg16)");
   // clang-format on
 
   program_options::variables_map user_options;
