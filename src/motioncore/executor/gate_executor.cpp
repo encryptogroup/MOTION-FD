@@ -30,7 +30,7 @@
 #include "communication/transport.h"
 #include "protocols/wire.h"
 #include "base/backend.h"
-#include "protocols/astra/astra_verifier.h"
+#include "protocols/auxiliator/auxiliator_verifier.h"
 #include "protocols/swift/swift_verifier.h"
 #include "protocols/swift/swift_truncation.h"
 
@@ -76,7 +76,6 @@ void GateExecutor::EvaluateSetupOnline(RunTimeStatistics& statistics) {
 
   // ------------------------------ setup phase ------------------------------ 
   statistics.RecordStart<RunTimeStatistics::StatisticsId::kGatesSetup>();
-  auto setup_start = steady_clock::now();
   backend_.GetSwiftTruncation()->InitializeRandom();
 
   // Evaluate the setup phase of all the gates
@@ -101,49 +100,19 @@ void GateExecutor::EvaluateSetupOnline(RunTimeStatistics& statistics) {
 
   register_.CheckSetupCondition();
   register_.GetGatesSetupDoneCondition()->Wait();
-  backend_.GetAstraVerifier()->SetReady();
+  backend_.GetAuxiliatorVerifier()->SetReady();
   backend_.GetSwiftVerifier()->SetReady();
   backend_.GetSociumVerifier()->SetReady();
   backend_.GetSwiftInputHashVerifier()->SetReady();
   backend_.GetSwiftOutputHashVerifier()->SetReady();
   backend_.GetSwiftMultiplyHashVerifier()->SetReady();
-  backend_.GetAstraVerifier()->GetIsReadyCondition().Wait();
+  backend_.GetAuxiliatorVerifier()->GetIsReadyCondition().Wait();
   backend_.GetSwiftVerifier()->GetIsReadyCondition().Wait();
   backend_.GetSociumVerifier()->GetIsReadyCondition().Wait();
   assert(register_.GetNumberOfEvaluatedGatesSetup() == register_.GetNumberOfGatesSetup());
   communication_layer.WaitForEmptyingSendBuffer();
   assert(communication_layer.IsSendBufferEmpty());
-  auto setup_end = steady_clock::now();
   statistics.RecordEnd<RunTimeStatistics::StatisticsId::kGatesSetup>();
-  duration<double> setup_diff = setup_end - setup_start;
-  std::cout << "CONTROL Setup Evaluation took: " << double(setup_diff.count() * 1'000) << " ms" << std::endl;
-  uint64_t my_id = communication_layer.GetMyId();
-  size_t bytes_sent_to_s0 = 0;
-  size_t bytes_sent_to_s1 = 0;
-  size_t bytes_sent_to_s2 = 0;
-  switch(my_id) {
-    case 0: {
-      bytes_sent_to_s1 = communication_layer.GetSendS1Communication();
-      bytes_sent_to_s2 = communication_layer.GetSendS2Communication();
-      std::cout << "CONTROL Setup bytes sent to S1: " << bytes_sent_to_s1 << std::endl;
-      std::cout << "CONTROL Setup bytes sent to S2: " << bytes_sent_to_s2 << std::endl;
-      break;
-    }
-    case 1: {
-      bytes_sent_to_s0 = communication_layer.GetSendS0Communication();
-      bytes_sent_to_s2 = communication_layer.GetSendS2Communication();
-      std::cout << "CONTROL Setup bytes sent to S0: " << bytes_sent_to_s0 << std::endl;
-      std::cout << "CONTROL Setup bytes sent to S2: " << bytes_sent_to_s2 << std::endl;
-      break;
-    }
-    case 2: {
-      bytes_sent_to_s0 = communication_layer.GetSendS0Communication();
-      bytes_sent_to_s1 = communication_layer.GetSendS1Communication();
-      std::cout << "CONTROL Setup bytes sent to S0: " << bytes_sent_to_s0 << std::endl;
-      std::cout << "CONTROL Setup bytes sent to S1: " << bytes_sent_to_s1 << std::endl;
-      break;
-    }
-  }
   
   g_setup_statistics = statistics;
   communication::g_setup_transport_statistics = backend_.GetCommunicationLayer().GetTransportStatistics();
@@ -158,7 +127,6 @@ void GateExecutor::EvaluateSetupOnline(RunTimeStatistics& statistics) {
   
   // ------------------------------ online phase ------------------------------
   statistics.RecordStart<RunTimeStatistics::StatisticsId::kGatesOnline>();
-  auto online_start = steady_clock::now();
 
   // Evaluate the online phase of all the gates
   for (auto& gate : register_.GetGates()) {
@@ -181,7 +149,6 @@ void GateExecutor::EvaluateSetupOnline(RunTimeStatistics& statistics) {
   backend_.GetSwiftMultiplyHashVerifier()->GetIsReadyCondition().Wait();
   assert(register_.GetNumberOfGatesOnline() == register_.GetNumberOfGatesOnline());
 
-  auto online_end = steady_clock::now();
   statistics.RecordEnd<RunTimeStatistics::StatisticsId::kGatesOnline>();
 
   // --------------------------------------------------------------------------
@@ -189,32 +156,6 @@ void GateExecutor::EvaluateSetupOnline(RunTimeStatistics& statistics) {
   fiber_pool.join();
 
   statistics.RecordEnd<RunTimeStatistics::StatisticsId::kEvaluate>();
-  
-  duration<double> online_diff = online_end - online_start;
-  std::cout << "CONTROL Online Evaluation took: " << double(online_diff.count() * 1'000) << " ms" << std::endl;
-  switch(my_id) {
-    case 0: {
-      bytes_sent_to_s1 = communication_layer.GetSendS1Communication() - bytes_sent_to_s1;
-      bytes_sent_to_s2 = communication_layer.GetSendS2Communication() - bytes_sent_to_s2;
-      std::cout << "CONTROL Online bytes sent to S1: " << bytes_sent_to_s1 << std::endl;
-      std::cout << "CONTROL Online bytes sent to S2: " << bytes_sent_to_s2 << std::endl;
-      break;
-    }
-    case 1: {
-      bytes_sent_to_s0 = communication_layer.GetSendS0Communication() - bytes_sent_to_s0;
-      bytes_sent_to_s2 = communication_layer.GetSendS2Communication() - bytes_sent_to_s2;
-      std::cout << "CONTROL Online bytes sent to S0: " << bytes_sent_to_s0 << std::endl;
-      std::cout << "CONTROL Online bytes sent to S2: " << bytes_sent_to_s2 << std::endl;
-      break;
-    }
-    case 2: {
-      bytes_sent_to_s0 = communication_layer.GetSendS0Communication() - bytes_sent_to_s0;
-      bytes_sent_to_s1 = communication_layer.GetSendS1Communication() - bytes_sent_to_s1;
-      std::cout << "CONTROL Online bytes sent to S0: " << bytes_sent_to_s0 << std::endl;
-      std::cout << "CONTROL Online bytes sent to S1: " << bytes_sent_to_s1 << std::endl;
-      break;
-    }
-  }
 }
 
 void GateExecutor::Evaluate(RunTimeStatistics& statistics) {

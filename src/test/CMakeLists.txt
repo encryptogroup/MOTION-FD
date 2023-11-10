@@ -2,6 +2,7 @@ add_executable(motiontest
         test_aesni.cpp
         test_agmw.cpp
         test_astra.cpp
+        test_auxiliator.cpp
         test_base_ot.cpp
         test_bgmw.cpp
         test_bitmatrix.cpp
@@ -9,6 +10,7 @@ add_executable(motiontest
         test_bmr.cpp
         test_boolean_algorithms.cpp
         test_boolean_astra.cpp
+        test_boolean_auxiliator.cpp
         test_communication_layer.cpp
         test_conversions.cpp
         test_dummy_transport.cpp

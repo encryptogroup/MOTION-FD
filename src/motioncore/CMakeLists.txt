@@ -38,7 +38,10 @@ add_library(motion
         protocols/astra/astra_gate.cpp
         protocols/astra/astra_wire.cpp
         protocols/astra/astra_share.cpp
-        protocols/astra/astra_verifier.cpp
+        protocols/auxiliator/auxiliator_gate.cpp
+        protocols/auxiliator/auxiliator_wire.cpp
+        protocols/auxiliator/auxiliator_share.cpp
+        protocols/auxiliator/auxiliator_verifier.cpp
         protocols/bmr/bmr_gate.cpp
         protocols/bmr/bmr_provider.cpp
         protocols/bmr/bmr_share.cpp
@@ -46,6 +49,9 @@ add_library(motion
         protocols/boolean_astra/boolean_astra_gate.cpp
         protocols/boolean_astra/boolean_astra_share.cpp
         protocols/boolean_astra/boolean_astra_wire.cpp
+        protocols/boolean_auxiliator/boolean_auxiliator_gate.cpp
+        protocols/boolean_auxiliator/boolean_auxiliator_share.cpp
+        protocols/boolean_auxiliator/boolean_auxiliator_wire.cpp
         protocols/boolean_gmw/boolean_gmw_gate.cpp
         protocols/boolean_gmw/boolean_gmw_share.cpp
         protocols/boolean_gmw/boolean_gmw_wire.cpp

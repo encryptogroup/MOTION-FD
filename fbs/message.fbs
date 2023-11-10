@@ -50,7 +50,7 @@ enum MessageType : ubyte {
   kBooleanAstraOnlineDotProductGate = 37,
   kAstraSetupMsbGate = 38,
   kAstraOnlineMsbGate = 39,
-  kAstraVerifier = 40,
+  kAuxiliatorVerifier = 40,
   kSwiftVerifier = 41,
   kSwiftInputGate = 42,
   kSwiftOutputGate = 43,
@@ -71,7 +71,18 @@ enum MessageType : ubyte {
   kSociumVerifierSemiMult = 58,
   kSociumVerifierV = 59,
   kSociumVerifierCheckZero = 60,
-  kGateExecutorSynchronizeSetup = 61
+  kGateExecutorSynchronizeSetup = 61,
+  kAuxiliatorInputGate = 62,
+  kAuxiliatorOutputGate = 63,
+  kAuxiliatorSetupBitAGate = 64,
+  kAuxiliatorOnlineBitAGate = 65,
+  kAuxiliatorOnlineMsbGate = 66,
+  kAuxiliatorSetupMultiplyGate = 67,
+  kAuxiliatorOnlineMultiplyGate = 68,
+  kBooleanAuxiliatorInputGate = 69,
+  kBooleanAuxiliatorOutputGate = 70,
+  kBooleanAuxiliatorSetupAndGate = 71,
+  kBooleanAuxiliatorOnlineAndGate = 72,
   // add new message types here
   }
 

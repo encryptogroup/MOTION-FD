@@ -72,7 +72,23 @@ namespace encrypto::motion::proto::boolean_astra {
 class Share;
 using SharePointer = std::shared_ptr<Share>;
 
-}  // namespace encrypto::motion::proto::astra
+}  // namespace encrypto::motion::proto::boolean_astra
+
+namespace encrypto::motion::proto::auxiliator {
+
+template <typename T>
+class Share;
+template <typename T>
+using SharePointer = std::shared_ptr<Share<T>>;
+
+}  // namespace encrypto::motion::proto::auxiliator
+
+namespace encrypto::motion::proto::boolean_auxiliator {
+
+class Share;
+using SharePointer = std::shared_ptr<Share>;
+
+}  // namespace encrypto::motion::proto::boolean_auxiliator
 
 namespace encrypto::motion {
 
@@ -109,7 +125,7 @@ using RegisterPointer = std::shared_ptr<Register>;
 
 class GateExecutor;
 
-class AstraSacrificeVerifier;
+class AuxiliatorSacrificeVerifier;
 class SwiftSacrificeVerifier;
 class SociumSacrificeVerifier;
 class SwiftHashVerifier;
@@ -221,6 +237,18 @@ class Backend : public std::enable_shared_from_this<Backend> {
   template <typename T>
   SharePointer AstraOutput(const SharePointer& parent, std::size_t output_owner);
 
+  template <typename T>
+  SharePointer AuxiliatorInput(std::size_t party_id, T input = 0);
+
+  template <typename T>
+  SharePointer AuxiliatorInput(std::size_t party_id, std::vector<T> input);
+
+  template <typename T>
+  SharePointer AuxiliatorOutput(const proto::auxiliator::SharePointer<T>& parent, std::size_t output_owner);
+
+  template <typename T>
+  SharePointer AuxiliatorOutput(const SharePointer& parent, std::size_t output_owner);
+
   SharePointer GarbledCircuitInput(std::size_t party_id, bool input = false);
 
   SharePointer GarbledCircuitInput(std::size_t party_id, const BitVector<>& input);
@@ -250,6 +278,18 @@ class Backend : public std::enable_shared_from_this<Backend> {
   SharePointer BooleanAstraInput(std::size_t party_id, std::vector<BitVector<>>&& input);
   
   SharePointer BooleanAstraOutput(const SharePointer& parent, std::size_t output_owner);
+  
+  SharePointer BooleanAuxiliatorInput(std::size_t party_id, bool input = false);
+
+  SharePointer BooleanAuxiliatorInput(std::size_t party_id, const BitVector<>& input);
+
+  SharePointer BooleanAuxiliatorInput(std::size_t party_id, BitVector<>&& input);
+
+  SharePointer BooleanAuxiliatorInput(std::size_t party_id, std::span<const BitVector<>> input);
+
+  SharePointer BooleanAuxiliatorInput(std::size_t party_id, std::vector<BitVector<>>&& input);
+  
+  SharePointer BooleanAuxiliatorOutput(const SharePointer& parent, std::size_t output_owner);
 
   /// \brief Blocking wait for synchronizing between parties. Called in Clear() and Reset()
   void Synchronize();
@@ -286,7 +326,7 @@ class Backend : public std::enable_shared_from_this<Backend> {
 
   auto& GetMutableRunTimeStatistics() { return run_time_statistics_; }
   
-  AstraSacrificeVerifier* GetAstraVerifier() { return astra_verifier_.get(); }
+  AuxiliatorSacrificeVerifier* GetAuxiliatorVerifier() { return auxiliator_verifier_.get(); }
   
   SwiftSacrificeVerifier* GetSwiftVerifier() { return swift_verifier_.get(); }
   
@@ -318,7 +358,7 @@ class Backend : public std::enable_shared_from_this<Backend> {
   std::shared_ptr<SpProvider> sp_provider_;
   std::shared_ptr<SbProvider> sb_provider_;
   std::unique_ptr<proto::bmr::Provider> bmr_provider_;
-  std::unique_ptr<AstraSacrificeVerifier> astra_verifier_;
+  std::unique_ptr<AuxiliatorSacrificeVerifier> auxiliator_verifier_;
   std::unique_ptr<SwiftSacrificeVerifier> swift_verifier_;
   std::unique_ptr<SociumSacrificeVerifier> socium_verifier_;
   std::unique_ptr<SwiftHashVerifier> input_swift_hash_verifier_;

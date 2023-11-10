@@ -38,12 +38,18 @@
 #include "protocols/astra/astra_gate.h"
 #include "protocols/astra/astra_share.h"
 #include "protocols/astra/astra_wire.h"
+#include "protocols/auxiliator/auxiliator_gate.h"
+#include "protocols/auxiliator/auxiliator_share.h"
+#include "protocols/auxiliator/auxiliator_wire.h"
 #include "protocols/bmr/bmr_gate.h"
 #include "protocols/bmr/bmr_share.h"
 #include "protocols/bmr/bmr_wire.h"
 #include "protocols/boolean_astra/boolean_astra_gate.h"
 #include "protocols/boolean_astra/boolean_astra_share.h"
 #include "protocols/boolean_astra/boolean_astra_wire.h"
+#include "protocols/boolean_auxiliator/boolean_auxiliator_gate.h"
+#include "protocols/boolean_auxiliator/boolean_auxiliator_share.h"
+#include "protocols/boolean_auxiliator/boolean_auxiliator_wire.h"
 #include "protocols/boolean_gmw/boolean_gmw_gate.h"
 #include "protocols/boolean_gmw/boolean_gmw_share.h"
 #include "protocols/boolean_gmw/boolean_gmw_wire.h"
@@ -136,6 +142,10 @@ ShareWrapper ShareWrapper::operator^(const ShareWrapper& other) const {
       auto xor_gate = share_->GetRegister()->EmplaceGate<proto::boolean_astra::XorGate>(*this, other);
       return ShareWrapper(xor_gate->GetOutputAsBooleanAstraShare());
     }
+    case MpcProtocol::kBooleanAuxiliator: {
+      auto xor_gate = share_->GetRegister()->EmplaceGate<proto::boolean_auxiliator::XorGate>(*this, other);
+      return ShareWrapper(xor_gate->GetOutputAsBooleanAuxiliatorShare());
+    }
     default:
       throw std::runtime_error(
           fmt::format("Unknown protocol for constructing an XOR gate with id {}",
@@ -179,6 +189,10 @@ ShareWrapper ShareWrapper::operator&(const ShareWrapper& other) const {
       auto and_gate = share_->GetRegister()->EmplaceGate<proto::boolean_astra::AndGate>(*this, other);
       return ShareWrapper(and_gate->GetOutputAsBooleanAstraShare());
     }
+    case MpcProtocol::kBooleanAuxiliator: {
+      auto and_gate = share_->GetRegister()->EmplaceGate<proto::boolean_auxiliator::AndGate>(*this, other);
+      return ShareWrapper(and_gate->GetOutputAsBooleanAuxiliatorShare());
+    }
     default:
       throw std::runtime_error(
           fmt::format("Unknown protocol for constructing an AND gate with id {}",
@@ -197,7 +211,7 @@ ShareWrapper ShareWrapper::operator|(const ShareWrapper& other) const {
         "Boolean primitive operations are not supported for arithmetic circuits");
   }
 
-  // OR operatinos is equal to NOT ( ( NOT a ) AND ( NOT b ) )
+  // OR operation is equal to NOT ( ( NOT a ) AND ( NOT b ) )
   return ~((~*this) & ~other);
 }
 
@@ -206,12 +220,6 @@ ShareWrapper ShareWrapper::operator+(const ShareWrapper& other) const {
   assert(share_);
   assert(share_->GetCircuitType() == other->GetCircuitType());
   assert(share_->GetBitLength() == other->GetBitLength());
-  if (share_->GetProtocol() != MpcProtocol::kArithmeticGmw &&
-      other->GetProtocol() != MpcProtocol::kArithmeticGmw &&
-      share_->GetProtocol() != MpcProtocol::kAstra && other->GetProtocol() != MpcProtocol::kAstra) {
-    throw std::runtime_error(
-        "Arithmetic primitive operations are only supported for arithmetic GMW and Astra shares");
-  }
 
   if (share_->GetBitLength() == 8u) {
     return Add<std::uint8_t>(share_, *other);
@@ -231,12 +239,6 @@ ShareWrapper ShareWrapper::operator-(const ShareWrapper& other) const {
   assert(share_);
   assert(share_->GetCircuitType() == other->GetCircuitType());
   assert(share_->GetBitLength() == other->GetBitLength());
-  if (share_->GetProtocol() != MpcProtocol::kArithmeticGmw &&
-      other->GetProtocol() != MpcProtocol::kArithmeticGmw &&
-      share_->GetProtocol() != MpcProtocol::kAstra && other->GetProtocol() != MpcProtocol::kAstra) {
-    throw std::runtime_error(
-        "Arithmetic primitive operations are only supported for arithmetic GMW and Astra shares");
-  }
 
   if (share_->GetBitLength() == 8u) {
     return Sub<std::uint8_t>(share_, *other);
@@ -285,14 +287,7 @@ ShareWrapper ShareWrapper::operator*(const ShareWrapper& other) const {
 
   assert(share_->GetCircuitType() == other->GetCircuitType());
   assert(share_->GetBitLength() == other->GetBitLength());
-
   assert(share_->GetNumberOfSimdValues() == other->GetNumberOfSimdValues());
-  if (share_->GetProtocol() != MpcProtocol::kArithmeticGmw &&
-      other->GetProtocol() != MpcProtocol::kArithmeticGmw &&
-      share_->GetProtocol() != MpcProtocol::kAstra && other->GetProtocol() != MpcProtocol::kAstra) {
-    throw std::runtime_error(
-        "Arithmetic primitive operations are only supported for arithmetic GMW and Astra shares");
-  }
 
   if (share_ == other.share_) {  // squaring
     if (share_->GetBitLength() == 8u) {
@@ -607,6 +602,30 @@ ShareWrapper ShareWrapper::Out(std::size_t output_owner) const {
         }
       }
     } break;
+    case MpcProtocol::kAuxiliator: {
+      switch (share_->GetBitLength()) {
+        case 8u: {
+          result = backend.AuxiliatorOutput<std::uint8_t>(share_, output_owner);
+          break;
+        }
+        case 16u: {
+          result = backend.AuxiliatorOutput<std::uint16_t>(share_, output_owner);
+          break;
+        }
+        case 32u: {
+          result = backend.AuxiliatorOutput<std::uint32_t>(share_, output_owner);
+          break;
+        }
+        case 64u: {
+          result = backend.AuxiliatorOutput<std::uint64_t>(share_, output_owner);
+          break;
+        }
+        default: {
+          throw std::runtime_error(
+              fmt::format("Unknown arithmetic ring of {} bilength", share_->GetBitLength()));
+        }
+      }
+    } break;
     case MpcProtocol::kBooleanGmw: {
       result = backend.BooleanGmwOutput(share_, output_owner);
       break;
@@ -621,6 +640,10 @@ ShareWrapper ShareWrapper::Out(std::size_t output_owner) const {
     }
     case MpcProtocol::kBooleanAstra: {
       result = backend.BooleanAstraOutput(share_, output_owner);
+      break;
+    }
+    case MpcProtocol::kBooleanAuxiliator: {
+      result = backend.BooleanAuxiliatorOutput(share_, output_owner);
       break;
     }
     default: {
@@ -698,6 +721,26 @@ ShareWrapper ShareWrapper::Concatenate(std::span<const ShareWrapper> input) {
         }
         case 64: {
           return ShareWrapper(std::make_shared<proto::astra::Share<std::uint64_t>>(wires.at(0)));
+        }
+        default:
+          throw std::runtime_error(fmt::format(
+              "Incorrect bit length of arithmetic shares: {}, allowed are 8, 16, 32, 64",
+              wires.at(0)->GetBitLength()));
+      }
+    }
+    case MpcProtocol::kAuxiliator: {
+      switch (wires.at(0)->GetBitLength()) {
+        case 8: {
+          return ShareWrapper(std::make_shared<proto::auxiliator::Share<std::uint8_t>>(wires.at(0)));
+        }
+        case 16: {
+          return ShareWrapper(std::make_shared<proto::auxiliator::Share<std::uint16_t>>(wires.at(0)));
+        }
+        case 32: {
+          return ShareWrapper(std::make_shared<proto::auxiliator::Share<std::uint32_t>>(wires.at(0)));
+        }
+        case 64: {
+          return ShareWrapper(std::make_shared<proto::auxiliator::Share<std::uint64_t>>(wires.at(0)));
         }
         default:
           throw std::runtime_error(fmt::format(
@@ -834,6 +877,10 @@ T ShareWrapper::As() const {
       auto astra_wire = std::dynamic_pointer_cast<proto::astra::Wire<T>>(share_->GetWires()[0]);
       assert(astra_wire);
       return astra_wire->GetValues()[0].value;
+    } else if (share_->GetProtocol() == MpcProtocol::kAuxiliator) {
+      auto auxiliator_wire = std::dynamic_pointer_cast<proto::auxiliator::Wire<T>>(share_->GetWires()[0]);
+      assert(auxiliator_wire);
+      return auxiliator_wire->GetValues()[0].value;
     } else {
       throw std::invalid_argument("Unsupported arithmetic protocol in ShareWrapper::As()");
     }
@@ -862,10 +909,22 @@ T ShareWrapper::As() const {
       assert(constant_arithmetic_wire);
       return constant_arithmetic_wire->GetValues();
     } else if (share_->GetProtocol() == MpcProtocol::kAstra) {
-      auto astra_wire = std::dynamic_pointer_cast<proto::astra::Wire<typename T::value_type>>(
+      auto astra_wire =
+        std::dynamic_pointer_cast<proto::astra::Wire<typename T::value_type>>(
           share_->GetWires()[0]);
       assert(astra_wire);
       auto const& values = astra_wire->GetValues();
+      T result(values.size());
+      for (auto i = 0u; i != result.size(); ++i) {
+        result[i] = values[i].value;
+      }
+      return result;
+    } else if (share_->GetProtocol() == MpcProtocol::kAuxiliator) {
+      auto auxiliator_wire = 
+        std::dynamic_pointer_cast<proto::auxiliator::Wire<typename T::value_type>>(
+          share_->GetWires()[0]);
+      assert(auxiliator_wire);
+      auto const& values = auxiliator_wire->GetValues();
       T result(values.size());
       for (auto i = 0u; i != result.size(); ++i) {
         result[i] = values[i].value;
@@ -1012,7 +1071,6 @@ ShareWrapper ShareWrapper::Add(SharePointer share, SharePointer other) const {
             share_->GetRegister()->EmplaceGate<proto::ConstantArithmeticAdditionGate<T>>(
                 non_constant_wire, constant_wire);
         auto result = std::static_pointer_cast<Share>(addition_gate->GetOutputAsArithmeticShare());
-
         return ShareWrapper(result);
       }
     }
@@ -1028,7 +1086,20 @@ ShareWrapper ShareWrapper::Add(SharePointer share, SharePointer other) const {
       auto addition_gate = share_->GetRegister()->EmplaceGate<proto::astra::AdditionGate<T>>(
           this_wire_a, other_wire_a);
       auto result = std::static_pointer_cast<Share>(addition_gate->GetOutputAsAstraShare());
+      return ShareWrapper(result);
+    }
+    case MpcProtocol::kAuxiliator: {
+      auto this_a = std::dynamic_pointer_cast<proto::auxiliator::Share<T>>(share);
+      assert(this_a);
+      auto this_wire_a = this_a->GetAuxiliatorWire();
 
+      auto other_a = std::dynamic_pointer_cast<proto::auxiliator::Share<T>>(other);
+      assert(other_a);
+      auto other_wire_a = other_a->GetAuxiliatorWire();
+
+      auto addition_gate = share_->GetRegister()->EmplaceGate<proto::auxiliator::AdditionGate<T>>(
+          this_wire_a, other_wire_a);
+      auto result = std::static_pointer_cast<Share>(addition_gate->GetOutputAsAuxiliatorShare());
       return ShareWrapper(result);
     }
     default:
@@ -1075,6 +1146,20 @@ ShareWrapper ShareWrapper::Sub(SharePointer share, SharePointer other) const {
       auto subtraction_gate = share_->GetRegister()->EmplaceGate<proto::astra::SubtractionGate<T>>(
           this_wire_a, other_wire_a);
       auto result = std::static_pointer_cast<Share>(subtraction_gate->GetOutputAsAstraShare());
+      return result;
+    }
+    case MpcProtocol::kAuxiliator: {
+      auto this_a = std::dynamic_pointer_cast<proto::auxiliator::Share<T>>(share);
+      assert(this_a);
+      auto this_wire_a = this_a->GetAuxiliatorWire();
+
+      auto other_a = std::dynamic_pointer_cast<proto::auxiliator::Share<T>>(other);
+      assert(other_a);
+      auto other_wire_a = other_a->GetAuxiliatorWire();
+
+      auto subtraction_gate = share_->GetRegister()->EmplaceGate<proto::auxiliator::SubtractionGate<T>>(
+          this_wire_a, other_wire_a);
+      auto result = std::static_pointer_cast<Share>(subtraction_gate->GetOutputAsAuxiliatorShare());
       return result;
     }
     default:
@@ -1147,9 +1232,26 @@ ShareWrapper ShareWrapper::Mul(SharePointer share, SharePointer other) const {
       auto other_wire_a = other_a->GetAstraWire();
 
       auto multiplication_gate =
-          share_->GetRegister()->EmplaceGate<proto::astra::MultiplicationGate<T>>(this_wire_a,
-                                                                                  other_wire_a);
-      auto result = std::static_pointer_cast<Share>(multiplication_gate->GetOutputAsAstraShare());
+          share_->GetRegister()->EmplaceGate<proto::astra::MultiplicationGate<T>>(
+            this_wire_a, other_wire_a);
+      auto result = std::static_pointer_cast<Share>(
+                      multiplication_gate->GetOutputAsAstraShare());
+      return ShareWrapper(result);
+    }
+    case MpcProtocol::kAuxiliator: {
+      auto this_a = std::dynamic_pointer_cast<proto::auxiliator::Share<T>>(share);
+      assert(this_a);
+      auto this_wire_a = this_a->GetAuxiliatorWire();
+
+      auto other_a = std::dynamic_pointer_cast<proto::auxiliator::Share<T>>(other);
+      assert(other_a);
+      auto other_wire_a = other_a->GetAuxiliatorWire();
+
+      auto multiplication_gate =
+          share_->GetRegister()->EmplaceGate<proto::auxiliator::MultiplicationGate<T>>(
+            this_wire_a, other_wire_a);
+      auto result = std::static_pointer_cast<Share>(
+                      multiplication_gate->GetOutputAsAuxiliatorShare());
       return ShareWrapper(result);
     }
     default:
@@ -1218,14 +1320,44 @@ ShareWrapper ShareWrapper::HybridMul(SharePointer share_bit, SharePointer share_
 
 template <typename T>
 ShareWrapper ShareWrapper::Square(SharePointer share) const {
-  auto this_a = std::dynamic_pointer_cast<proto::arithmetic_gmw::Share<T>>(share);
-  assert(this_a);
-  auto this_wire_a = this_a->GetArithmeticWire();
+  switch (share->GetProtocol()) {
+    case MpcProtocol::kArithmeticGmw: {
+      auto this_a = std::dynamic_pointer_cast<proto::arithmetic_gmw::Share<T>>(share);
+      assert(this_a);
+      auto this_wire_a = this_a->GetArithmeticWire();
 
-  auto square_gate =
-      share_->GetRegister()->EmplaceGate<proto::arithmetic_gmw::SquareGate<T>>(this_wire_a);
-  auto result = std::static_pointer_cast<Share>(square_gate->GetOutputAsArithmeticShare());
-  return ShareWrapper(result);
+      auto square_gate =
+          share_->GetRegister()->EmplaceGate<proto::arithmetic_gmw::SquareGate<T>>(this_wire_a);
+      auto result = std::static_pointer_cast<Share>(square_gate->GetOutputAsArithmeticShare());
+      return ShareWrapper(result);
+    }
+    case MpcProtocol::kAstra: {
+      auto this_a = std::dynamic_pointer_cast<proto::astra::Share<T>>(share);
+      assert(this_a);
+      auto this_wire_a = this_a->GetAstraWire();
+
+      auto multiplication_gate =
+          share_->GetRegister()->EmplaceGate<proto::astra::MultiplicationGate<T>>(
+            this_wire_a, this_wire_a);
+      auto result = std::static_pointer_cast<Share>(
+                      multiplication_gate->GetOutputAsAstraShare());
+      return ShareWrapper(result);
+    }
+    case MpcProtocol::kAuxiliator: {
+      auto this_a = std::dynamic_pointer_cast<proto::auxiliator::Share<T>>(share);
+      assert(this_a);
+      auto this_wire_a = this_a->GetAuxiliatorWire();
+
+      auto multiplication_gate =
+          share_->GetRegister()->EmplaceGate<proto::auxiliator::MultiplicationGate<T>>(
+            this_wire_a, this_wire_a);
+      auto result = std::static_pointer_cast<Share>(
+                      multiplication_gate->GetOutputAsAuxiliatorShare());
+      return ShareWrapper(result);
+    }
+    default:
+      throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::Square");
+  }
 }
 
 template ShareWrapper ShareWrapper::Mul<std::uint8_t>(SharePointer share, SharePointer other) const;
@@ -1283,10 +1415,20 @@ template ShareWrapper ShareWrapper::DotProduct<std::uint64_t>(std::span<ShareWra
 
 template<typename T>
 proto::astra::MatrixWirePointer<T> 
-ConvertToMatrixWire(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
+AstraConvertToMatrixWire(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
   auto& share = a(0, 0);
   auto mc_gate = share->GetRegister()->EmplaceGate<proto::astra::MatrixConversionGate<T>>(a);
   auto result = std::dynamic_pointer_cast<proto::astra::MatrixWire<T>>(mc_gate->GetOutputWires()[0]);
+  assert(result);
+  return result;
+}
+
+template<typename T>
+proto::auxiliator::MatrixWirePointer<T> 
+AuxiliatorConvertToMatrixWire(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
+  auto& share = a(0, 0);
+  auto mc_gate = share->GetRegister()->EmplaceGate<proto::auxiliator::MatrixConversionGate<T>>(a);
+  auto result = std::dynamic_pointer_cast<proto::auxiliator::MatrixWire<T>>(mc_gate->GetOutputWires()[0]);
   assert(result);
   return result;
 }
@@ -1300,10 +1442,20 @@ boost::numeric::ublas::matrix<ShareWrapper> ShareWrapper::MatrixMultiplication(
     case MpcProtocol::kAstra: {
       auto matrix_multiplication_gate = 
         share_->GetRegister()->EmplaceGate<proto::astra::MatrixMultiplicationGate<T>>(
-          ConvertToMatrixWire<T>(a), ConvertToMatrixWire<T>(b));
+          AstraConvertToMatrixWire<T>(a), AstraConvertToMatrixWire<T>(b));
       auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAstraShare());
       auto result_gate = 
         share_->GetRegister()->EmplaceGate<proto::astra::MatrixReconversionGate<T>>(product);
+      return result_gate->GetShareMatrix();
+      
+    }
+    case MpcProtocol::kAuxiliator: {
+      auto matrix_multiplication_gate = 
+        share_->GetRegister()->EmplaceGate<proto::auxiliator::MatrixMultiplicationGate<T>>(
+          AuxiliatorConvertToMatrixWire<T>(a), AuxiliatorConvertToMatrixWire<T>(b));
+      auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAuxiliatorShare());
+      auto result_gate = 
+        share_->GetRegister()->EmplaceGate<proto::auxiliator::MatrixReconversionGate<T>>(product);
       return result_gate->GetShareMatrix();
       
     }
@@ -1390,12 +1542,21 @@ boost::numeric::ublas::matrix<ShareWrapper> FixedPointMatrixMultiplicationImpl(
     case MpcProtocol::kAstra: {
       auto matrix_multiplication_gate = 
         share->GetRegister()->EmplaceGate<proto::astra::fixed_point::MatrixMultiplicationGate<T>>(
-          ConvertToMatrixWire<T>(a), ConvertToMatrixWire<T>(b), precision);
+          AstraConvertToMatrixWire<T>(a), AstraConvertToMatrixWire<T>(b), precision);
       auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAstraShare());
       auto result_gate = 
         share->GetRegister()->EmplaceGate<proto::astra::MatrixReconversionGate<T>>(product);
       return result_gate->GetShareMatrix();
       
+    }
+    case MpcProtocol::kAuxiliator: {
+      auto matrix_multiplication_gate = 
+        share->GetRegister()->EmplaceGate<proto::auxiliator::fixed_point::MatrixMultiplicationGate<T>>(
+          AuxiliatorConvertToMatrixWire<T>(a), AuxiliatorConvertToMatrixWire<T>(b), precision);
+      auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAuxiliatorShare());
+      auto result_gate = 
+        share->GetRegister()->EmplaceGate<proto::auxiliator::MatrixReconversionGate<T>>(product);
+      return result_gate->GetShareMatrix();
     }
     default:
       throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::MatrixMultipliecation");
@@ -1431,10 +1592,19 @@ boost::numeric::ublas::matrix<ShareWrapper> FixedPointMatrixConstantMultiplicati
     case MpcProtocol::kAstra: {
       auto matrix_multiplication_gate = 
         share->GetRegister()->EmplaceGate<proto::astra::fixed_point::MatrixConstantMultiplicationGate<T>>(
-          constant, ConvertToMatrixWire<T>(a), precision);
+          constant, AstraConvertToMatrixWire<T>(a), precision);
       auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAstraShare());
       auto result_gate = 
         share->GetRegister()->EmplaceGate<proto::astra::MatrixReconversionGate<T>>(product);
+      return result_gate->GetShareMatrix();
+    }
+    case MpcProtocol::kAuxiliator: {
+      auto matrix_multiplication_gate = 
+        share->GetRegister()->EmplaceGate<proto::auxiliator::fixed_point::MatrixConstantMultiplicationGate<T>>(
+          constant, AuxiliatorConvertToMatrixWire<T>(a), precision);
+      auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAuxiliatorShare());
+      auto result_gate = 
+        share->GetRegister()->EmplaceGate<proto::auxiliator::MatrixReconversionGate<T>>(product);
       return result_gate->GetShareMatrix();
     }
     default:
@@ -1462,51 +1632,6 @@ FixedPointMatrixConstantMultiplication<uint32_t>(
 
 template boost::numeric::ublas::matrix<ShareWrapper>
 FixedPointMatrixConstantMultiplication<uint64_t>(
-  uint64_t const& constant,
-  boost::numeric::ublas::matrix<ShareWrapper> const& a,
-  size_t precision);
-
-template<typename T>
-boost::numeric::ublas::matrix<ShareWrapper> MaliciousFixedPointMatrixConstantMultiplication(
-  T const& constant, 
-  boost::numeric::ublas::matrix<ShareWrapper> const& a,
-  size_t precision) {
-  auto& share = a(0, 0);
-  switch (share->GetProtocol()) {
-    case MpcProtocol::kAstra: {
-      auto matrix_multiplication_gate = 
-        share->GetRegister()->EmplaceGate<proto::astra::fixed_point::MaliciousMatrixConstantMultiplicationGate<T>>(
-          constant, ConvertToMatrixWire<T>(a), precision);
-      auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAstraShare());
-      auto result_gate = 
-        share->GetRegister()->EmplaceGate<proto::astra::MatrixReconversionGate<T>>(product);
-      return result_gate->GetShareMatrix();
-    }
-    default:
-      throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::MaliciousFixedPointMatrixMultiplication");
-  }
-}
-
-template boost::numeric::ublas::matrix<ShareWrapper>
-MaliciousFixedPointMatrixConstantMultiplication<uint8_t>(
-  uint8_t const& constant,
-  boost::numeric::ublas::matrix<ShareWrapper> const& a,
-  size_t precision);
-  
-template boost::numeric::ublas::matrix<ShareWrapper>
-MaliciousFixedPointMatrixConstantMultiplication<uint16_t>(
-  uint16_t const& constant,
-  boost::numeric::ublas::matrix<ShareWrapper> const& a,
-  size_t precision);
-  
-template boost::numeric::ublas::matrix<ShareWrapper>
-MaliciousFixedPointMatrixConstantMultiplication<uint32_t>(
-  uint32_t const& constant,
-  boost::numeric::ublas::matrix<ShareWrapper> const& a,
-  size_t precision);
-
-template boost::numeric::ublas::matrix<ShareWrapper>
-MaliciousFixedPointMatrixConstantMultiplication<uint64_t>(
   uint64_t const& constant,
   boost::numeric::ublas::matrix<ShareWrapper> const& a,
   size_t precision);
@@ -1624,113 +1749,20 @@ ShareWrapper MsbAdd(ShareWrapper a, ShareWrapper b) {
   return shares[number_of_wires - number_of_output_wires];
 }
 
-ShareWrapper MaliciousMsbAdd(ShareWrapper a, ShareWrapper b) {
-  using namespace std::literals::string_literals;
-  std::string path;
-  {
-    switch(a->GetWires().size()) {
-      case 8: {
-        path = std::string(encrypto::motion::kRootDir) + "/circuits/int/msb_adder_8_logp1.bristol"s;
-        break;
-      }
-      case 16: {
-        path = std::string(encrypto::motion::kRootDir) + "/circuits/int/msb_adder_16_logp1.bristol"s;
-        break;
-      }
-      case 32: {
-        path = std::string(encrypto::motion::kRootDir) + "/circuits/int/msb_adder_32_logp1.bristol"s;
-        break;
-      }
-      case 64: {
-        path = std::string(encrypto::motion::kRootDir) + "/circuits/int/msb_adder_64_logp1.bristol"s;
-        break;
-      }
-    }
-  }
-  std::ifstream stream(path);
-  assert(stream.is_open());
-  assert(stream.good());
-  size_t number_of_gates, number_of_wires;
-  stream >> number_of_gates >> number_of_wires;
-
-  std::vector<std::string> line_vector;
-  std::string line;
-  std::getline(stream, line);  // skip \n at the end of the first line
-  size_t number_of_wires_parent_a = 0;
-  [[maybe_unused]] size_t number_of_wires_parent_b = 0;
-  size_t number_of_output_wires = 0;
-  {
-    std::string second_line;
-    std::getline(stream, second_line);
-    std::stringstream ss(second_line);
-    while (std::getline(ss, line, ' ')) {
-      line_vector.emplace_back(std::move(line));
-      line.clear();
-    }
-    number_of_wires_parent_a = std::stoull(line_vector[0]);
-    if (line_vector.size() == 2) {
-      number_of_output_wires = std::stoull(line_vector[1]);
-    } else if (line_vector.size() == 3) {
-      number_of_wires_parent_b = std::stoull(line_vector[1]);
-      number_of_output_wires = std::stoull(line_vector[2]);
-    } else {
-      throw std::runtime_error(
-          std::string("Unexpected number of values: " + std::to_string(line_vector.size()) + "\n"));
-    }
-    line.clear();
-    line_vector.clear();
-  }
-  assert(number_of_wires_parent_a == number_of_wires_parent_b);
-
-  std::getline(stream, line);
-  assert(line.empty());
-  std::vector<ShareWrapper> shares(number_of_wires);
-  {
-    auto split_shares_a = a.Split();
-    auto split_shares_b = b.Split();
-    assert(split_shares_a.size() == number_of_wires_parent_a);
-    assert(split_shares_b.size() == number_of_wires_parent_b);
-    for(size_t i = 0; i != split_shares_a.size(); ++i) {
-      assert(1 == split_shares_a[i]->GetWires().size());
-      assert(1 == split_shares_b[i]->GetWires().size());
-      shares[i] = split_shares_a[i];
-      shares[i + number_of_wires_parent_a] = split_shares_b[i];
-    }
-  }
-  // read line
-  while (std::getline(stream, line)) {
-    if (line.size() == 0) continue;
-    std::stringstream ss(line);
-    size_t gate_inputs, gate_outputs, a_index, b_index, out_index;
-    std::string type;
-    ss >> gate_inputs >> gate_outputs >> a_index >> b_index >> out_index >> type;
-    
-    assert(2 == gate_inputs);
-    assert(1 == gate_outputs);
-    auto const& a_share = shares[a_index];
-    auto const& b_share = shares[b_index];
-    
-    if(type == "XOR"s) {
-      shares[out_index] = a_share ^ b_share;
-    }
-    else if(type == "AND"s) {
-      shares[out_index] = MaliciousAnd(a_share, b_share);
-    }
-    else {
-      assert(false);
-    }
-  }
-  return shares[number_of_wires - number_of_output_wires];
-}
-
 template<typename T>
 ShareWrapper MatrixMsbImpl(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
   ShareWrapper const& share = a(0, 0);
   switch (share->GetProtocol()) {
     case MpcProtocol::kAstra: {
       auto matrix_msb_gate = 
-        share->GetRegister()->EmplaceGate<proto::astra::MsbGate<T>>(ConvertToMatrixWire<T>(a));
+        share->GetRegister()->EmplaceGate<proto::astra::MsbGate<T>>(AstraConvertToMatrixWire<T>(a));
       auto msb = std::static_pointer_cast<Share>(matrix_msb_gate->GetOutputAsBooleanAstraShare());
+      return ShareWrapper(msb);
+    }
+    case MpcProtocol::kAuxiliator: {
+      auto matrix_msb_gate = 
+        share->GetRegister()->EmplaceGate<proto::auxiliator::MsbGate<T>>(AuxiliatorConvertToMatrixWire<T>(a));
+      auto msb = std::static_pointer_cast<Share>(matrix_msb_gate->GetOutputAsBooleanAuxiliatorShare());
       return ShareWrapper(msb);
     }
     default:
@@ -1754,43 +1786,13 @@ ShareWrapper MatrixMsb(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
 }
 
 template<typename T>
-ShareWrapper MaliciousMatrixMsbImpl(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
-  ShareWrapper const& share = a(0, 0);
-  switch (share->GetProtocol()) {
-    case MpcProtocol::kAstra: {
-      auto matrix_msb_gate = 
-        share->GetRegister()->EmplaceGate<proto::astra::MaliciousMsbGate<T>>(ConvertToMatrixWire<T>(a));
-      auto msb = std::static_pointer_cast<Share>(matrix_msb_gate->GetOutputAsBooleanAstraShare());
-      return ShareWrapper(msb);
-    }
-    default:
-      throw std::invalid_argument("Unsupported Arithmetic protocol in MaliciousMatrixMsb");
-  }
-}
-
-ShareWrapper MaliciousMatrixMsb(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
-  auto bit_length = a(0, 0)->GetBitLength();
-  if (bit_length == 8u) {
-    return MaliciousMatrixMsbImpl<std::uint8_t>(a);
-  } else if (bit_length == 16u) {
-    return MaliciousMatrixMsbImpl<std::uint16_t>(a);
-  } else if (bit_length == 32u) {
-    return MaliciousMatrixMsbImpl<std::uint32_t>(a);
-  } else if (bit_length == 64u) {
-    return MaliciousMatrixMsbImpl<std::uint64_t>(a);
-  } else {
-    throw std::bad_cast();
-  }
-}
-
-template<typename T>
 ShareWrapper ReLUImpl(
   boost::numeric::ublas::matrix<ShareWrapper> const& X) {
   auto& share = X(0, 0);
   switch (share->GetProtocol()) {
     case MpcProtocol::kAstra: {
       //The msb is already inverted, so we can skip step 2 and get C directly
-      auto X_matrix_wire = ConvertToMatrixWire<T>(X);
+      auto X_matrix_wire = AstraConvertToMatrixWire<T>(X);
       auto C = 
         std::dynamic_pointer_cast<proto::boolean_astra::BitMatrixWire>(
           share->GetRegister()->EmplaceGate<proto::astra::MsbGate<T>>(
@@ -1802,6 +1804,22 @@ ShareWrapper ReLUImpl(
       auto X_simd = 
         share->GetRegister()->EmplaceGate<proto::astra::MatrixSimdReconversionGate<T>>(
           ShareWrapper(std::make_shared<proto::astra::Share<T>>(X_matrix_wire)))->GetSimdShare();
+      return D_simd * X_simd;
+    }
+    case MpcProtocol::kAuxiliator: {
+      //The msb is already inverted, so we can skip step 2 and get C directly
+      auto X_matrix_wire = AuxiliatorConvertToMatrixWire<T>(X);
+      auto C = 
+        std::dynamic_pointer_cast<proto::boolean_auxiliator::BitMatrixWire>(
+          share->GetRegister()->EmplaceGate<proto::auxiliator::MsbGate<T>>(
+            X_matrix_wire)->GetOutputWires()[0]);
+      auto D_gate = share->GetRegister()->EmplaceGate<proto::auxiliator::BitAGate<T>>(C);
+      auto D_simd = 
+        share->GetRegister()->EmplaceGate<proto::auxiliator::MatrixSimdReconversionGate<T>>(
+          std::static_pointer_cast<Share>(D_gate->GetOutputAsAuxiliatorShare()))->GetSimdShare();
+      auto X_simd = 
+        share->GetRegister()->EmplaceGate<proto::auxiliator::MatrixSimdReconversionGate<T>>(
+          ShareWrapper(std::make_shared<proto::auxiliator::Share<T>>(X_matrix_wire)))->GetSimdShare();
       return D_simd * X_simd;
     }
     default:
@@ -1820,211 +1838,6 @@ ShareWrapper ReLU(
     return ReLUImpl<std::uint32_t>(a);
   } else if (bit_length == 64u) {
     return ReLUImpl<std::uint64_t>(a);
-  } else {
-    throw std::bad_cast();
-  }
-}
-
-template<typename T>
-ShareWrapper MaliciousReLUImpl(
-  boost::numeric::ublas::matrix<ShareWrapper> const& X) {
-  auto& share = X(0, 0);
-  switch (share->GetProtocol()) {
-    case MpcProtocol::kAstra: {
-      //The msb is already inverted, so we can skip step 2 and get C directly
-      auto X_matrix_wire = ConvertToMatrixWire<T>(X);
-      auto C = 
-        std::dynamic_pointer_cast<proto::boolean_astra::BitMatrixWire>(
-          share->GetRegister()->EmplaceGate<proto::astra::MaliciousMsbGate<T>>(
-            X_matrix_wire)->GetOutputWires()[0]);
-      auto D_gate = share->GetRegister()->EmplaceGate<proto::astra::MaliciousBitAGate<T>>(C);
-      auto D_simd = 
-        share->GetRegister()->EmplaceGate<proto::astra::MatrixSimdReconversionGate<T>>(
-          std::static_pointer_cast<Share>(D_gate->GetOutputAsAstraShare()))->GetSimdShare();
-      auto X_simd = 
-        share->GetRegister()->EmplaceGate<proto::astra::MatrixSimdReconversionGate<T>>(
-          ShareWrapper(std::make_shared<proto::astra::Share<T>>(X_matrix_wire)))->GetSimdShare();
-      return D_simd * X_simd;
-    }
-    default:
-      throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::MaliciousReLU");
-  }
-}
-
-ShareWrapper MaliciousReLU(
-  boost::numeric::ublas::matrix<ShareWrapper> const& a) {
-  auto bit_length = a(0, 0)->GetBitLength();
-  if (bit_length == 8u) {
-    return MaliciousReLUImpl<std::uint8_t>(a);
-  } else if (bit_length == 16u) {
-    return MaliciousReLUImpl<std::uint16_t>(a);
-  } else if (bit_length == 32u) {
-    return MaliciousReLUImpl<std::uint32_t>(a);
-  } else if (bit_length == 64u) {
-    return MaliciousReLUImpl<std::uint64_t>(a);
-  } else {
-    throw std::bad_cast();
-  }
-}
-
-template<typename T>
-ShareWrapper MaliciousMultiplyImpl(ShareWrapper const& a, ShareWrapper const& b) {
-  switch (a->GetProtocol()) {
-    case MpcProtocol::kAstra: {
-      auto a_share = std::dynamic_pointer_cast<proto::astra::Share<T>>(*a);
-      assert(a_share);
-      auto a_wire = a_share->GetAstraWire();
-
-      auto b_share = std::dynamic_pointer_cast<proto::astra::Share<T>>(*b);
-      assert(b_share);
-      auto b_wire = b_share->GetAstraWire();
-      auto multiply_gate = 
-        a->GetRegister()->EmplaceGate<proto::astra::MaliciousMultiplicationGate<T>>(a_wire, b_wire);
-      auto result = std::static_pointer_cast<Share>(multiply_gate->GetOutputAsAstraShare());
-      return ShareWrapper(result);
-    }
-    default:
-      throw std::invalid_argument("Unsupported Arithmetic protocol in MaliciousMultiply");
-  }
-}
-
-ShareWrapper MaliciousMultiply(ShareWrapper const& a, ShareWrapper const& b) {
-  assert(a->GetCircuitType() == b->GetCircuitType());
-  assert(a->GetBitLength() == b->GetBitLength());
-  if (a->GetProtocol() != MpcProtocol::kAstra && 
-      b->GetProtocol() != MpcProtocol::kAstra) {
-    throw std::runtime_error(
-        "Malicious protocols are only supported by Astra Shares");
-  }
-
-  if (a->GetBitLength() == 8u) {
-    return MaliciousMultiplyImpl<uint8_t>(a, b);
-  } else if (a->GetBitLength() == 16u) {
-    return MaliciousMultiplyImpl<uint16_t>(a, b);
-  } else if (a->GetBitLength() == 32u) {
-    return MaliciousMultiplyImpl<uint32_t>(a, b);
-  } else if (a->GetBitLength() == 64u) {
-    return MaliciousMultiplyImpl<uint64_t>(a, b);
-  } else {
-    throw std::bad_cast();
-  }
-}
-
-ShareWrapper MaliciousAnd(ShareWrapper const& a, ShareWrapper const& b) {
-  assert(a->GetCircuitType() == b->GetCircuitType());
-  assert(a->GetBitLength() == b->GetBitLength());
-  if (a->GetProtocol() != MpcProtocol::kBooleanAstra && 
-      b->GetProtocol() != MpcProtocol::kBooleanAstra) {
-    throw std::runtime_error(
-        "Malicious protocols are only supported by Astra Shares");
-  }
-  
-  switch (a->GetProtocol()) {
-    case MpcProtocol::kBooleanAstra: {
-      auto and_gate = 
-        a->GetRegister()->EmplaceGate<proto::boolean_astra::MaliciousAndGate>(a, b);
-      auto result = std::static_pointer_cast<Share>(and_gate->GetOutputAsBooleanAstraShare());
-      return ShareWrapper(result);
-    }
-    default:
-      throw std::invalid_argument("Unsupported boolean protocol in MaliciousAnd");
-  }
-}
-
-template<typename T>
-boost::numeric::ublas::matrix<ShareWrapper> MaliciousMatrixMultiplicationImpl(
-  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
-  boost::numeric::ublas::matrix<ShareWrapper> const& b) {
-  auto share = a(0, 0);
-  switch (share->GetProtocol()) {
-    case MpcProtocol::kAstra: {
-      auto matrix_multiplication_gate = 
-        share->GetRegister()->EmplaceGate<proto::astra::MaliciousMatrixMultiplicationGate<T>>(
-          ConvertToMatrixWire<T>(a), ConvertToMatrixWire<T>(b));
-      auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAstraShare());
-      auto result_gate = 
-        share->GetRegister()->EmplaceGate<proto::astra::MatrixReconversionGate<T>>(product);
-      return result_gate->GetShareMatrix();
-      
-    }
-    default:
-      throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::MaliciousMatrixMultiplication");
-  }
-}
-
-boost::numeric::ublas::matrix<ShareWrapper> MaliciousMatrixMultiplication(
-  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
-  boost::numeric::ublas::matrix<ShareWrapper> const& b) {
-  
-  auto bit_length = a(0, 0)->GetBitLength();
-  if (bit_length == 8u) {
-    return MaliciousMatrixMultiplicationImpl<std::uint8_t>(a, b);
-  } else if (bit_length == 16u) {
-    return MaliciousMatrixMultiplicationImpl<std::uint16_t>(a, b);
-  } else if (bit_length == 32u) {
-    return MaliciousMatrixMultiplicationImpl<std::uint32_t>(a, b);
-  } else if (bit_length == 64u) {
-    return MaliciousMatrixMultiplicationImpl<std::uint64_t>(a, b);
-  } else {
-    throw std::bad_cast();
-  }
-}
-
-
-boost::numeric::ublas::matrix<ShareWrapper> MaliciousHadamardMultiplication(
-  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
-  boost::numeric::ublas::matrix<ShareWrapper> const& b) {
-  size_t m = a.size1();
-  size_t n = a.size2();
-  assert(m == b.size1());
-  assert(n == b.size2());
-  
-  boost::numeric::ublas::matrix<ShareWrapper> result(m, n);
-  for(size_t i = 0; i != m; ++i) {
-    for(size_t j = 0; j != n; ++j) {
-      result(i, j) = MaliciousMultiply(a(i, j), b(i, j));
-    }
-  }
-  return result;
-}
-
-
-template<typename T>
-boost::numeric::ublas::matrix<ShareWrapper> MaliciousFixedPointMatrixMultiplicationImpl(
-  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
-  boost::numeric::ublas::matrix<ShareWrapper> const& b,
-  size_t precision) {
-  auto& share = a(0, 0);
-  switch (share->GetProtocol()) {
-    case MpcProtocol::kAstra: {
-      auto matrix_multiplication_gate = 
-        share->GetRegister()->EmplaceGate<proto::astra::fixed_point::MaliciousMatrixMultiplicationGate<T>>(
-          ConvertToMatrixWire<T>(a), ConvertToMatrixWire<T>(b), precision);
-      auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAstraShare());
-      auto result_gate = 
-        share->GetRegister()->EmplaceGate<proto::astra::MatrixReconversionGate<T>>(product);
-      return result_gate->GetShareMatrix();
-      
-    }
-    default:
-      throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::MaliciousMatrixMultiplicationGate");
-  }
-}
-
-boost::numeric::ublas::matrix<ShareWrapper> MaliciousFixedPointMatrixMultiplication(
-  boost::numeric::ublas::matrix<ShareWrapper> const& a, 
-  boost::numeric::ublas::matrix<ShareWrapper> const& b,
-  size_t precision) {
-  
-  auto bit_length = a(0, 0)->GetBitLength();
-  if (bit_length == 8u) {
-    return MaliciousFixedPointMatrixMultiplicationImpl<std::uint8_t>(a, b, precision);
-  } else if (bit_length == 16u) {
-    return MaliciousFixedPointMatrixMultiplicationImpl<std::uint16_t>(a, b, precision);
-  } else if (bit_length == 32u) {
-    return MaliciousFixedPointMatrixMultiplicationImpl<std::uint32_t>(a, b, precision);
-  } else if (bit_length == 64u) {
-    return MaliciousFixedPointMatrixMultiplicationImpl<std::uint64_t>(a, b, precision);
   } else {
     throw std::bad_cast();
   }
@@ -2063,7 +1876,6 @@ ShareWrapper B2A(std::vector<ShareWrapper> a, size_t bitlen) {
     throw std::bad_cast();
   }
 }
-
 
 ShareWrapper B2A(std::vector<ShareWrapper> a) {
   return B2A(std::move(a), a.size());

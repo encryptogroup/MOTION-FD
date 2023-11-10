@@ -3,21 +3,21 @@
 
 #include "base/party.h"
 #include "protocols/share_wrapper.h"
-#include "protocols/boolean_astra/boolean_astra_wire.h"
-#include "protocols/boolean_astra/boolean_astra_gate.h"
+#include "protocols/boolean_auxiliator/boolean_auxiliator_wire.h"
+#include "protocols/boolean_auxiliator/boolean_auxiliator_gate.h"
 #include "test_constants.h"
 #include "test_helpers.h"
 #include "utility/bit_vector.h"
 
 constexpr std::size_t kAll = std::numeric_limits<std::int64_t>::max();
-constexpr auto kBooleanAstra = encrypto::motion::MpcProtocol::kBooleanAstra;
+constexpr auto kBooleanAuxiliator = encrypto::motion::MpcProtocol::kBooleanAuxiliator;
 
 namespace mo = encrypto::motion;
 
-class BooleanAstraTestParameters {
+class BooleanAuxiliatorTestParameters {
  
  public:
-  BooleanAstraTestParameters() { InstantiateParties(); }
+  BooleanAuxiliatorTestParameters() { InstantiateParties(); }
 
   void InstantiateParties() {
     parties_ = std::move(mo::MakeLocallyConnectedParties(number_of_parties_, kPortOffset));
@@ -51,14 +51,14 @@ class BooleanAstraTestParameters {
       for (std::size_t party_id : {0, 1, 2}) {
         if (party_id == input_owner) {
           shared_inputs_single_[party_id][input_owner] =
-              parties_.at(party_id)->template In<kBooleanAstra>(inputs_single_[input_owner], input_owner);
+              parties_.at(party_id)->template In<kBooleanAuxiliator>(inputs_single_[input_owner], input_owner);
           shared_inputs_simd_[party_id][input_owner] =
-              parties_.at(party_id)->template In<kBooleanAstra>(inputs_simd_[input_owner], input_owner);
+              parties_.at(party_id)->template In<kBooleanAuxiliator>(inputs_simd_[input_owner], input_owner);
         } else {
           shared_inputs_single_[party_id][input_owner] =
-              parties_.at(party_id)->template In<kBooleanAstra>(zeros_single_, input_owner);
+              parties_.at(party_id)->template In<kBooleanAuxiliator>(zeros_single_, input_owner);
           shared_inputs_simd_[party_id][input_owner] =
-              parties_.at(party_id)->template In<kBooleanAstra>(zeros_simd_, input_owner);
+              parties_.at(party_id)->template In<kBooleanAuxiliator>(zeros_simd_, input_owner);
         }
       }
     }
@@ -74,9 +74,6 @@ class BooleanAstraTestParameters {
         t = mo::BitVector<>::SecureRandom(kDefaultTestBitLength);
       }
     }
-    
-    
-    
   }
   
   void ShareAndNInputs() {
@@ -88,15 +85,15 @@ class BooleanAstraTestParameters {
       for(size_t i = 0; i != arity; ++i) {
         if (party_id == input_owner) {
         shared_and_n_inputs_[party_id].emplace_back(
-            parties_.at(party_id)->template In<kBooleanAstra>(inputs_and_n_[0][i], input_owner));
+            parties_.at(party_id)->template In<kBooleanAuxiliator>(inputs_and_n_[0][i], input_owner));
         /*shared_inputs_simd_[party_id][input_owner] =
-            parties_.at(party_id)->template In<kBooleanAstra>(inputs_simd_[input_owner], input_owner);*/
+            parties_.at(party_id)->template In<kBooleanAuxiliator>(inputs_simd_[input_owner], input_owner);*/
         
         } else {
           shared_and_n_inputs_[party_id].emplace_back(
-              parties_.at(party_id)->template In<kBooleanAstra>(zeros_single_, input_owner));
+              parties_.at(party_id)->template In<kBooleanAuxiliator>(zeros_single_, input_owner));
           /*shared_inputs_simd_[party_id][input_owner] =
-              parties_.at(party_id)->template In<kBooleanAstra>(zeros_simd_, input_owner);*/
+              parties_.at(party_id)->template In<kBooleanAuxiliator>(zeros_simd_, input_owner);*/
         }
       }
     }
@@ -133,10 +130,10 @@ class BooleanAstraTestParameters {
         shared_dot_product_inputs_simd_[party_id][vector_i].resize(dot_product_vector_size_);
         for (std::size_t element_j = 0; element_j < dot_product_vector_size_; ++element_j) {
           shared_dot_product_inputs_single_[party_id][vector_i][element_j] =
-              parties_.at(party_id)->template In<kBooleanAstra>(
+              parties_.at(party_id)->template In<kBooleanAuxiliator>(
                   inputs_dot_product_single_[vector_i][element_j], input_owner);
           shared_dot_product_inputs_simd_[party_id][vector_i][element_j] =
-              parties_.at(party_id)->template In<kBooleanAstra>(
+              parties_.at(party_id)->template In<kBooleanAuxiliator>(
                   inputs_dot_product_simd_[vector_i][element_j], input_owner);
         }
       }
@@ -282,37 +279,37 @@ std::vector<std::byte> ToByteVector(mo::ShareWrapper output) {
   std::vector<std::byte> result;
   auto wires = output->GetWires();
   for(auto& wire : wires) {
-    auto w = std::dynamic_pointer_cast<mo::proto::boolean_astra::Wire>(wire);
+    auto w = std::dynamic_pointer_cast<mo::proto::boolean_auxiliator::Wire>(wire);
     auto& d = w->GetValues().GetData();
     std::copy(d.begin(), d.end(), std::back_inserter(result));
   }
   return result;
 }
 
-}  //namespace (anonymous)
+}  // namespace (anonymous) 
 
-TEST(BooleanAstraTest, InputOutput) {
-  BooleanAstraTestParameters astra_test;
-  astra_test.GenerateDiverseInputs();
-  astra_test.ShareDiverseInputs();
+TEST(BooleanAuxiliatorTest, InputOutput) {
+  BooleanAuxiliatorTestParameters auxiliator_test;
+  auxiliator_test.GenerateDiverseInputs();
+  auxiliator_test.ShareDiverseInputs();
   std::array<std::future<void>, 3> futures;
-  for (auto party_id = 0u; party_id != astra_test.parties_.size(); ++party_id) {
+  for (auto party_id = 0u; party_id != auxiliator_test.parties_.size(); ++party_id) {
     futures[party_id] = std::async([&, party_id]() {
       std::array<mo::ShareWrapper, 3> share_output_single, share_output_simd;
       for (std::size_t other_party_id = 0u; 
-           other_party_id != astra_test.number_of_parties_;
+           other_party_id != auxiliator_test.number_of_parties_;
            ++other_party_id) {
         share_output_single[other_party_id] =
-            astra_test.shared_inputs_single_[party_id][other_party_id].Out(kAll);
+            auxiliator_test.shared_inputs_single_[party_id][other_party_id].Out(kAll);
         share_output_simd[other_party_id] =
-            astra_test.shared_inputs_simd_[party_id][other_party_id].Out(kAll);
+            auxiliator_test.shared_inputs_simd_[party_id][other_party_id].Out(kAll);
       }
 
-      astra_test.parties_[party_id]->Run();
+      auxiliator_test.parties_[party_id]->Run();
 
-      for (std::size_t input_owner = 0; input_owner != astra_test.number_of_parties_; ++input_owner) {
+      for (std::size_t input_owner = 0; input_owner != auxiliator_test.number_of_parties_; ++input_owner) {
         std::vector<std::byte> expected_result_single;
-        for(auto& s : astra_test.inputs_single_[input_owner]) {
+        for(auto& s : auxiliator_test.inputs_single_[input_owner]) {
           auto& d = s.GetData();
           std::copy(d.begin(), d.end(), std::back_inserter(expected_result_single));
         }
@@ -320,109 +317,109 @@ TEST(BooleanAstraTest, InputOutput) {
         EXPECT_EQ(circuit_result_single, expected_result_single);
         std::vector<std::byte> circuit_result_simd = ToByteVector(share_output_simd[input_owner]);
         std::vector<std::byte> expected_result_simd;
-        for(auto& s : astra_test.inputs_simd_[input_owner]) {
+        for(auto& s : auxiliator_test.inputs_simd_[input_owner]) {
           auto& d = s.GetData();
           std::copy(d.begin(), d.end(), std::back_inserter(expected_result_simd));
         }
         EXPECT_EQ(circuit_result_simd, expected_result_simd);
       }
-      astra_test.parties_[party_id]->Finish();
+      auxiliator_test.parties_[party_id]->Finish();
     });
   }
   for (auto& f : futures) f.get();
 }
 
-TEST(BooleanAstraTest, Xor) {
-  BooleanAstraTestParameters astra_test;
-  astra_test.GenerateDiverseInputs();
-  astra_test.ShareDiverseInputs();
+TEST(BooleanAuxiliatorTest, Xor) {
+  BooleanAuxiliatorTestParameters auxiliator_test;
+  auxiliator_test.GenerateDiverseInputs();
+  auxiliator_test.ShareDiverseInputs();
   std::array<std::future<void>, 3> futures;
-  for (auto party_id = 0u; party_id != astra_test.parties_.size(); ++party_id) {
+  for (auto party_id = 0u; party_id != auxiliator_test.parties_.size(); ++party_id) {
     futures[party_id] = std::async([&, party_id]() {
-      auto share_xor_single = astra_test.shared_inputs_single_[party_id][0] ^
-                              astra_test.shared_inputs_single_[party_id][1] ^
-                              astra_test.shared_inputs_single_[party_id][2];
-      auto share_xor_simd = astra_test.shared_inputs_simd_[party_id][0] ^
-                            astra_test.shared_inputs_simd_[party_id][1] ^
-                            astra_test.shared_inputs_simd_[party_id][2];
+      auto share_xor_single = auxiliator_test.shared_inputs_single_[party_id][0] ^
+                              auxiliator_test.shared_inputs_single_[party_id][1] ^
+                              auxiliator_test.shared_inputs_single_[party_id][2];
+      auto share_xor_simd = auxiliator_test.shared_inputs_simd_[party_id][0] ^
+                            auxiliator_test.shared_inputs_simd_[party_id][1] ^
+                            auxiliator_test.shared_inputs_simd_[party_id][2];
 
       auto share_output_single_all = share_xor_single.Out();
       auto share_output_simd_all = share_xor_simd.Out();
 
-      astra_test.parties_[party_id]->Run();
+      auxiliator_test.parties_[party_id]->Run();
 
       {
         std::vector<std::byte> circuit_result_single = ToByteVector(share_output_single_all);
-        std::vector<std::byte> expected_result_single = astra_test.GetXorOfInputs();
+        std::vector<std::byte> expected_result_single = auxiliator_test.GetXorOfInputs();
         EXPECT_EQ(circuit_result_single, expected_result_single);
 
         const std::vector<std::byte> circuit_result_simd = ToByteVector(share_output_simd_all);
-        const std::vector<std::byte> expected_result_simd = astra_test.GetXorOfSimdInputs();
+        const std::vector<std::byte> expected_result_simd = auxiliator_test.GetXorOfSimdInputs();
         EXPECT_EQ(circuit_result_simd, expected_result_simd);
       }
-      astra_test.parties_[party_id]->Finish();
+      auxiliator_test.parties_[party_id]->Finish();
     });
   }
   for (auto& f : futures) f.get();
 }
 
-TEST(BooleanAstraTest, And) {
-  BooleanAstraTestParameters astra_test;
-  astra_test.GenerateDiverseInputs();
-  astra_test.ShareDiverseInputs();
+TEST(BooleanAuxiliatorTest, And) {
+  BooleanAuxiliatorTestParameters auxiliator_test;
+  auxiliator_test.GenerateDiverseInputs();
+  auxiliator_test.ShareDiverseInputs();
   std::array<std::future<void>, 3> futures;
-  for (auto party_id = 0u; party_id != astra_test.parties_.size(); ++party_id) {
+  for (auto party_id = 0u; party_id != auxiliator_test.parties_.size(); ++party_id) {
     futures[party_id] = std::async([&, party_id]() {
-      auto share_and_single = astra_test.shared_inputs_single_[party_id][0] &
-                              astra_test.shared_inputs_single_[party_id][1] &
-                              astra_test.shared_inputs_single_[party_id][2];
-      auto share_and_simd = astra_test.shared_inputs_simd_[party_id][0] &
-                            astra_test.shared_inputs_simd_[party_id][1] &
-                            astra_test.shared_inputs_simd_[party_id][2];
+      auto share_and_single = auxiliator_test.shared_inputs_single_[party_id][0] &
+                              auxiliator_test.shared_inputs_single_[party_id][1] &
+                              auxiliator_test.shared_inputs_single_[party_id][2];
+      auto share_and_simd = auxiliator_test.shared_inputs_simd_[party_id][0] &
+                            auxiliator_test.shared_inputs_simd_[party_id][1] &
+                            auxiliator_test.shared_inputs_simd_[party_id][2];
 
       auto share_output_single_all = share_and_single.Out();
       auto share_output_simd_all = share_and_simd.Out();
 
-      astra_test.parties_[party_id]->Run();
+      auxiliator_test.parties_[party_id]->Run();
 
       {
         std::vector<std::byte> circuit_result_single = ToByteVector(share_output_single_all);
-        std::vector<std::byte> expected_result_single = astra_test.GetAndOfInputs();
+        std::vector<std::byte> expected_result_single = auxiliator_test.GetAndOfInputs();
         EXPECT_EQ(circuit_result_single, expected_result_single);
 
         const std::vector<std::byte> circuit_result_simd = ToByteVector(share_output_simd_all);
-        const std::vector<std::byte> expected_result_simd = astra_test.GetAndOfSimdInputs();
+        const std::vector<std::byte> expected_result_simd = auxiliator_test.GetAndOfSimdInputs();
         EXPECT_EQ(circuit_result_simd, expected_result_simd);
       }
-      astra_test.parties_[party_id]->Finish();
+      auxiliator_test.parties_[party_id]->Finish();
     });
   }
   for (auto& f : futures) f.get();
 }
 
-TEST(BooleanAstraTest, Add) {
-  BooleanAstraTestParameters astra_test;
-  astra_test.GenerateDiverseInputs();
-  astra_test.ShareDiverseInputs();
+TEST(BooleanAuxiliatorTest, Add) {
+  BooleanAuxiliatorTestParameters auxiliator_test;
+  auxiliator_test.GenerateDiverseInputs();
+  auxiliator_test.ShareDiverseInputs();
   
   std::array<std::future<void>, 3> futures;
-  for (auto party_id = 0u; party_id != astra_test.parties_.size(); ++party_id) {
+  for (auto party_id = 0u; party_id != auxiliator_test.parties_.size(); ++party_id) {
     futures[party_id] = std::async([&, party_id]() {
       auto share_msb_single = 
-        MsbAdd(astra_test.shared_inputs_single_[party_id][0],
-               astra_test.shared_inputs_single_[party_id][1]);
+        MsbAdd(auxiliator_test.shared_inputs_single_[party_id][0],
+               auxiliator_test.shared_inputs_single_[party_id][1]);
       auto share_msb_simd = 
-        MsbAdd(astra_test.shared_inputs_simd_[party_id][0],
-               astra_test.shared_inputs_simd_[party_id][1]);
+        MsbAdd(auxiliator_test.shared_inputs_simd_[party_id][0],
+               auxiliator_test.shared_inputs_simd_[party_id][1]);
 
       auto share_output_single_all = share_msb_single.Out();
       auto share_output_simd_all = share_msb_simd.Out();
 
-      astra_test.parties_[party_id]->Run();
+      auxiliator_test.parties_[party_id]->Run();
 
       {
-        std::vector<mo::BitVector<>> a_v = astra_test.inputs_single_[0];
-        std::vector<mo::BitVector<>> b_v = astra_test.inputs_single_[1];
+        std::vector<mo::BitVector<>> a_v = auxiliator_test.inputs_single_[0];
+        std::vector<mo::BitVector<>> b_v = auxiliator_test.inputs_single_[1];
         uint32_t a = 0, b = 0;
         for(size_t i = 0; i != a_v.size(); ++i) {
           a |= uint32_t(a_v[i].Get(0)) << i;
@@ -434,8 +431,8 @@ TEST(BooleanAstraTest, Add) {
         std::vector<std::byte> expected_result_single{std::byte((a + b) >> 31)};
         EXPECT_EQ(circuit_result_single, expected_result_single);
         
-        auto const& a_vectors = astra_test.inputs_simd_[0];
-        auto const& b_vectors = astra_test.inputs_simd_[1];
+        auto const& a_vectors = auxiliator_test.inputs_simd_[0];
+        auto const& b_vectors = auxiliator_test.inputs_simd_[1];
         size_t n = a_vectors[0].GetSize();
         mo::BitVector<> expected_result_simd;
         for(size_t s = 0; s != n; ++s) {
@@ -452,7 +449,7 @@ TEST(BooleanAstraTest, Add) {
         EXPECT_EQ(circuit_result_simd, expected_result_simd.GetData());
         
       }
-      astra_test.parties_[party_id]->Finish();
+      auxiliator_test.parties_[party_id]->Finish();
     });
   }
   for (auto& f : futures) f.get();

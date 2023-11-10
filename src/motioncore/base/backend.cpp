@@ -52,6 +52,10 @@
 #include "protocols/astra/astra_share.h"
 #include "protocols/boolean_astra/boolean_astra_gate.h"
 #include "protocols/boolean_astra/boolean_astra_share.h"
+#include "protocols/auxiliator/auxiliator_gate.h"
+#include "protocols/auxiliator/auxiliator_share.h"
+#include "protocols/boolean_auxiliator/boolean_auxiliator_gate.h"
+#include "protocols/boolean_auxiliator/boolean_auxiliator_share.h"
 #include "protocols/bmr/bmr_gate.h"
 #include "protocols/bmr/bmr_provider.h"
 #include "protocols/bmr/bmr_share.h"
@@ -64,7 +68,7 @@
 #include "register.h"
 #include "statistics/run_time_statistics.h"
 #include "utility/constants.h"
-#include "protocols/astra/astra_verifier.h"
+#include "protocols/auxiliator/auxiliator_verifier.h"
 #include "protocols/swift/swift_verifier.h"
 #include "protocols/swift/swift_truncation.h"
 
@@ -103,7 +107,7 @@ Backend::Backend(std::unique_ptr<communication::CommunicationLayer> communicatio
     garbled_circuit_provider_ =
         proto::garbled_circuit::Provider::MakeProvider(*communication_layer_);
   }
-  astra_verifier_ = std::make_unique<AstraSacrificeVerifier>(*this);
+  auxiliator_verifier_ = std::make_unique<AuxiliatorSacrificeVerifier>(*this);
   swift_verifier_ = std::make_unique<SwiftSacrificeVerifier>(*this);
   socium_verifier_ = std::make_unique<SociumSacrificeVerifier>(*this);
   input_swift_hash_verifier_ = std::make_unique<SwiftHashVerifier>(*this);
@@ -367,14 +371,14 @@ SharePointer Backend::AstraInput(std::size_t party_id, std::vector<T> input) {
   return std::static_pointer_cast<Share>(input_gate->GetOutputAsAstraShare());
 }
 
-template SharePointer Backend::AstraInput<std::uint8_t>(std::size_t party_id,
-                                                        std::vector<std::uint8_t> input);
-template SharePointer Backend::AstraInput<std::uint16_t>(std::size_t party_id,
-                                                         std::vector<std::uint16_t> input);
-template SharePointer Backend::AstraInput<std::uint32_t>(std::size_t party_id,
-                                                         std::vector<std::uint32_t> input);
-template SharePointer Backend::AstraInput<std::uint64_t>(std::size_t party_id,
-                                                         std::vector<std::uint64_t> input);
+template SharePointer Backend::AstraInput<std::uint8_t>(
+  std::size_t party_id, std::vector<std::uint8_t> input);
+template SharePointer Backend::AstraInput<std::uint16_t>(
+  std::size_t party_id, std::vector<std::uint16_t> input);
+template SharePointer Backend::AstraInput<std::uint32_t>(
+  std::size_t party_id, std::vector<std::uint32_t> input);
+template SharePointer Backend::AstraInput<std::uint64_t>(
+  std::size_t party_id, std::vector<std::uint64_t> input);
 
 template <typename T>
 SharePointer Backend::AstraOutput(const proto::astra::SharePointer<T>& parent,
@@ -401,14 +405,81 @@ SharePointer Backend::AstraOutput(const SharePointer& parent, std::size_t output
   return AstraOutput<T>(casted_parent_pointer, output_owner);
 }
 
-template SharePointer Backend::AstraOutput<std::uint8_t>(const SharePointer& parent,
-                                                         std::size_t output_owner);
-template SharePointer Backend::AstraOutput<std::uint16_t>(const SharePointer& parent,
-                                                          std::size_t output_owner);
-template SharePointer Backend::AstraOutput<std::uint32_t>(const SharePointer& parent,
-                                                          std::size_t output_owner);
-template SharePointer Backend::AstraOutput<std::uint64_t>(const SharePointer& parent,
-                                                          std::size_t output_owner);
+template SharePointer Backend::AstraOutput<std::uint8_t>(
+  const SharePointer& parent, std::size_t output_owner);
+template SharePointer Backend::AstraOutput<std::uint16_t>(
+  const SharePointer& parent, std::size_t output_owner);
+template SharePointer Backend::AstraOutput<std::uint32_t>(
+  const SharePointer& parent, std::size_t output_owner);
+template SharePointer Backend::AstraOutput<std::uint64_t>(
+  const SharePointer& parent, std::size_t output_owner);
+                                                          
+                                                          
+                                                          
+template <typename T>
+SharePointer Backend::AuxiliatorInput(std::size_t party_id, T input) {
+  return AuxiliatorInput(party_id, std::vector<T>(input));
+}
+
+template SharePointer Backend::AuxiliatorInput<std::uint8_t>(
+  std::size_t party_id, std::uint8_t input);
+template SharePointer Backend::AuxiliatorInput<std::uint16_t>(
+  std::size_t party_id, std::uint16_t input);
+template SharePointer Backend::AuxiliatorInput<std::uint32_t>(
+  std::size_t party_id, std::uint32_t input);
+template SharePointer Backend::AuxiliatorInput<std::uint64_t>(
+  std::size_t party_id, std::uint64_t input);
+
+template <typename T>
+SharePointer Backend::AuxiliatorInput(std::size_t party_id, std::vector<T> input) {
+  auto input_gate =
+      register_->EmplaceGate<proto::auxiliator::InputGate<T>>(std::move(input), party_id, *this);
+  return std::static_pointer_cast<Share>(input_gate->GetOutputAsAuxiliatorShare());
+}
+
+template SharePointer Backend::AuxiliatorInput<std::uint8_t>(
+  std::size_t party_id, std::vector<std::uint8_t> input);
+template SharePointer Backend::AuxiliatorInput<std::uint16_t>(
+  std::size_t party_id, std::vector<std::uint16_t> input);
+template SharePointer Backend::AuxiliatorInput<std::uint32_t>(
+  std::size_t party_id, std::vector<std::uint32_t> input);
+template SharePointer Backend::AuxiliatorInput<std::uint64_t>(
+  std::size_t party_id, std::vector<std::uint64_t> input);
+
+template <typename T>
+SharePointer Backend::AuxiliatorOutput(const proto::auxiliator::SharePointer<T>& parent,
+                                  std::size_t output_owner) {
+  assert(parent);
+  auto output_gate = register_->EmplaceGate<proto::auxiliator::OutputGate<T>>(parent, output_owner);
+  return std::static_pointer_cast<Share>(output_gate->GetOutputAsAuxiliatorShare());
+}
+
+template SharePointer Backend::AuxiliatorOutput<std::uint8_t>(
+    const proto::auxiliator::SharePointer<std::uint8_t>& parent, std::size_t output_owner);
+template SharePointer Backend::AuxiliatorOutput<std::uint16_t>(
+    const proto::auxiliator::SharePointer<std::uint16_t>& parent, std::size_t output_owner);
+template SharePointer Backend::AuxiliatorOutput<std::uint32_t>(
+    const proto::auxiliator::SharePointer<std::uint32_t>& parent, std::size_t output_owner);
+template SharePointer Backend::AuxiliatorOutput<std::uint64_t>(
+    const proto::auxiliator::SharePointer<std::uint64_t>& parent, std::size_t output_owner);
+
+template <typename T>
+SharePointer Backend::AuxiliatorOutput(const SharePointer& parent, std::size_t output_owner) {
+  assert(parent);
+  auto casted_parent_pointer = std::dynamic_pointer_cast<proto::auxiliator::Share<T>>(parent);
+  assert(casted_parent_pointer);
+  return AuxiliatorOutput<T>(casted_parent_pointer, output_owner);
+}
+
+template SharePointer Backend::AuxiliatorOutput<std::uint8_t>(
+  const SharePointer& parent, std::size_t output_owner);
+template SharePointer Backend::AuxiliatorOutput<std::uint16_t>(
+  const SharePointer& parent, std::size_t output_owner);
+template SharePointer Backend::AuxiliatorOutput<std::uint32_t>(
+  const SharePointer& parent, std::size_t output_owner);
+template SharePointer Backend::AuxiliatorOutput<std::uint64_t>(
+  const SharePointer& parent, std::size_t output_owner);
+
 
 SharePointer Backend::GarbledCircuitInput(std::size_t party_id,
                                           std::span<const BitVector<>> input) {
@@ -473,6 +544,34 @@ SharePointer Backend::BooleanAstraOutput(const SharePointer& parent, std::size_t
   assert(parent);
   const auto output_gate = register_->EmplaceGate<proto::boolean_astra::OutputGate>(parent, output_owner);
   return std::static_pointer_cast<Share>(output_gate->GetOutputAsBooleanAstraShare());
+}
+
+
+SharePointer Backend::BooleanAuxiliatorInput(std::size_t party_id, bool input) {
+  return BooleanAuxiliatorInput(party_id, BitVector(1, input));
+}
+
+SharePointer Backend::BooleanAuxiliatorInput(std::size_t party_id, const BitVector<>& input) {
+  return BooleanAuxiliatorInput(party_id, std::vector<BitVector<>>{input});
+}
+
+SharePointer Backend::BooleanAuxiliatorInput(std::size_t party_id, BitVector<>&& input) {
+  return BooleanAuxiliatorInput(party_id, std::vector<BitVector<>>{std::move(input)});
+}
+
+SharePointer Backend::BooleanAuxiliatorInput(std::size_t party_id, std::span<const BitVector<>> input) {
+  return BooleanAuxiliatorInput(party_id, std::vector<BitVector<>>{input.begin(), input.end()});
+}
+
+SharePointer Backend::BooleanAuxiliatorInput(std::size_t party_id, std::vector<BitVector<>>&& input) {
+  const auto input_gate = register_->EmplaceGate<proto::boolean_auxiliator::InputGate>(std::move(input), party_id, *this);
+  return std::static_pointer_cast<Share>(input_gate->GetOutputAsBooleanAuxiliatorShare());
+}
+
+SharePointer Backend::BooleanAuxiliatorOutput(const SharePointer& parent, std::size_t output_owner) {
+  assert(parent);
+  const auto output_gate = register_->EmplaceGate<proto::boolean_auxiliator::OutputGate>(parent, output_owner);
+  return std::static_pointer_cast<Share>(output_gate->GetOutputAsBooleanAuxiliatorShare());
 }
 
 void Backend::Synchronize() { communication_layer_->Synchronize(); }

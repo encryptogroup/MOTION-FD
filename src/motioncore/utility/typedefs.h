@@ -139,10 +139,16 @@ enum class MpcProtocol : unsigned int {
   // MPC protocols
   kArithmeticGmw,
   kAstra,
+  kAuxiliator,
   kBooleanAstra,
+  kBooleanAuxiliator,
   kBooleanGmw,
+  kBooleanSocium,
+  kBooleanSwift,
   kBmr,
   kGarbledCircuit,
+  kSocium,
+  kSwift,
   // Constants
   kArithmeticConstant,
   kBooleanConstant,

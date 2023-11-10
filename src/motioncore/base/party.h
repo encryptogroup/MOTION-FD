@@ -67,6 +67,7 @@ class Party {
     static_assert(P != MpcProtocol::kArithmeticGmw);
     static_assert(P != MpcProtocol::kArithmeticConstant);
     static_assert(P != MpcProtocol::kAstra);
+    static_assert(P != MpcProtocol::kAuxiliator);
     switch (P) {
       case MpcProtocol::kBooleanConstant: {
         // TODO implement
@@ -84,6 +85,9 @@ class Party {
       }
       case MpcProtocol::kBooleanAstra: {
         return backend_->BooleanAstraInput(party_id, input);
+      }
+      case MpcProtocol::kBooleanAuxiliator: {
+        return backend_->BooleanAuxiliatorInput(party_id, input);
       }
       default: {
         throw(std::runtime_error(
@@ -127,6 +131,7 @@ class Party {
     static_assert(P != MpcProtocol::kArithmeticGmw);
     static_assert(P != MpcProtocol::kArithmeticConstant);
     static_assert(P != MpcProtocol::kAstra);
+    static_assert(P != MpcProtocol::kAuxiliator);
     switch (P) {
       case MpcProtocol::kBooleanConstant: {
         // TODO implement
@@ -145,6 +150,9 @@ class Party {
       case MpcProtocol::kBooleanAstra: {
         return backend_->BooleanAstraInput(party_id, input);
       }
+      case MpcProtocol::kBooleanAuxiliator: {
+        return backend_->BooleanAuxiliatorInput(party_id, input);
+      }
       default: {
         throw(std::runtime_error(
             fmt::format("Unknown MPC protocol with id {}", static_cast<unsigned int>(P))));
@@ -158,6 +166,7 @@ class Party {
     static_assert(P != MpcProtocol::kArithmeticGmw);
     static_assert(P != MpcProtocol::kArithmeticConstant);
     static_assert(P != MpcProtocol::kAstra);
+    static_assert(P != MpcProtocol::kAuxiliator);
     switch (P) {
       case MpcProtocol::kBooleanConstant: {
         // TODO implement
@@ -172,6 +181,9 @@ class Party {
       }
       case MpcProtocol::kBooleanAstra: {
         return backend_->BooleanAstraInput(party_id, input);
+      }
+      case MpcProtocol::kBooleanAuxiliator: {
+        return backend_->BooleanAuxiliatorInput(party_id, input);
       }
       default: {
         throw(std::runtime_error(
@@ -200,6 +212,9 @@ class Party {
       }
       case MpcProtocol::kBooleanAstra: {
         return backend_->BooleanAstraInput(party_id, input);
+      }
+      case MpcProtocol::kBooleanAuxiliator: {
+        return backend_->BooleanAuxiliatorInput(party_id, input);
       }
       default: {
         throw(std::runtime_error(
@@ -231,6 +246,9 @@ class Party {
       case MpcProtocol::kAstra: {
         return backend_->AstraInput<T>(party_id, input);
       }
+      case MpcProtocol::kAuxiliator: {
+        return backend_->AuxiliatorInput<T>(party_id, input);
+      }
       case MpcProtocol::kBooleanGmw: {
         throw std::runtime_error(
             "Non-binary types have to be converted to BitVectors in BooleanGMW, "
@@ -244,6 +262,11 @@ class Party {
       case MpcProtocol::kBooleanAstra: {
         throw(std::runtime_error(
             fmt::format("Non-binary types have to be converted to BitVectors in BooleanAstra, "
+                        "consider using TODO function for the input")));
+      }
+      case MpcProtocol::kBooleanAuxiliator: {
+        throw(std::runtime_error(
+            fmt::format("Non-binary types have to be converted to BitVectors in BooleanAuxiliator, "
                         "consider using TODO function for the input")));
       }
       default: {
@@ -276,6 +299,9 @@ class Party {
       case MpcProtocol::kAstra: {
         return backend_->AstraInput<T>(party_id, std::move(input));
       }
+      case MpcProtocol::kAuxiliator: {
+        return backend_->AuxiliatorInput<T>(party_id, std::move(input));
+      }
       case MpcProtocol::kBooleanGmw: {
         throw(std::runtime_error(
             fmt::format("Non-binary types have to be converted to BitVectors in BooleanGMW, "
@@ -289,6 +315,11 @@ class Party {
       case MpcProtocol::kBooleanAstra: {
         throw(std::runtime_error(
             fmt::format("Non-binary types have to be converted to BitVectors in BooleanAstra, "
+                        "consider using TODO function for the input")));
+      }
+      case MpcProtocol::kBooleanAuxiliator: {
+        throw(std::runtime_error(
+            fmt::format("Non-binary types have to be converted to BitVectors in BooleanAuxiliator, "
                         "consider using TODO function for the input")));
       }
       default: {
@@ -330,6 +361,9 @@ class Party {
       case MpcProtocol::kAstra: {
         static_assert(P != MpcProtocol::kAstra, "Not implemented yet");
       }
+      case MpcProtocol::kAuxiliator: {
+        static_assert(P != MpcProtocol::kAuxiliator, "Not implemented yet");
+      }
       case MpcProtocol::kBooleanGmw: {
         throw std::runtime_error(
             "Non-binary types have to be converted to BitVectors in BooleanGMW, "
@@ -343,6 +377,11 @@ class Party {
       case MpcProtocol::kBooleanAstra: {
         throw(std::runtime_error(
             fmt::format("Non-binary types have to be converted to BitVectors in BooleanAstra, "
+                        "consider using TODO function for the input")));
+      }
+      case MpcProtocol::kBooleanAuxiliator: {
+        throw(std::runtime_error(
+            fmt::format("Non-binary types have to be converted to BitVectors in BooleanAuxiliator, "
                         "consider using TODO function for the input")));
       }
       default: {
@@ -372,6 +411,9 @@ class Party {
       case MpcProtocol::kAstra: {
         static_assert(P != MpcProtocol::kAstra, "Not implemented yet");
       }
+      case MpcProtocol::kAuxiliator: {
+        static_assert(P != MpcProtocol::kAuxiliator, "Not implemented yet");
+      }
       case MpcProtocol::kBooleanGmw: {
         throw std::runtime_error(
             "Non-binary types have to be converted to BitVectors in BooleanGMW, "
@@ -387,6 +429,11 @@ class Party {
             fmt::format("Non-binary types have to be converted to BitVectors in BooleanAstra, "
                         "consider using TODO function for the input")));
       }
+      case MpcProtocol::kBooleanAuxiliator: {
+        throw(std::runtime_error(
+            fmt::format("Non-binary types have to be converted to BitVectors in BooleanAuxiliator, "
+                        "consider using TODO function for the input")));
+      }
       default: {
         throw(std::runtime_error(
             fmt::format("Unknown MPC protocol with id {}", static_cast<unsigned int>(P))));
@@ -399,6 +446,7 @@ class Party {
     static_assert(P != MpcProtocol::kArithmeticGmw);
     static_assert(P != MpcProtocol::kArithmeticConstant);
     static_assert(P != MpcProtocol::kAstra);
+    static_assert(P != MpcProtocol::kAuxiliator);
 
     switch (P) {
       case MpcProtocol::kBooleanConstant: {

@@ -3,7 +3,7 @@
 #include "communication/message_manager.h"
 #include "communication/message.h"
 
-#include "astra_verifier.h"
+#include "auxiliator_verifier.h"
 
 #include <iomanip>
 
@@ -54,11 +54,11 @@ void Abort() {
 
 }  // namespace (anonymous)
 
-AstraSacrificeVerifier::ReservedTriple64::ReservedTriple64(
-AstraSacrificeVerifier* sacrifice_verify, size_t offset)
+AuxiliatorSacrificeVerifier::ReservedTriple64::ReservedTriple64(
+AuxiliatorSacrificeVerifier* sacrifice_verify, size_t offset)
 : sacrifice_verify_{sacrifice_verify}, offset_{offset} {}
 
-void AstraSacrificeVerifier::ReservedTriple64::AppendTriple(
+void AuxiliatorSacrificeVerifier::ReservedTriple64::AppendTriple(
 uint64_t lambda_x, uint64_t lambda_y, uint64_t gamma_xy) {
   sacrifice_verify_->lambdas_x64_[offset_] = std::move(lambda_x);
   sacrifice_verify_->lambdas_y64_[offset_] = std::move(lambda_y);
@@ -66,11 +66,11 @@ uint64_t lambda_x, uint64_t lambda_y, uint64_t gamma_xy) {
   ++offset_;
 }
 
-AstraSacrificeVerifier::ReservedTriple128::ReservedTriple128(
-AstraSacrificeVerifier* sacrifice_verify, size_t offset)
+AuxiliatorSacrificeVerifier::ReservedTriple128::ReservedTriple128(
+AuxiliatorSacrificeVerifier* sacrifice_verify, size_t offset)
 : sacrifice_verify_{sacrifice_verify}, offset_{offset} {}
 
-void AstraSacrificeVerifier::ReservedTriple128::AppendTriple(
+void AuxiliatorSacrificeVerifier::ReservedTriple128::AppendTriple(
 UInt128 lambda_x, UInt128 lambda_y, UInt128 gamma_xy) {
   sacrifice_verify_->lambdas_x128_[offset_] = std::move(lambda_x);
   sacrifice_verify_->lambdas_y128_[offset_] = std::move(lambda_y);
@@ -78,11 +78,11 @@ UInt128 lambda_x, UInt128 lambda_y, UInt128 gamma_xy) {
   ++offset_;
 }
 
-AstraSacrificeVerifier::ReservedMatrixTriple64::ReservedMatrixTriple64(
-AstraSacrificeVerifier* sacrifice_verify, size_t offset)
+AuxiliatorSacrificeVerifier::ReservedMatrixTriple64::ReservedMatrixTriple64(
+AuxiliatorSacrificeVerifier* sacrifice_verify, size_t offset)
 : sacrifice_verify_{sacrifice_verify}, offset_{offset} {}
 
-void AstraSacrificeVerifier::ReservedMatrixTriple64::AppendTriple(
+void AuxiliatorSacrificeVerifier::ReservedMatrixTriple64::AppendTriple(
   boost::numeric::ublas::matrix<uint64_t> lambda_x, 
   boost::numeric::ublas::matrix<uint64_t> lambda_y, 
   boost::numeric::ublas::matrix<uint64_t> gamma_xy) {
@@ -92,11 +92,11 @@ void AstraSacrificeVerifier::ReservedMatrixTriple64::AppendTriple(
   ++offset_;
 }
 
-AstraSacrificeVerifier::ReservedMatrixTriple128::ReservedMatrixTriple128(
-AstraSacrificeVerifier* sacrifice_verify, size_t offset)
+AuxiliatorSacrificeVerifier::ReservedMatrixTriple128::ReservedMatrixTriple128(
+AuxiliatorSacrificeVerifier* sacrifice_verify, size_t offset)
 : sacrifice_verify_{sacrifice_verify}, offset_{offset} {}
 
-void AstraSacrificeVerifier::ReservedMatrixTriple128::AppendTriple(
+void AuxiliatorSacrificeVerifier::ReservedMatrixTriple128::AppendTriple(
   boost::numeric::ublas::matrix<UInt128> lambda_x, 
   boost::numeric::ublas::matrix<UInt128> lambda_y, 
   boost::numeric::ublas::matrix<UInt128> gamma_xy) {
@@ -106,8 +106,8 @@ void AstraSacrificeVerifier::ReservedMatrixTriple128::AppendTriple(
   ++offset_;
 }
 
-AstraSacrificeVerifier::ReservedTriple64 
-AstraSacrificeVerifier::ReserveTriples64(size_t number_of_triples) {
+AuxiliatorSacrificeVerifier::ReservedTriple64 
+AuxiliatorSacrificeVerifier::ReserveTriples64(size_t number_of_triples) {
   //This method is supposed to be called during circuit definition, thus
   //no synchronization is needed here.
   dependencies_.fetch_add(1);
@@ -120,8 +120,8 @@ AstraSacrificeVerifier::ReserveTriples64(size_t number_of_triples) {
   return {this, old_size};
 }
 
-AstraSacrificeVerifier::ReservedTriple128 
-AstraSacrificeVerifier::ReserveTriples128(size_t number_of_triples) {
+AuxiliatorSacrificeVerifier::ReservedTriple128 
+AuxiliatorSacrificeVerifier::ReserveTriples128(size_t number_of_triples) {
   //This method is supposed to be called during circuit definition, thus
   //no synchronization is needed here.
   dependencies_.fetch_add(1);
@@ -134,8 +134,8 @@ AstraSacrificeVerifier::ReserveTriples128(size_t number_of_triples) {
   return {this, old_size};
 }
 
-AstraSacrificeVerifier::ReservedMatrixTriple64 
-AstraSacrificeVerifier::ReserveMatrixTriples64(size_t number_of_triples) {
+AuxiliatorSacrificeVerifier::ReservedMatrixTriple64 
+AuxiliatorSacrificeVerifier::ReserveMatrixTriples64(size_t number_of_triples) {
   //This method is supposed to be called during circuit definition, thus
   //no synchronization is needed here.
   dependencies_.fetch_add(1);
@@ -148,8 +148,8 @@ AstraSacrificeVerifier::ReserveMatrixTriples64(size_t number_of_triples) {
   return {this, old_size};
 }
 
-AstraSacrificeVerifier::ReservedMatrixTriple128 
-AstraSacrificeVerifier::ReserveMatrixTriples128(size_t number_of_triples) {
+AuxiliatorSacrificeVerifier::ReservedMatrixTriple128 
+AuxiliatorSacrificeVerifier::ReserveMatrixTriples128(size_t number_of_triples) {
   //This method is supposed to be called during circuit definition, thus
   //no synchronization is needed here.
   dependencies_.fetch_add(1);
@@ -162,26 +162,26 @@ AstraSacrificeVerifier::ReserveMatrixTriples128(size_t number_of_triples) {
   return {this, old_size};
 }
 
-AstraSacrificeVerifier::AstraSacrificeVerifier(Backend& backend)
+AuxiliatorSacrificeVerifier::AuxiliatorSacrificeVerifier(Backend& backend)
 : backend_{backend}, gate_id_{backend.GetRegister()->NextGateId()},
   dependencies_{2},
   check_is_done_condition_([this](){ return dependencies_.load() == 0; }),
   lambdas_x64_{}, lambdas_y64_{}, gammas_xy64_{},
   lambdas_x128_{}, lambdas_y128_{}, gammas_xy128_{} {
-  using communication::MessageType::kAstraVerifier;
+  using communication::MessageType::kAuxiliatorVerifier;
   auto& communication_layer = backend_.GetCommunicationLayer();
   auto& message_manager = communication_layer.GetMessageManager();
   uint64_t my_id = communication_layer.GetMyId();
   
   if (my_id == 1) {
-    triple_future_p1_p2_ = message_manager.RegisterReceive(2, kAstraVerifier, gate_id_);
+    triple_future_p1_p2_ = message_manager.RegisterReceive(2, kAuxiliatorVerifier, gate_id_);
   } else if (my_id == 2) {
-    triple_future_p0_ = message_manager.RegisterReceive(0, kAstraVerifier, gate_id_);
-    triple_future_p1_p2_ = message_manager.RegisterReceive(1, kAstraVerifier, gate_id_);
+    triple_future_p0_ = message_manager.RegisterReceive(0, kAuxiliatorVerifier, gate_id_);
+    triple_future_p1_p2_ = message_manager.RegisterReceive(1, kAuxiliatorVerifier, gate_id_);
   }
 }
 
-void AstraSacrificeVerifier::SetReady() {
+void AuxiliatorSacrificeVerifier::SetReady() {
   size_t dependencies = dependencies_.fetch_sub(1) - 1;
   //If dependencies is 1 at this point, all dependencies called SetReady()
   if(dependencies == 1) {
@@ -193,12 +193,13 @@ void AstraSacrificeVerifier::SetReady() {
 }
 
 
-void AstraSacrificeVerifier::Verify() {
-  using communication::MessageType::kAstraVerifier;
+void AuxiliatorSacrificeVerifier::Verify() {
+  using communication::MessageType::kAuxiliatorVerifier;
   using boost::numeric::ublas::matrix;
   auto& communication_layer = backend_.GetCommunicationLayer();
   uint64_t my_id = communication_layer.GetMyId();
   
+  //The number of scalar triples
   size_t const number_of_triples64 = lambdas_x64_.size();
   size_t const number_of_triples128 = lambdas_x128_.size();
   assert(number_of_triples64 == lambdas_y64_.size());
@@ -206,6 +207,7 @@ void AstraSacrificeVerifier::Verify() {
   assert(number_of_triples128 == lambdas_y128_.size());
   assert(number_of_triples128 == gammas_xy128_.size());
   
+  //The number of matrix triples
   size_t const number_of_matrix_triples64 = matrix_lambdas_x64_.size();
   size_t const number_of_matrix_triples128 = matrix_lambdas_x128_.size();
   assert(number_of_matrix_triples64 == matrix_lambdas_y64_.size());
@@ -221,6 +223,8 @@ void AstraSacrificeVerifier::Verify() {
   size_t const number_of_triples64_bytes = number_of_triples64 * sizeof(uint64_t);
   size_t const number_of_triples128_bytes = number_of_triples128 * sizeof(UInt128);
   
+  //Calculate the number of bytes used for a u x w and u x v matrix
+  //of 64-bit scalar values
   size_t number_of_matrix_u_w64_bytes = 0;
   size_t number_of_matrix_u_v64_bytes = 0;
   for(size_t i = 0; i != number_of_matrix_triples64; ++i) {
@@ -234,6 +238,8 @@ void AstraSacrificeVerifier::Verify() {
     number_of_matrix_u_v64_bytes += u * v * sizeof(uint64_t);
   }
   
+  //Calculate the number of bytes used for a u x w and u x v matrix
+  //of 128-bit scalar values
   size_t number_of_matrix_u_w128_bytes = 0;
   size_t number_of_matrix_u_v128_bytes = 0;
   for(size_t i = 0; i != number_of_matrix_triples128; ++i) {
@@ -247,6 +253,7 @@ void AstraSacrificeVerifier::Verify() {
     number_of_matrix_u_v128_bytes += u * v * sizeof(UInt128);
   }
   
+  //Calculate the number of bytes used in the vectors for the respective variables
   size_t const number_of_triple_bytes = 
     number_of_triples64_bytes + number_of_triples128_bytes;
   size_t const number_of_matrix_u_w_bytes = 
@@ -264,7 +271,8 @@ void AstraSacrificeVerifier::Verify() {
     number_of_triple_bytes + number_of_matrix_u_w_bytes;
   size_t const w_bytes = 
     number_of_triple_bytes + number_of_matrix_u_v_bytes;
-      
+  
+  //Calculate the offset of each element in the random number vectors
   size_t const lambda1_x_prime64_offset = 0;
   size_t const lambda1_x_prime128_offset = 
     lambda1_x_prime64_offset + number_of_triples64_bytes;
@@ -326,7 +334,8 @@ void AstraSacrificeVerifier::Verify() {
   size_t const matrix_w128_offset =
     matrix_v64_offset + number_of_matrix_u_v64_bytes;
     
-         
+  //Inner functions assigning arrays of bytes to matrices and assigning
+  //matrices to arrays of bytes
   auto AssignToMatrix = [](auto& mat, uint8_t const* data_pointer) {
     using ArithmeticType = typename std::decay_t<decltype(mat)>::value_type;
     size_t offset = 0;
@@ -355,7 +364,7 @@ void AstraSacrificeVerifier::Verify() {
     case 0: {
       auto& rng1 = backend_.GetBaseProvider().GetMyRandomnessGenerator(1);
       auto& rng2 = backend_.GetBaseProvider().GetMyRandomnessGenerator(2);
-      //lambda1_x's are followed by gamma_x'ys then followed by matrix_lambda_x'ys,
+      //lambda1_x's are followed by gamma_x'ys, then followed by matrix_lambda_x'ys,
       //then finally followed by matrix_gamma_x'ys
       std::vector<uint8_t> randoms1 = 
         rng1.template GetUnsigned<uint8_t>(gate_id_, lambda1_x_prime_gamma1_x_prime_y_bytes);
@@ -366,6 +375,7 @@ void AstraSacrificeVerifier::Verify() {
       
       //Calcuate gamma2_x'y
       {
+        //Set the pointer to the first element to be read in the random byte array
         uint8_t const* const lambda1_x_prime64_pointer = 
           randoms1.data() + lambda1_x_prime64_offset;
         uint8_t const* const gamma1_x_prime_y64_pointer =
@@ -376,6 +386,7 @@ void AstraSacrificeVerifier::Verify() {
           gamma2_x_prime_y.data() + gamma2_x_prime_y64_offset;
         size_t offset = 0;
         for(size_t i = 0; i != number_of_triples64; ++i) {
+          //Convert the bytes in the random array to 64-bit values
           uint64_t lambda1_x_prime64;
           memcpy(&lambda1_x_prime64, lambda1_x_prime64_pointer + offset, sizeof(uint64_t));
           uint64_t lambda2_x_prime64;
@@ -383,11 +394,14 @@ void AstraSacrificeVerifier::Verify() {
           uint64_t lambda_y64 = lambdas_y64_[i];
           uint64_t gamma1_x_prime_y64;
           memcpy(&gamma1_x_prime_y64, gamma1_x_prime_y64_pointer + offset, sizeof(uint64_t));
-        
+          
+          //Calculate gamma2_x'y
           uint64_t lambda_x_prime64 = lambda1_x_prime64 + lambda2_x_prime64;
           uint64_t gamma2_x_prime_y64 = lambda_x_prime64 * lambda_y64 - gamma1_x_prime_y64;
-        
+          
+          //Store gamma2_x'y
           memcpy(gamma2_x_prime_y64_pointer + offset, &gamma2_x_prime_y64, sizeof(uint64_t));
+          //Update offset
           offset += sizeof(uint64_t);
         }
         //128-bit values should follow 64-bit values
@@ -398,6 +412,7 @@ void AstraSacrificeVerifier::Verify() {
       }
       
       {
+        //Same as above but with 128-bit values instead of 64-bit
         uint8_t const* const lambda1_x_prime128_pointer = 
           randoms1.data() + lambda1_x_prime128_offset;
         uint8_t const* const gamma1_x_prime_y128_pointer = 
@@ -432,6 +447,8 @@ void AstraSacrificeVerifier::Verify() {
       }
       
       {
+        //Same as the two above, but this time we work with matrices
+        //of two different sizes u x w and u x v
         uint8_t const* const matrix_lambda1_x_prime64_pointer = 
           randoms1.data() + matrix_lambda1_x_prime64_offset;
         uint8_t const* const matrix_gamma1_x_prime_y64_pointer = 
@@ -457,6 +474,7 @@ void AstraSacrificeVerifier::Verify() {
                  matrix_lambdas_y64_[i]) 
             - matrix_gamma1_x_prime_y64;
           AssignFromMatrix(matrix_gamma2_x_prime_y64_pointer + u_v_offset, matrix_gamma1_x_prime_y64);
+          //Update the two offsets to point to the beginning of the data of the next matrix
           u_w_offset += u * w * sizeof(uint64_t);
           u_v_offset += u * v * sizeof(uint64_t);
         }
@@ -468,6 +486,7 @@ void AstraSacrificeVerifier::Verify() {
       }
       
       {
+        //Same as matrix above, but with 128-bit values instead of 64-bit
         uint8_t const* const matrix_lambda1_x_prime128_pointer = 
           randoms1.data() + matrix_lambda1_x_prime128_offset;
         uint8_t const* const matrix_gamma1_x_prime_y128_pointer = 
@@ -502,12 +521,11 @@ void AstraSacrificeVerifier::Verify() {
         assert(matrix_gamma2_x_prime_y128_offset + u_v_offset == gamma2_x_prime_y.size());
       }
       //Send gamma2_x'y to S2
-      auto message = communication::BuildMessage(kAstraVerifier, gate_id_, gamma2_x_prime_y);
+      auto message = communication::BuildMessage(kAuxiliatorVerifier, gate_id_, gamma2_x_prime_y);
       communication_layer.SendMessage(2, message.Release());
       break;
     }
     case 1: {
-      
       auto& rng0 = backend_.GetBaseProvider().GetTheirRandomnessGenerator(0);
       auto& rng2 = backend_.GetBaseProvider().GetMyRandomnessGenerator(2);
       //lambda1_x's are followed by gamma_x'ys then followed by matrix_lambda_x'ys,
@@ -730,7 +748,7 @@ void AstraSacrificeVerifier::Verify() {
       assert((m.data() + m.size()) - hash_pointer == EVP_MAX_MD_SIZE);
       Blake2b(w.data(), hash_pointer, w.size());
       {
-        auto message = communication::BuildMessage(kAstraVerifier, gate_id_, m);
+        auto message = communication::BuildMessage(kAuxiliatorVerifier, gate_id_, m);
         communication_layer.SendMessage(2, message.Release());
       }
       break;
@@ -820,7 +838,7 @@ void AstraSacrificeVerifier::Verify() {
       
       //Send v2
       {
-        auto message = communication::BuildMessage(kAstraVerifier, gate_id_, v2);
+        auto message = communication::BuildMessage(kAuxiliatorVerifier, gate_id_, v2);
         communication_layer.SendMessage(1, message.Release());
       }
       

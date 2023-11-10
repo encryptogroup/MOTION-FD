@@ -7,7 +7,7 @@
 
 namespace encrypto::motion {
 
-class AstraSacrificeVerifier {
+class AuxiliatorSacrificeVerifier {
     public:
   
   class ReservedTriple64 {
@@ -18,11 +18,11 @@ class AstraSacrificeVerifier {
     ReservedTriple64& operator=(ReservedTriple64 const&) = default;
     ReservedTriple64& operator=(ReservedTriple64&&) = default;
     
-    ReservedTriple64(AstraSacrificeVerifier* sacrifice_verify, size_t offset);
+    ReservedTriple64(AuxiliatorSacrificeVerifier* sacrifice_verify, size_t offset);
     
     void AppendTriple(uint64_t lambda_x, uint64_t lambda_y, uint64_t gamma_xy);
    private:
-    AstraSacrificeVerifier* sacrifice_verify_;
+    AuxiliatorSacrificeVerifier* sacrifice_verify_;
     size_t offset_;
   };
   
@@ -34,11 +34,11 @@ class AstraSacrificeVerifier {
     ReservedTriple128& operator=(ReservedTriple128 const&) = default;
     ReservedTriple128& operator=(ReservedTriple128&&) = default;
    
-    ReservedTriple128(AstraSacrificeVerifier* sacrifice_verify, size_t offset);
+    ReservedTriple128(AuxiliatorSacrificeVerifier* sacrifice_verify, size_t offset);
     
     void AppendTriple(UInt128 lambda_x, UInt128 lambda_y, UInt128 gamma_xy);
    private:
-    AstraSacrificeVerifier* sacrifice_verify_;
+    AuxiliatorSacrificeVerifier* sacrifice_verify_;
     size_t offset_;
   };
   
@@ -50,14 +50,14 @@ class AstraSacrificeVerifier {
     ReservedMatrixTriple64& operator=(ReservedMatrixTriple64 const&) = default;
     ReservedMatrixTriple64& operator=(ReservedMatrixTriple64&&) = default;
     
-    ReservedMatrixTriple64(AstraSacrificeVerifier* sacrifice_verify, size_t offset);
+    ReservedMatrixTriple64(AuxiliatorSacrificeVerifier* sacrifice_verify, size_t offset);
     
     void AppendTriple(
       boost::numeric::ublas::matrix<uint64_t> lambda_x, 
       boost::numeric::ublas::matrix<uint64_t> lambda_y, 
       boost::numeric::ublas::matrix<uint64_t> gamma_xy);
    private:
-    AstraSacrificeVerifier* sacrifice_verify_;
+    AuxiliatorSacrificeVerifier* sacrifice_verify_;
     size_t offset_;
   };
   
@@ -69,14 +69,14 @@ class AstraSacrificeVerifier {
     ReservedMatrixTriple128& operator=(ReservedMatrixTriple128 const&) = default;
     ReservedMatrixTriple128& operator=(ReservedMatrixTriple128&&) = default;
     
-    ReservedMatrixTriple128(AstraSacrificeVerifier* sacrifice_verify, size_t offset);
+    ReservedMatrixTriple128(AuxiliatorSacrificeVerifier* sacrifice_verify, size_t offset);
     
     void AppendTriple(
       boost::numeric::ublas::matrix<UInt128> lambda_x, 
       boost::numeric::ublas::matrix<UInt128> lambda_y, 
       boost::numeric::ublas::matrix<UInt128> gamma_xy);
    private:
-    AstraSacrificeVerifier* sacrifice_verify_;
+    AuxiliatorSacrificeVerifier* sacrifice_verify_;
     size_t offset_;
   };
   
@@ -85,7 +85,7 @@ class AstraSacrificeVerifier {
   friend class ReservedMatrixTriple64;
   friend class ReservedMatrixTriple128;
   
-  AstraSacrificeVerifier(Backend& backend);
+  AuxiliatorSacrificeVerifier(Backend& backend);
   
   ReservedTriple64 ReserveTriples64(size_t number_of_triples);
   ReservedTriple128 ReserveTriples128(size_t number_of_triples);

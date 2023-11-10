@@ -3,7 +3,7 @@
 
 #include "base/party.h"
 #include "protocols/share_wrapper.h"
-#include "protocols/boolean_astra/boolean_astra_wire.h"
+#include "protocols/boolean_auxiliator/boolean_auxiliator_wire.h"
 #include "test_constants.h"
 #include "test_helpers.h"
 
@@ -11,13 +11,13 @@
 #include <boost/numeric/ublas/io.hpp>
 
 constexpr std::size_t kAll = std::numeric_limits<std::int64_t>::max();
-constexpr auto kAstra = encrypto::motion::MpcProtocol::kAstra;
+constexpr auto kAuxiliator = encrypto::motion::MpcProtocol::kAuxiliator;
 
 namespace mo = encrypto::motion;
 namespace ublas = boost::numeric::ublas;
 
 template <typename T>
-class AstraTest : public ::testing::Test {
+class AuxiliatorTest : public ::testing::Test {
  protected:
   void SetUp() override { InstantiateParties(); }
 
@@ -49,53 +49,14 @@ class AstraTest : public ::testing::Test {
       for (std::size_t party_id : {0, 1, 2}) {
         if (party_id == input_owner) {
           shared_inputs_single_[party_id][input_owner] =
-              parties_.at(party_id)->template In<kAstra>(inputs_single_[input_owner], input_owner);
+              parties_.at(party_id)->template In<kAuxiliator>(inputs_single_[input_owner], input_owner);
           shared_inputs_simd_[party_id][input_owner] =
-              parties_.at(party_id)->template In<kAstra>(inputs_simd_[input_owner], input_owner);
+              parties_.at(party_id)->template In<kAuxiliator>(inputs_simd_[input_owner], input_owner);
         } else {
           shared_inputs_single_[party_id][input_owner] =
-              parties_.at(party_id)->template In<kAstra>(zeros_single_, input_owner);
+              parties_.at(party_id)->template In<kAuxiliator>(zeros_single_, input_owner);
           shared_inputs_simd_[party_id][input_owner] =
-              parties_.at(party_id)->template In<kAstra>(zeros_simd_, input_owner);
-        }
-      }
-    }
-  }
-
-  void GenerateDotProductInputs() {
-    zeros_single_.emplace_back(0);
-    zeros_simd_.resize(number_of_simd_, 0);
-
-    std::mt19937_64 mt(seed_);
-    std::uniform_int_distribution<T> dist;
-
-    for (auto& v : inputs_dot_product_single_) {
-      v.resize(dot_product_vector_size_);
-      for (T& t : v) t = dist(mt);
-    }
-
-    for (auto& vv : inputs_dot_product_simd_) {
-      vv.resize(dot_product_vector_size_);
-      for (auto& v : vv) {
-        v.resize(number_of_simd_);
-        for (T& t : v) t = dist(mt);
-      }
-    }
-  }
-
-  void ShareDotProductInputs() {
-    constexpr std::size_t input_owner = 0;
-    for (std::size_t party_id : {0, 1, 2}) {
-      for (std::size_t vector_i : {0, 1}) {
-        shared_dot_product_inputs_single_[party_id][vector_i].resize(dot_product_vector_size_);
-        shared_dot_product_inputs_simd_[party_id][vector_i].resize(dot_product_vector_size_);
-        for (std::size_t element_j = 0; element_j < dot_product_vector_size_; ++element_j) {
-          shared_dot_product_inputs_single_[party_id][vector_i][element_j] =
-              parties_.at(party_id)->template In<kAstra>(
-                  inputs_dot_product_single_[vector_i][element_j], input_owner);
-          shared_dot_product_inputs_simd_[party_id][vector_i][element_j] =
-              parties_.at(party_id)->template In<kAstra>(
-                  inputs_dot_product_simd_[vector_i][element_j], input_owner);
+              parties_.at(party_id)->template In<kAuxiliator>(zeros_simd_, input_owner);
         }
       }
     }
@@ -128,10 +89,10 @@ class AstraTest : public ::testing::Test {
           for(size_t j = 0; j != n; ++j) {
             if(party_id == input_owner) {
               shared_matrix(i, j) = 
-                parties_.at(party_id)->template In<kAstra>(input_matrix(i, j), input_owner);
+                parties_.at(party_id)->template In<kAuxiliator>(input_matrix(i, j), input_owner);
             } else {
               shared_matrix(i, j) = 
-                parties_.at(party_id)->template In<kAstra>(T(0), input_owner);
+                parties_.at(party_id)->template In<kAuxiliator>(T(0), input_owner);
             }
           }
         }
@@ -167,9 +128,9 @@ class AstraTest : public ::testing::Test {
 };
 
 using UintTypes = ::testing::Types<std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t>;
-TYPED_TEST_SUITE(AstraTest, UintTypes);
+TYPED_TEST_SUITE(AuxiliatorTest, UintTypes);
 
-TYPED_TEST(AstraTest, InputOutput) {
+TYPED_TEST(AuxiliatorTest, InputOutput) {
   this->GenerateDiverseInputs();
   this->ShareDiverseInputs();
   std::array<std::future<void>, 3> futures;
@@ -198,7 +159,7 @@ TYPED_TEST(AstraTest, InputOutput) {
   for (auto& f : futures) f.get();
 }
 
-TYPED_TEST(AstraTest, Addition) {
+TYPED_TEST(AuxiliatorTest, Addition) {
   this->GenerateDiverseInputs();
   this->ShareDiverseInputs();
   std::array<std::future<void>, 3> futures;
@@ -233,7 +194,7 @@ TYPED_TEST(AstraTest, Addition) {
   for (auto& f : futures) f.get();
 }
 
-TYPED_TEST(AstraTest, Subtraction) {
+TYPED_TEST(AuxiliatorTest, Subtraction) {
   this->GenerateDiverseInputs();
   this->ShareDiverseInputs();
   std::array<std::future<void>, 3> futures;
@@ -268,7 +229,7 @@ TYPED_TEST(AstraTest, Subtraction) {
   for (auto& f : futures) f.get();
 }
 
-TYPED_TEST(AstraTest, Multiplication) {
+TYPED_TEST(AuxiliatorTest, Multiplication) {
   this->GenerateDiverseInputs();
   this->ShareDiverseInputs();
   std::array<std::future<void>, 3> futures;
@@ -303,44 +264,9 @@ TYPED_TEST(AstraTest, Multiplication) {
   for (auto& f : futures) f.get();
 }
 
-TYPED_TEST(AstraTest, DotProduct) {
-  this->GenerateDotProductInputs();
-  this->ShareDotProductInputs();
-  std::array<std::future<void>, 3> futures;
-  for (auto party_id = 0u; party_id < this->parties_.size(); ++party_id) {
-    futures[party_id] = std::async([this, party_id]() {
-      auto share_dp_single = mo::DotProduct(this->shared_dot_product_inputs_single_[party_id][0],
-                                            this->shared_dot_product_inputs_single_[party_id][1]);
-      auto share_dp_simd = mo::DotProduct(this->shared_dot_product_inputs_simd_[party_id][0],
-                                          this->shared_dot_product_inputs_simd_[party_id][1]);
-
-      auto share_output_single_all = share_dp_single.Out();    
-      auto share_output_simd_all = share_dp_simd.Out();
-
-      this->parties_[party_id]->Run();
-
-      {
-        TypeParam circuit_result_single = share_output_single_all.template As<TypeParam>();
-        TypeParam expected_result_single = mo::DotProduct<TypeParam>(
-            this->inputs_dot_product_single_[0], this->inputs_dot_product_single_[1]);
-        EXPECT_EQ(circuit_result_single, expected_result_single);
-
-        const std::vector<TypeParam> circuit_result_simd =
-            share_output_simd_all.template As<std::vector<TypeParam>>();
-        const std::vector<TypeParam> expected_result_simd = std::move(mo::RowDotProduct<TypeParam>(
-            this->inputs_dot_product_simd_[0], this->inputs_dot_product_simd_[1]));
-        EXPECT_EQ(circuit_result_simd, expected_result_simd);
-      }
-      this->parties_[party_id]->Finish();
-    });
-  }
-  for (auto& f : futures) f.get();
-}
-
-
-TYPED_TEST(AstraTest, MatrixMultiplication) {
+TYPED_TEST(AuxiliatorTest, MatrixMultiplication) {
   using namespace boost::numeric::ublas;
-  using namespace mo::proto::astra;
+  using namespace mo::proto::auxiliator;
   
   this->GenerateMatrixInputs();
   this->ShareMatrixInputs();
@@ -452,9 +378,9 @@ std::ostream& operator<<(std::ostream& os, FixedPoint<T> const& fp) {
 }
 
 
-TYPED_TEST(AstraTest, FixedPointMatrixMultiplication) {
+TYPED_TEST(AuxiliatorTest, FixedPointMatrixMultiplication) {
   using namespace boost::numeric::ublas;
-  using namespace mo::proto::astra;
+  using namespace mo::proto::auxiliator;
   
   this->GenerateMatrixInputs();
   this->ShareMatrixInputs();
@@ -507,9 +433,9 @@ TYPED_TEST(AstraTest, FixedPointMatrixMultiplication) {
 }
 
 
-TYPED_TEST(AstraTest, HadamardMultiplication) {
+TYPED_TEST(AuxiliatorTest, HadamardMultiplication) {
   using namespace boost::numeric::ublas;
-  using namespace mo::proto::astra;
+  using namespace mo::proto::auxiliator;
   
   this->GenerateMatrixInputs();
   this->ShareMatrixInputs();
@@ -579,18 +505,18 @@ std::vector<std::byte> ToByteVector(mo::ShareWrapper output) {
   std::vector<std::byte> result;
   auto wires = output->GetWires();
   for(auto& wire : wires) {
-    auto w = std::dynamic_pointer_cast<mo::proto::boolean_astra::Wire>(wire);
+    auto w = std::dynamic_pointer_cast<mo::proto::boolean_auxiliator::Wire>(wire);
     auto& d = w->GetValues().GetData();
     std::copy(d.begin(), d.end(), std::back_inserter(result));
   }
   return result;
 }
 
-} // namespace (anonymous)
+}
 
-TYPED_TEST(AstraTest, Msb) {
+TYPED_TEST(AuxiliatorTest, Msb) {
   using namespace boost::numeric::ublas;
-  using namespace mo::proto::astra;
+  using namespace mo::proto::auxiliator;
   
   this->GenerateMatrixInputs();
   this->ShareMatrixInputs();
@@ -628,9 +554,9 @@ TYPED_TEST(AstraTest, Msb) {
   for (auto& f : futures) f.get();
 }
 
-TYPED_TEST(AstraTest, ReLU) {
+TYPED_TEST(AuxiliatorTest, ReLU) {
   using namespace boost::numeric::ublas;
-  using namespace mo::proto::astra;
+  using namespace mo::proto::auxiliator;
   
   this->GenerateMatrixInputs();
   this->ShareMatrixInputs();

@@ -28,12 +28,13 @@
 #include "base/register.h"
 #include "communication/communication_layer.h"
 #include "communication/message.h"
-#include "protocols/astra/astra_wire.h"
-#include "protocols/boolean_astra/boolean_astra_wire.h"
+#include "protocols/auxiliator/auxiliator_wire.h"
+#include "protocols/boolean_auxiliator/boolean_auxiliator_wire.h"
 #include "protocols/share_wrapper.h"
 #include <boost/numeric/ublas/matrix.hpp>
+#include "auxiliator_verifier.h"
 
-namespace encrypto::motion::proto::astra { 
+namespace encrypto::motion::proto::auxiliator { 
     
 constexpr std::size_t kAll = std::numeric_limits<std::int64_t>::max(); 
 
@@ -49,7 +50,7 @@ class InputGate final : public motion::InputGate {
   void EvaluateSetup() final override;
   void EvaluateOnline() final override;
   
-  astra::SharePointer<T> GetOutputAsAstraShare();
+  auxiliator::SharePointer<T> GetOutputAsAuxiliatorShare();
   
  private:
   motion::ReusableFiberFuture<std::vector<std::uint8_t>> input_future_;
@@ -60,8 +61,8 @@ class OutputGate final : public motion::OutputGate {
   using Base = motion::OutputGate;
 
  public:
-  OutputGate(const astra::SharePointer<T>& parent, std::size_t output_owner);
-  OutputGate(const astra::WirePointer<T>& parent, std::size_t output_owner = kAll);
+  OutputGate(const auxiliator::SharePointer<T>& parent, std::size_t output_owner);
+  OutputGate(const auxiliator::WirePointer<T>& parent, std::size_t output_owner = kAll);
   OutputGate(const motion::SharePointer& parent, std::size_t output_owner);
 
   ~OutputGate() final = default;
@@ -71,7 +72,7 @@ class OutputGate final : public motion::OutputGate {
 
   bool NeedsSetup() const override { return false; }
   
-  astra::SharePointer<T> GetOutputAsAstraShare();
+  auxiliator::SharePointer<T> GetOutputAsAuxiliatorShare();
   
  private:
   motion::ReusableFiberFuture<std::vector<std::uint8_t>> output_future_;
@@ -82,14 +83,14 @@ class AdditionGate final : public TwoGate {
   using Base = motion::TwoGate;
  
  public:
-  AdditionGate(const astra::WirePointer<T>& a, const astra::WirePointer<T>& b);
+  AdditionGate(const auxiliator::WirePointer<T>& a, const auxiliator::WirePointer<T>& b);
   
   ~AdditionGate() final = default;
   
   void EvaluateSetup() final override;
   void EvaluateOnline() final override;
   
-  astra::SharePointer<T> GetOutputAsAstraShare();
+  auxiliator::SharePointer<T> GetOutputAsAuxiliatorShare();
 };
 
 template<typename T>
@@ -97,14 +98,14 @@ class SubtractionGate final : public TwoGate {
   using Base = motion::TwoGate;
  
  public:
-  SubtractionGate(const astra::WirePointer<T>& a, const astra::WirePointer<T>& b);
+  SubtractionGate(const auxiliator::WirePointer<T>& a, const auxiliator::WirePointer<T>& b);
   
   ~SubtractionGate() final = default;
   
   void EvaluateSetup() final override;
   void EvaluateOnline() final override;
   
-  astra::SharePointer<T> GetOutputAsAstraShare();
+  auxiliator::SharePointer<T> GetOutputAsAuxiliatorShare();
 };
 
 template<typename T>
@@ -112,38 +113,19 @@ class MultiplicationGate final : public TwoGate {
   using Base = motion::TwoGate;
  
  public:
-  MultiplicationGate(const astra::WirePointer<T>& a, const astra::WirePointer<T>& b);
+  MultiplicationGate(const auxiliator::WirePointer<T>& a, const auxiliator::WirePointer<T>& b);
   
   ~MultiplicationGate() final = default;
   
   void EvaluateSetup() final override;
   void EvaluateOnline() final override;
   
-  astra::SharePointer<T> GetOutputAsAstraShare();
+  auxiliator::SharePointer<T> GetOutputAsAuxiliatorShare();
   
  private:
+  motion::AuxiliatorSacrificeVerifier::ReservedTriple128 triple_;
   motion::ReusableFiberFuture<std::vector<std::uint8_t>> multiply_future_setup_;
   motion::ReusableFiberFuture<std::vector<std::uint8_t>> multiply_future_online_;
-};
-
-template<typename T>
-class DotProductGate final : public TwoGate {
-  using Base = motion::TwoGate;
- public:
-  DotProductGate(std::vector<motion::WirePointer> vector_a, std::vector<motion::WirePointer> vector_b);
-
-  ~DotProductGate() final = default;
-
-  DotProductGate(DotProductGate const&) = delete;
-  
-  void EvaluateSetup() final override;
-  void EvaluateOnline() final override;
-  
-  astra::SharePointer<T> GetOutputAsAstraShare();
-  
- private:
-  motion::ReusableFiberFuture<std::vector<std::uint8_t>> dot_product_future_setup_;
-  motion::ReusableFiberFuture<std::vector<std::uint8_t>> dot_product_future_online_;
 };
 
 template<typename T>
@@ -182,7 +164,7 @@ class MatrixReconversionGate final : public motion::Gate {
   
  private:
   boost::numeric::ublas::matrix<ShareWrapper> share_matrix_;
-  astra::MatrixWirePointer<T> matrix_input_wire_;
+  auxiliator::MatrixWirePointer<T> matrix_input_wire_;
 };
 
 template<typename T>
@@ -204,7 +186,49 @@ class MatrixSimdReconversionGate final : public motion::Gate {
   
  private:
   ShareWrapper simd_share_;
-  astra::MatrixWirePointer<T> matrix_input_wire_;
+  auxiliator::MatrixWirePointer<T> matrix_input_wire_;
+};
+
+template<typename T>
+class BitAGate final : public OneGate {
+  using Base = motion::OneGate;
+ public:
+  BitAGate(boolean_auxiliator::BitMatrixWirePointer bit_matrix_wire);
+
+  ~BitAGate() final = default;
+
+  BitAGate(BitAGate&) = delete;
+  
+  void EvaluateSetup() final override;
+  void EvaluateOnline() final override;
+  
+  auxiliator::SharePointer<T> GetOutputAsAuxiliatorShare();
+ private:
+  motion::AuxiliatorSacrificeVerifier::ReservedTriple128 triple_;
+  motion::ReusableFiberFuture<std::vector<std::uint8_t>> bit_a_future_setup_;
+  motion::ReusableFiberFuture<std::vector<std::uint8_t>> bit_a_future_online_;
+};
+
+//The MsbGate currently returns inverted msb value, so if e.g. 1 
+//is the msb of the input then MaliciousMsbGate will return 0 and vice-versa.
+template<typename T>
+class MsbGate final : public motion::OneGate {
+  using Base = motion::OneGate;
+ public:
+  MsbGate(MatrixWirePointer<T> const& matrix_wire);
+
+  ~MsbGate() final = default;
+
+  MsbGate(MsbGate const&) = delete;
+  
+  void EvaluateSetup() final override;
+  void EvaluateOnline() final override;
+  
+  boolean_auxiliator::SharePointer GetOutputAsBooleanAuxiliatorShare();
+ private:
+  motion::ReusableFiberFuture<std::vector<std::uint8_t>> msb_future_online_;
+  std::vector<boost::numeric::ublas::matrix<T>> R1_, R2_;
+  ShareWrapper A_, B_, PPA_;
 };
 
 template<typename T>
@@ -220,71 +244,11 @@ class MatrixMultiplicationGate final : public TwoGate {
   void EvaluateSetup() final override;
   void EvaluateOnline() final override;
   
-  astra::SharePointer<T> GetOutputAsAstraShare();
+  auxiliator::SharePointer<T> GetOutputAsAuxiliatorShare();
  private:
+  motion::AuxiliatorSacrificeVerifier::ReservedMatrixTriple128 triple_;
   motion::ReusableFiberFuture<std::vector<std::uint8_t>> matrix_multiply_future_setup_;
   motion::ReusableFiberFuture<std::vector<std::uint8_t>> matrix_multiply_future_online_;
-};
-
-template<typename T>
-class BitAGate final : public OneGate {
-  using Base = motion::OneGate;
- public:
-  BitAGate(boolean_astra::BitMatrixWirePointer bit_matrix_wire);
-
-  ~BitAGate() final = default;
-
-  BitAGate(BitAGate const&) = delete;
-  
-  void EvaluateSetup() final override;
-  void EvaluateOnline() final override;
-  
-  astra::SharePointer<T> GetOutputAsAstraShare();
- private:
-  motion::ReusableFiberFuture<std::vector<std::uint8_t>> bit_a_future_setup_;
-  motion::ReusableFiberFuture<std::vector<std::uint8_t>> bit_a_future_online_;
-};
-
-template<typename T>
-class B2AGate final : public OneGate {
-  using Base = motion::OneGate;
- public:
-  B2AGate(std::vector<motion::WirePointer> bit_wires);
-
-  ~B2AGate() final = default;
-
-  B2AGate(B2AGate const&) = delete;
-  
-  void EvaluateSetup() final override;
-  void EvaluateOnline() final override;
-  
-  astra::SharePointer<T> GetOutputAsAstraShare();
- private:
-  std::vector<T> r_;
-  motion::ReusableFiberFuture<std::vector<std::uint8_t>> b2a_future_setup_;
-  motion::ReusableFiberFuture<std::vector<std::uint8_t>> b2a_future_online_;
-};
-
-//The MsbGate currently returns inverted msb value, so if e.g. 1 
-//is the msb of the input then MsbGate will return 0 and vice-versa.
-template<typename T>
-class MsbGate final : public motion::OneGate {
-  using Base = motion::OneGate;
- public:
-  MsbGate(MatrixWirePointer<T> const& matrix_wire);
-
-  ~MsbGate() final = default;
-
-  MsbGate(MsbGate const&) = delete;
-  
-  void EvaluateSetup() final override;
-  void EvaluateOnline() final override;
-  
-  boolean_astra::SharePointer GetOutputAsBooleanAstraShare();
- private:
-  motion::ReusableFiberFuture<std::vector<std::uint8_t>> msb_future_setup_;
-  std::vector<boost::numeric::ublas::matrix<T>> R1_, R2_;
-  ShareWrapper A_, B_, PPA_;
 };
 
 namespace fixed_point {
@@ -297,15 +261,15 @@ class MatrixConstantMultiplicationGate final : public Gate {
 
   ~MatrixConstantMultiplicationGate() final = default;
 
-  MatrixConstantMultiplicationGate(MatrixConstantMultiplicationGate&) = delete;
+  MatrixConstantMultiplicationGate(MatrixConstantMultiplicationGate const&) = delete;
   
   void EvaluateSetup() final override;
   void EvaluateOnline() final override;
   
-  astra::SharePointer<T> GetOutputAsAstraShare();
+  auxiliator::SharePointer<T> GetOutputAsAuxiliatorShare();
   
  private:
-  motion::ReusableFiberFuture<std::vector<std::uint8_t>> matrix_multiply_future_setup_;
+  motion::ReusableFiberFuture<std::vector<std::uint8_t>> matrix_multiply_future_;
   MatrixWirePointer<T> parent_a_;
   T constant_;
   unsigned precision_;
@@ -324,8 +288,9 @@ class MatrixMultiplicationGate final : public TwoGate {
   void EvaluateSetup() final override;
   void EvaluateOnline() final override;
   
-  astra::SharePointer<T> GetOutputAsAstraShare();
+  auxiliator::SharePointer<T> GetOutputAsAuxiliatorShare();
  private:
+  motion::AuxiliatorSacrificeVerifier::ReservedMatrixTriple128 triple_;
   motion::ReusableFiberFuture<std::vector<std::uint8_t>> matrix_multiply_future_setup_;
   motion::ReusableFiberFuture<std::vector<std::uint8_t>> matrix_multiply_future_online_;
   unsigned precision_;
@@ -333,4 +298,5 @@ class MatrixMultiplicationGate final : public TwoGate {
 
 } //namespace fixed_point
 
-} //namespace encrypto::motion::proto::astra
+    
+} //namespace encrypto::motion::proto::auxiliator
