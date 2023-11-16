@@ -9,6 +9,8 @@
 #include "communication/tcp_transport.h"
 #include "protocols/astra/astra_wire.h"
 #include "protocols/astra/astra_share.h"
+#include "protocols/auxiliator/auxiliator_wire.h"
+#include "protocols/auxiliator/auxiliator_share.h"
 #include "protocols/swift/swift_wire.h"
 #include "protocols/swift/swift_gate.h"
 #include "statistics/analysis.h"
@@ -49,6 +51,25 @@ AstraMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
   return result;
 }
 
+ublas::matrix<ShareWrapper> 
+AuxiliatorMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
+  auto backend = party->GetBackend();
+  auto reg = backend->GetRegister();
+  
+  ublas::matrix<ShareWrapper> result(m, n);
+  for(size_t i = 0; i != m; ++i) {
+    for(size_t j = 0; j != n; ++j) {
+      auto w = reg->template EmplaceWire<proto::auxiliator::Wire<TypeParam>>(
+        *backend, std::vector<proto::auxiliator::Wire<TypeParam>::Data>{{42, 42, 42}});
+      result(i, j) = ShareWrapper(std::make_shared<proto::auxiliator::Share<TypeParam>>(w));
+      w->SetSetupIsReady();
+      w->SetOnlineFinished();
+    }
+  }
+  return result;
+}
+
+
 ublas::matrix<proto::swift::WirePointer<TypeParam>> 
 SwiftMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
   auto backend = party->GetBackend();
@@ -83,6 +104,28 @@ ublas::matrix<ShareWrapper> AstraMakeDummyInputSimdMatrices(
       }
       auto w = reg->template EmplaceWire<proto::astra::Wire<TypeParam>>(*backend, simd_input);
       result(i, j) = ShareWrapper(std::make_shared<proto::astra::Share<TypeParam>>(w));
+      w->SetSetupIsReady();
+      w->SetOnlineFinished();
+    }
+  }
+  return result;
+}
+
+ublas::matrix<ShareWrapper> AuxiliatorMakeDummyInputSimdMatrices(
+  PartyPointer& party, size_t m, size_t n, size_t number_of_simd_values) {
+  auto backend = party->GetBackend();
+  auto reg = backend->GetRegister();
+  
+  ublas::matrix<ShareWrapper> result(m, n);
+  for(size_t i = 0; i != m; ++i) {
+    for(size_t j = 0; j != n; ++j) {
+      std::vector<proto::auxiliator::Wire<TypeParam>::Data> simd_input;
+      simd_input.reserve(number_of_simd_values);
+      for(size_t s = 0; s != number_of_simd_values; ++s) {
+        simd_input.emplace_back(42, 42, 42);
+      }
+      auto w = reg->template EmplaceWire<proto::auxiliator::Wire<TypeParam>>(*backend, simd_input);
+      result(i, j) = ShareWrapper(std::make_shared<proto::auxiliator::Share<TypeParam>>(w));
       w->SetSetupIsReady();
       w->SetOnlineFinished();
     }
@@ -217,26 +260,6 @@ ublas::matrix<proto::swift::WirePointer<TypeParam>> Conv(
   return FixedPointMatrixMultiplication(K, D, 16);
 }
 
-ublas::matrix<ShareWrapper> MaliciousConv(std::vector<ublas::matrix<ShareWrapper>> C_ks,
-                                          ublas::matrix<ShareWrapper> K, size_t w) {
-  size_t m = C_ks[0].size1();
-  size_t n = C_ks[0].size2();
-  size_t max_m = m - w + 1;
-  size_t max_n = n - w + 1;
-  ublas::matrix<ShareWrapper> D(w*w * C_ks.size(), max_m * max_n);
-  size_t row_offset = 0;
-  for(size_t k = 0; k != C_ks.size(); ++k) {
-    auto& C_k = C_ks[k];
-    for(size_t i = 0; i != max_m; ++i) {
-      for(size_t j = 0; j != max_n; ++j) {
-        AssignSquare(D, C_k, w, row_offset, max_n * i + j, i, j);
-      }
-    }
-    row_offset += w*w;
-  }
-  return MaliciousFixedPointMatrixMultiplication(K, D, 16);
-}
-
 ShareWrapper GetSquareSum(ublas::matrix<ShareWrapper> const& P, size_t w, 
                           size_t P_row_offset, size_t P_column_offset) {
   ShareWrapper square_sum = P(P_row_offset, P_column_offset);
@@ -331,30 +354,6 @@ ublas::matrix<proto::swift::WirePointer<TypeParam>> AvgPool(
     backend.GetRegister()->EmplaceGate<proto::swift::MatrixReconversionGate<uint64_t>>(
       fpa_mult_const_wire);
   return matrix_reconversion_gate->GetWireMatrix();
-}
-
-ublas::matrix<ShareWrapper> MaliciousAvgPool(ublas::matrix<ShareWrapper> P,
-                                    size_t w, unsigned precision) {
-  constexpr size_t kMaxPrecision = sizeof(size_t) * CHAR_BIT - 1;
-  unsigned scaling_w_inv = kMaxPrecision - precision;
-  size_t w_inv = (size_t(1) << kMaxPrecision) / w;
-  if(scaling_w_inv < precision) {
-    w_inv <<= precision - scaling_w_inv;
-  } else if(scaling_w_inv > precision) {
-    w_inv >>= scaling_w_inv - precision;
-  }
-  size_t w_inv_square = (w_inv * w_inv) >> precision;
-  
-  size_t m = P.size1();
-  size_t n = P.size2();
-  ublas::matrix<ShareWrapper> S(m/w, n/w);
-  for(size_t i = 0; i != m/w; ++i) {
-    for(size_t j = 0; j != n/w; ++j) {
-      S(i, j) = GetSquareSum(P, w, w*i, w*j);
-    }
-  }
-  
-  return MaliciousFixedPointMatrixConstantMultiplication(w_inv_square, S, precision);
 }
 
 void Benchmark_Astra_MNIST_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
@@ -2130,9 +2129,9 @@ void Benchmark_Auxiliator_MNIST_1(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto c_0 = AstraMakeDummyInputMatrix(party, 28, 28);
-    auto K = AstraMakeDummyInputMatrix(party, 16, 25);
-    auto result = MaliciousConv({c_0}, K, 5);
+    auto c_0 = AuxiliatorMakeDummyInputMatrix(party, 28, 28);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 16, 25);
+    auto result = Conv({c_0}, K, 5);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2157,8 +2156,8 @@ void Benchmark_Auxiliator_MNIST_2(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 16, 576);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 16, 576);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2183,8 +2182,8 @@ void Benchmark_Auxiliator_MNIST_3(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = AstraMakeDummyInputSimdMatrices(party, 24, 24, 16);
-    auto result = MaliciousAvgPool(S, 2, 16);
+    auto S = AuxiliatorMakeDummyInputSimdMatrices(party, 24, 24, 16);
+    auto result = AvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2212,10 +2211,10 @@ void Benchmark_Auxiliator_MNIST_4(program_options::variables_map& user_options, 
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(16);
     for(size_t i = 0; i != 16; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 12, 12));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 12, 12));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 16, 400);
-    auto result = MaliciousConv(C_ks, K, 5);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 16, 400);
+    auto result = Conv(C_ks, K, 5);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2240,8 +2239,8 @@ void Benchmark_Auxiliator_MNIST_5(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 16, 64);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 16, 64);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2266,8 +2265,8 @@ void Benchmark_Auxiliator_MNIST_6(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = AstraMakeDummyInputSimdMatrices(party, 8, 8, 16);
-    auto result = MaliciousAvgPool(S, 2, 16);
+    auto S = AuxiliatorMakeDummyInputSimdMatrices(party, 8, 8, 16);
+    auto result = AvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2292,9 +2291,9 @@ void Benchmark_Auxiliator_MNIST_7(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = AstraMakeDummyInputMatrix(party, 100, 256);
-    auto b = AstraMakeDummyInputMatrix(party, 256, 1);
-    auto result = MaliciousFixedPointMatrixMultiplication(a, b, 16);
+    auto a = AuxiliatorMakeDummyInputMatrix(party, 100, 256);
+    auto b = AuxiliatorMakeDummyInputMatrix(party, 256, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2319,8 +2318,8 @@ void Benchmark_Auxiliator_MNIST_8(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 100, 1);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 100, 1);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2345,9 +2344,9 @@ void Benchmark_Auxiliator_MNIST_9(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = AstraMakeDummyInputMatrix(party, 10, 100);
-    auto b = AstraMakeDummyInputMatrix(party, 100, 1);
-    auto result = MaliciousFixedPointMatrixMultiplication(a, b, 16);
+    auto a = AuxiliatorMakeDummyInputMatrix(party, 10, 100);
+    auto b = AuxiliatorMakeDummyInputMatrix(party, 100, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2375,10 +2374,10 @@ void Benchmark_Auxiliator_CIFAR_10_1(program_options::variables_map& user_option
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(3);
     for(size_t i = 0; i != 3; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 34, 34));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 34, 34));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 64, 27);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 64, 27);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2403,8 +2402,8 @@ void Benchmark_Auxiliator_CIFAR_10_2(program_options::variables_map& user_option
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 64, 1024);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 64, 1024);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2432,10 +2431,10 @@ void Benchmark_Auxiliator_CIFAR_10_3(program_options::variables_map& user_option
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 34, 34));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 34, 34));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 64, 576);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 64, 576);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2460,8 +2459,8 @@ void Benchmark_Auxiliator_CIFAR_10_4(program_options::variables_map& user_option
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 64, 1024);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 64, 1024);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2486,8 +2485,8 @@ void Benchmark_Auxiliator_CIFAR_10_5(program_options::variables_map& user_option
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = AstraMakeDummyInputSimdMatrices(party, 32, 32, 64);
-    auto result = MaliciousAvgPool(S, 2, 16);
+    auto S = AuxiliatorMakeDummyInputSimdMatrices(party, 32, 32, 64);
+    auto result = AvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2515,10 +2514,10 @@ void Benchmark_Auxiliator_CIFAR_10_6(program_options::variables_map& user_option
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 18, 18));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 18, 18));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 64, 576);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 64, 576);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2543,8 +2542,8 @@ void Benchmark_Auxiliator_CIFAR_10_7(program_options::variables_map& user_option
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 64, 256);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 64, 256);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2572,10 +2571,10 @@ void Benchmark_Auxiliator_CIFAR_10_8(program_options::variables_map& user_option
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 18, 18));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 18, 18));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 64, 576);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 64, 576);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2600,8 +2599,8 @@ void Benchmark_Auxiliator_CIFAR_10_9(program_options::variables_map& user_option
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 64, 256);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 64, 256);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2626,8 +2625,8 @@ void Benchmark_Auxiliator_CIFAR_10_10(program_options::variables_map& user_optio
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = AstraMakeDummyInputSimdMatrices(party, 16, 16, 64);
-    auto result = MaliciousAvgPool(S, 2, 16);
+    auto S = AuxiliatorMakeDummyInputSimdMatrices(party, 16, 16, 64);
+    auto result = AvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2655,10 +2654,10 @@ void Benchmark_Auxiliator_CIFAR_10_11(program_options::variables_map& user_optio
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 10, 10));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 10, 10));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 64, 576);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 64, 576);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2683,8 +2682,8 @@ void Benchmark_Auxiliator_CIFAR_10_12(program_options::variables_map& user_optio
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 64, 64);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 64, 64);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2712,10 +2711,10 @@ void Benchmark_Auxiliator_CIFAR_10_13(program_options::variables_map& user_optio
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 8, 8));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 8, 8));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 64, 64);
-    auto result = MaliciousConv(C_ks, K, 1);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 64, 64);
+    auto result = Conv(C_ks, K, 1);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2740,8 +2739,8 @@ void Benchmark_Auxiliator_CIFAR_10_14(program_options::variables_map& user_optio
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 64, 64);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 64, 64);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2769,10 +2768,10 @@ void Benchmark_Auxiliator_CIFAR_10_15(program_options::variables_map& user_optio
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 8, 8));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 8, 8));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 16, 64);
-    auto result = MaliciousConv(C_ks, K, 1);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 16, 64);
+    auto result = Conv(C_ks, K, 1);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2797,8 +2796,8 @@ void Benchmark_Auxiliator_CIFAR_10_16(program_options::variables_map& user_optio
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 16, 64);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 16, 64);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2823,9 +2822,9 @@ void Benchmark_Auxiliator_CIFAR_10_17(program_options::variables_map& user_optio
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = AstraMakeDummyInputMatrix(party, 10, 1024);
-    auto b = AstraMakeDummyInputMatrix(party, 1024, 1);
-    auto result = MaliciousFixedPointMatrixMultiplication(a, b, 16);
+    auto a = AuxiliatorMakeDummyInputMatrix(party, 10, 1024);
+    auto b = AuxiliatorMakeDummyInputMatrix(party, 1024, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2854,10 +2853,10 @@ void Benchmark_Auxiliator_VGG16_1(program_options::variables_map& user_options, 
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(3);
     for(size_t i = 0; i != 3; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 34, 34));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 34, 34));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 64, 27);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 64, 27);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2882,8 +2881,8 @@ void Benchmark_Auxiliator_VGG16_2(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 64, 1024);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 64, 1024);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2911,10 +2910,10 @@ void Benchmark_Auxiliator_VGG16_3(program_options::variables_map& user_options, 
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 34, 34));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 34, 34));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 64, 576);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 64, 576);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2939,8 +2938,8 @@ void Benchmark_Auxiliator_VGG16_4(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 64, 1024);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 64, 1024);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2965,8 +2964,8 @@ void Benchmark_Auxiliator_VGG16_5(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = AstraMakeDummyInputSimdMatrices(party, 32, 32, 64);
-    auto result = MaliciousAvgPool(S, 2, 16);
+    auto S = AuxiliatorMakeDummyInputSimdMatrices(party, 32, 32, 64);
+    auto result = AvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -2994,10 +2993,10 @@ void Benchmark_Auxiliator_VGG16_6(program_options::variables_map& user_options, 
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 18, 18));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 18, 18));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 128, 576);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 128, 576);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3022,8 +3021,8 @@ void Benchmark_Auxiliator_VGG16_7(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 128, 256);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 128, 256);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3051,10 +3050,10 @@ void Benchmark_Auxiliator_VGG16_8(program_options::variables_map& user_options, 
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(128);
     for(size_t i = 0; i != 128; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 18, 18));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 18, 18));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 128, 1152);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 128, 1152);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3079,8 +3078,8 @@ void Benchmark_Auxiliator_VGG16_9(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 128, 256);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 128, 256);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3105,8 +3104,8 @@ void Benchmark_Auxiliator_VGG16_10(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = AstraMakeDummyInputSimdMatrices(party, 16, 16, 128);
-    auto result = MaliciousAvgPool(S, 2, 16);
+    auto S = AuxiliatorMakeDummyInputSimdMatrices(party, 16, 16, 128);
+    auto result = AvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3134,10 +3133,10 @@ void Benchmark_Auxiliator_VGG16_11(program_options::variables_map& user_options,
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(128);
     for(size_t i = 0; i != 128; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 10, 10));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 10, 10));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 256, 1152);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 256, 1152);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3162,8 +3161,8 @@ void Benchmark_Auxiliator_VGG16_12(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 256, 64);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 256, 64);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3191,10 +3190,10 @@ void Benchmark_Auxiliator_VGG16_13(program_options::variables_map& user_options,
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(256);
     for(size_t i = 0; i != 256; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 10, 10));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 10, 10));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 256, 2304);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 256, 2304);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3219,8 +3218,8 @@ void Benchmark_Auxiliator_VGG16_14(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 256, 64);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 256, 64);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3248,10 +3247,10 @@ void Benchmark_Auxiliator_VGG16_15(program_options::variables_map& user_options,
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(256);
     for(size_t i = 0; i != 256; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 10, 10));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 10, 10));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 256, 2304);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 256, 2304);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3276,8 +3275,8 @@ void Benchmark_Auxiliator_VGG16_16(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 256, 64);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 256, 64);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3302,8 +3301,8 @@ void Benchmark_Auxiliator_VGG16_17(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = AstraMakeDummyInputSimdMatrices(party, 8, 8, 256);
-    auto result = MaliciousAvgPool(S, 2, 16);
+    auto S = AuxiliatorMakeDummyInputSimdMatrices(party, 8, 8, 256);
+    auto result = AvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3331,10 +3330,10 @@ void Benchmark_Auxiliator_VGG16_18(program_options::variables_map& user_options,
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(256);
     for(size_t i = 0; i != 256; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 6, 6));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 6, 6));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 512, 2304);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 512, 2304);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3359,8 +3358,8 @@ void Benchmark_Auxiliator_VGG16_19(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 512, 16);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 512, 16);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3388,10 +3387,10 @@ void Benchmark_Auxiliator_VGG16_20(program_options::variables_map& user_options,
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(512);
     for(size_t i = 0; i != 512; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 6, 6));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 6, 6));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3416,8 +3415,8 @@ void Benchmark_Auxiliator_VGG16_21(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 512, 16);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 512, 16);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3445,10 +3444,10 @@ void Benchmark_Auxiliator_VGG16_22(program_options::variables_map& user_options,
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(512);
     for(size_t i = 0; i != 512; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 6, 6));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 6, 6));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3473,8 +3472,8 @@ void Benchmark_Auxiliator_VGG16_23(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 512, 16);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 512, 16);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3499,8 +3498,8 @@ void Benchmark_Auxiliator_VGG16_24(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = AstraMakeDummyInputSimdMatrices(party, 4, 4, 512);
-    auto result = MaliciousAvgPool(S, 2, 16);
+    auto S = AuxiliatorMakeDummyInputSimdMatrices(party, 4, 4, 512);
+    auto result = AvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3528,10 +3527,10 @@ void Benchmark_Auxiliator_VGG16_25(program_options::variables_map& user_options,
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(512);
     for(size_t i = 0; i != 512; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 4, 4));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 4, 4));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3556,8 +3555,8 @@ void Benchmark_Auxiliator_VGG16_26(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 512, 4);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 512, 4);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3585,10 +3584,10 @@ void Benchmark_Auxiliator_VGG16_27(program_options::variables_map& user_options,
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(512);
     for(size_t i = 0; i != 512; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 4, 4));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 4, 4));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3613,8 +3612,8 @@ void Benchmark_Auxiliator_VGG16_28(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 512, 4);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 512, 4);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3642,10 +3641,10 @@ void Benchmark_Auxiliator_VGG16_29(program_options::variables_map& user_options,
     std::vector<ublas::matrix<ShareWrapper>> C_ks;
     C_ks.reserve(512);
     for(size_t i = 0; i != 512; ++i) {
-      C_ks.emplace_back(AstraMakeDummyInputMatrix(party, 4, 4));
+      C_ks.emplace_back(AuxiliatorMakeDummyInputMatrix(party, 4, 4));
     }
-    auto K = AstraMakeDummyInputMatrix(party, 512, 4608);
-    auto result = MaliciousConv(C_ks, K, 3);
+    auto K = AuxiliatorMakeDummyInputMatrix(party, 512, 4608);
+    auto result = Conv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3670,8 +3669,8 @@ void Benchmark_Auxiliator_VGG16_30(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 512, 4);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 512, 4);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3696,8 +3695,8 @@ void Benchmark_Auxiliator_VGG16_31(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = AstraMakeDummyInputSimdMatrices(party, 2, 2, 512);
-    auto result = MaliciousAvgPool(S, 2, 16);
+    auto S = AuxiliatorMakeDummyInputSimdMatrices(party, 2, 2, 512);
+    auto result = AvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3722,9 +3721,9 @@ void Benchmark_Auxiliator_VGG16_32(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = AstraMakeDummyInputMatrix(party, 4096, 512);
-    auto b = AstraMakeDummyInputMatrix(party, 512, 1);
-    auto result = MaliciousFixedPointMatrixMultiplication(a, b, 16);
+    auto a = AuxiliatorMakeDummyInputMatrix(party, 4096, 512);
+    auto b = AuxiliatorMakeDummyInputMatrix(party, 512, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3750,8 +3749,8 @@ void Benchmark_Auxiliator_VGG16_33(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 4096, 1);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 4096, 1);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3776,9 +3775,9 @@ void Benchmark_Auxiliator_VGG16_34(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = AstraMakeDummyInputMatrix(party, 4096, 4096);
-    auto b = AstraMakeDummyInputMatrix(party, 4096, 1);
-    auto result = MaliciousFixedPointMatrixMultiplication(a, b, 16);
+    auto a = AuxiliatorMakeDummyInputMatrix(party, 4096, 4096);
+    auto b = AuxiliatorMakeDummyInputMatrix(party, 4096, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3804,8 +3803,8 @@ void Benchmark_Auxiliator_VGG16_35(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 4096, 1);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 4096, 1);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3830,9 +3829,9 @@ void Benchmark_Auxiliator_VGG16_36(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = AstraMakeDummyInputMatrix(party, 1000, 4096);
-    auto b = AstraMakeDummyInputMatrix(party, 4096, 1);
-    auto result = MaliciousFixedPointMatrixMultiplication(a, b, 16);
+    auto a = AuxiliatorMakeDummyInputMatrix(party, 1000, 4096);
+    auto b = AuxiliatorMakeDummyInputMatrix(party, 4096, 1);
+    auto result = FixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3858,8 +3857,8 @@ void Benchmark_Auxiliator_VGG16_37(program_options::variables_map& user_options,
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = AstraMakeDummyInputMatrix(party, 1000, 1);
-    auto result = encrypto::motion::MaliciousReLU(m);
+    auto m = AuxiliatorMakeDummyInputMatrix(party, 1000, 1);
+    auto result = encrypto::motion::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -3960,12 +3959,12 @@ class TripleSacrifice {
     
   if (my_id == 1) {
     triple_future_p1_p2_ = message_manager.RegisterReceive(
-        2, communication::MessageType::kAstraVerifier, gate_id_);
+        2, communication::MessageType::kAuxiliatorVerifier, gate_id_);
   } else if (my_id == 2) {
     triple_future_p0_ = message_manager.RegisterReceive(
-        0, communication::MessageType::kAstraVerifier, gate_id_);
+        0, communication::MessageType::kAuxiliatorVerifier, gate_id_);
     triple_future_p1_p2_ = message_manager.RegisterReceive(
-        1, communication::MessageType::kAstraVerifier, gate_id_);
+        1, communication::MessageType::kAuxiliatorVerifier, gate_id_);
   }
     
   }
@@ -3998,7 +3997,7 @@ class TripleSacrifice {
         }
         //Now randoms2 contain gamma2_x'ys
         auto payload = ToByteVector<T>(randoms2);
-        auto message = communication::BuildMessage(communication::MessageType::kAstraVerifier,
+        auto message = communication::BuildMessage(communication::MessageType::kAuxiliatorVerifier,
                                                gate_id_, payload);
         communication_layer.SendMessage(2, message.Release());
         break;
@@ -4042,7 +4041,7 @@ class TripleSacrifice {
         std::vector<uint8_t> w1(EVP_MAX_MD_SIZE);
         Blake2b(reinterpret_cast<uint8_t*>(w.data()), w1.data(), w.size());
         serialized_data.insert(serialized_data.end(), w1.begin(), w1.end());
-        auto send_message = communication::BuildMessage(communication::MessageType::kAstraVerifier,
+        auto send_message = communication::BuildMessage(communication::MessageType::kAuxiliatorVerifier,
                                                         gate_id_, serialized_data);
         communication_layer.SendMessage(2, send_message.Release());
         break;
@@ -4067,7 +4066,7 @@ class TripleSacrifice {
         
         {
           auto payload = ToByteVector<T>(w);
-          auto message = communication::BuildMessage(communication::MessageType::kAstraVerifier,
+          auto message = communication::BuildMessage(communication::MessageType::kAuxiliatorVerifier,
                                                gate_id_, payload);
           communication_layer.SendMessage(1, message.Release());
         }
@@ -4230,12 +4229,12 @@ class MatrixTripleSacrifice {
     
     if (my_id == 1) {
       triple_future_p1_p2_ = message_manager.RegisterReceive(
-          2, communication::MessageType::kAstraVerifier, gate_id_);
+          2, communication::MessageType::kAuxiliatorVerifier, gate_id_);
     } else if (my_id == 2) {
       triple_future_p0_ = message_manager.RegisterReceive(
-          0, communication::MessageType::kAstraVerifier, gate_id_);
+          0, communication::MessageType::kAuxiliatorVerifier, gate_id_);
       triple_future_p1_p2_ = message_manager.RegisterReceive(
-          1, communication::MessageType::kAstraVerifier, gate_id_);
+          1, communication::MessageType::kAuxiliatorVerifier, gate_id_);
     }
     
   }
@@ -4343,7 +4342,7 @@ class MatrixTripleSacrifice {
         }
         //Now randoms2 contain gamma2_x'ys
         auto payload = SerializeMatrices(randoms2);
-        auto send_message = communication::BuildMessage(communication::MessageType::kAstraVerifier,
+        auto send_message = communication::BuildMessage(communication::MessageType::kAuxiliatorVerifier,
                                                         gate_id_, payload);
         communication_layer.SendMessage(2, send_message.Release());
         break;
@@ -4399,7 +4398,7 @@ class MatrixTripleSacrifice {
           Blake2b(tmp.data(), w1.data(), tmp.size());
         }
         serialized_data.insert(serialized_data.end(), w1.begin(), w1.end());
-        auto send_message = communication::BuildMessage(communication::MessageType::kAstraVerifier,
+        auto send_message = communication::BuildMessage(communication::MessageType::kAuxiliatorVerifier,
                                                         gate_id_, serialized_data);
         communication_layer.SendMessage(2, send_message.Release());
         break;
@@ -4424,7 +4423,7 @@ class MatrixTripleSacrifice {
         
         {
           auto payload = SerializeMatrices(w);
-          auto message = communication::BuildMessage(communication::MessageType::kAstraVerifier,
+          auto message = communication::BuildMessage(communication::MessageType::kAuxiliatorVerifier,
                                                gate_id_, payload);
           communication_layer.SendMessage(1, message.Release());
         }
