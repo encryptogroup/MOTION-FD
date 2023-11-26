@@ -69,6 +69,11 @@ add_library(motion
         protocols/gate.cpp
         protocols/share.cpp
         protocols/share_wrapper.cpp
+        protocols/socium/socium_share.cpp
+        protocols/socium/socium_wire.cpp
+        protocols/socium/socium_gate.cpp
+        protocols/socium/socium_verifier.cpp
+        protocols/swift/swift_share.cpp
         protocols/swift/swift_wire.cpp
         protocols/swift/swift_gate.cpp
         protocols/swift/swift_truncation.cpp

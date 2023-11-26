@@ -130,6 +130,7 @@ class SwiftSacrificeVerifier;
 class SociumSacrificeVerifier;
 class SwiftHashVerifier;
 class SwiftTruncation;
+using SociumHashVerifier = SwiftHashVerifier;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
@@ -337,6 +338,14 @@ class Backend : public std::enable_shared_from_this<Backend> {
   SwiftHashVerifier* GetSwiftOutputHashVerifier() { return output_swift_hash_verifier_.get(); }
   
   SwiftHashVerifier* GetSwiftMultiplyHashVerifier() { return multiply_swift_hash_verifier_.get(); }
+  
+  //Socium hash verifiers are equivalent to swift hash verifiers.
+  
+  SociumHashVerifier* GetSociumInputHashVerifier() { return input_swift_hash_verifier_.get(); }
+  
+  SociumHashVerifier* GetSociumOutputHashVerifier() { return output_swift_hash_verifier_.get(); }
+  
+  SociumHashVerifier* GetSociumMultiplyHashVerifier() { return multiply_swift_hash_verifier_.get(); }
   
   SwiftTruncation* GetSwiftTruncation() { return swift_truncation_.get(); }
 

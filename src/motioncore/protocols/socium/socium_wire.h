@@ -26,13 +26,13 @@
 
 #include "protocols/wire.h"
 #include <boost/numeric/ublas/matrix.hpp>
-#include <utility/bit_vector.h>
 #include <vector>
+#include <utility/bit_vector.h>
 
-namespace encrypto::motion::proto::swift {
+namespace encrypto::motion::proto::socium {
     
 template<typename T>
-class Wire final : public motion::Wire {
+class Wire : public motion::Wire {
   using Base = motion::Wire;
  public:
   struct Data {
@@ -49,13 +49,13 @@ class Wire final : public motion::Wire {
   
   ~Wire() = default;
   
-  MpcProtocol GetProtocol() const final { return MpcProtocol::kSwift; }
+  MpcProtocol GetProtocol() const { return MpcProtocol::kSocium; }
   
-  CircuitType GetCircuitType() const final { return CircuitType::kArithmetic; }
+  CircuitType GetCircuitType() const { return CircuitType::kArithmetic; }
 
-  virtual bool IsConstant() const noexcept final { return false; };
+  virtual bool IsConstant() const noexcept { return false; };
   
-  virtual std::size_t GetBitLength() const final { return sizeof(T) * 8; };
+  virtual std::size_t GetBitLength() const { return sizeof(T) * 8; };
   
   Data const& GetData() const { return data_; }
   
@@ -79,22 +79,22 @@ class Wire final : public motion::Wire {
 };
 
 template<typename T>
-using WirePointer = std::shared_ptr<swift::Wire<T>>;
+using WirePointer = std::shared_ptr<socium::Wire<T>>;
 
 
 template<typename T>
-class MatrixWire final : public motion::Wire {
+class MatrixWire : public motion::Wire {
   using Base = motion::Wire;
  public:
   MatrixWire(Backend& backend, size_t m, size_t n, size_t number_of_simd_values);
   
-  MpcProtocol GetProtocol() const final { return MpcProtocol::kSwift; }
+  MpcProtocol GetProtocol() const { return MpcProtocol::kSocium; }
   
-  CircuitType GetCircuitType() const final { return CircuitType::kArithmetic; }
+  CircuitType GetCircuitType() const { return CircuitType::kArithmetic; }
 
-  virtual bool IsConstant() const noexcept final { return false; };
+  virtual bool IsConstant() const noexcept { return false; };
   
-  virtual std::size_t GetBitLength() const final { return sizeof(T) * 8; };
+  virtual std::size_t GetBitLength() const { return sizeof(T) * 8; };
 
   void SetSetupIsReady() {
     {
@@ -129,7 +129,7 @@ class MatrixWire final : public motion::Wire {
 };
 
 template<typename T>
-using MatrixWirePointer = std::shared_ptr<swift::MatrixWire<T>>;
+using MatrixWirePointer = std::shared_ptr<socium::MatrixWire<T>>;
 
 class BooleanWire : public motion::BooleanWire {
   using Base = motion::BooleanWire;
@@ -143,11 +143,11 @@ class BooleanWire : public motion::BooleanWire {
   
   ~BooleanWire() = default;
   
-  MpcProtocol GetProtocol() const final { return MpcProtocol::kSwift; }
+  MpcProtocol GetProtocol() const { return MpcProtocol::kSocium; }
 
-  virtual bool IsConstant() const noexcept final { return false; };
+  virtual bool IsConstant() const noexcept { return false; };
   
-  virtual std::size_t GetBitLength() const final { return 1; };
+  virtual std::size_t GetBitLength() const { return 1; };
   
   BitVector<> const& GetValues() const { return values_; }
   
@@ -182,8 +182,8 @@ class BooleanWire : public motion::BooleanWire {
 
 using BooleanWirePointer = std::shared_ptr<BooleanWire>;
 
-class BitMatrixWire final : public swift::BooleanWire {
-  using Base = swift::BooleanWire;
+class BitMatrixWire : public socium::BooleanWire {
+  using Base = socium::BooleanWire;
  public:
 
   BitMatrixWire(
@@ -204,4 +204,4 @@ class BitMatrixWire final : public swift::BooleanWire {
 using BitMatrixWirePointer = std::shared_ptr<BitMatrixWire>;
 
     
-} // namespace encrypto::motion::proto::swift
+}  // namespace encrypto::motion::proto::socium

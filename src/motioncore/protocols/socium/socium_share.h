@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "swift_wire.h"
+#include "socium_wire.h"
 #include "protocols/share.h"
 
 
-namespace encrypto::motion::proto::swift {
+namespace encrypto::motion::proto::socium {
     
 template <typename T>
 class Share final : public motion::Share {
@@ -36,8 +36,8 @@ class Share final : public motion::Share {
 
  public:
   Share(const motion::WirePointer& wire);
-  Share(const swift::WirePointer<T>& wire);
-  Share(const std::vector<swift::WirePointer<T>>& wires);
+  Share(const socium::WirePointer<T>& wire);
+  Share(const std::vector<socium::WirePointer<T>>& wires);
   Share(const std::vector<motion::WirePointer>& wires);
 
   ~Share() override = default;
@@ -48,8 +48,8 @@ class Share final : public motion::Share {
 
   CircuitType GetCircuitType() const noexcept final;
 
-  swift::WirePointer<T> GetSwiftWire() {
-    auto wire = std::dynamic_pointer_cast<swift::Wire<T>>(wires_.at(0));
+  socium::WirePointer<T> GetSociumWire() {
+    auto wire = std::dynamic_pointer_cast<socium::Wire<T>>(wires_[0]);
     assert(wire);
     return wire;
   }
@@ -75,4 +75,4 @@ class Share final : public motion::Share {
 template <typename T>
 using SharePointer = std::shared_ptr<Share<T>>;
 
-}  // namespace encrypto::motion::proto::swift
+}  // namespace encrypto::motion::proto::socium

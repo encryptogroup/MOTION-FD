@@ -13,6 +13,8 @@
 #include "protocols/auxiliator/auxiliator_share.h"
 #include "protocols/swift/swift_wire.h"
 #include "protocols/swift/swift_gate.h"
+#include "protocols/socium/socium_wire.h"
+#include "protocols/socium/socium_gate.h"
 #include "statistics/analysis.h"
 #include "utility/typedefs.h"
 #include "communication/transport.h"
@@ -69,7 +71,6 @@ AuxiliatorMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
   return result;
 }
 
-
 ublas::matrix<proto::swift::WirePointer<TypeParam>> 
 SwiftMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
   auto backend = party->GetBackend();
@@ -80,6 +81,25 @@ SwiftMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
     for(size_t j = 0; j != n; ++j) {
       std::vector<TypeParam> v1{42}, v2{42}, v3{42};
       auto w = reg->template EmplaceWire<proto::swift::Wire<TypeParam>>(
+        *backend, 1, v1, v2, v3);
+      result(i, j) = w;
+      w->SetSetupIsReady();
+      w->SetOnlineFinished();
+    }
+  }
+  return result;
+}
+
+ublas::matrix<proto::socium::WirePointer<TypeParam>> 
+SociumMakeDummyInputMatrix(PartyPointer& party, size_t m, size_t n) {
+  auto backend = party->GetBackend();
+  auto reg = backend->GetRegister();
+  
+  ublas::matrix<proto::socium::WirePointer<TypeParam>> result(m, n);
+  for(size_t i = 0; i != m; ++i) {
+    for(size_t j = 0; j != n; ++j) {
+      std::vector<TypeParam> v1{42}, v2{42}, v3{42};
+      auto w = reg->template EmplaceWire<proto::socium::Wire<TypeParam>>(
         *backend, 1, v1, v2, v3);
       result(i, j) = w;
       w->SetSetupIsReady();
@@ -160,6 +180,33 @@ ublas::matrix<proto::swift::WirePointer<TypeParam>> SwiftMakeDummyInputSimdMatri
   return result;
 }
 
+ublas::matrix<proto::socium::WirePointer<TypeParam>> SociumMakeDummyInputSimdMatrices(
+  PartyPointer& party, size_t m, size_t n, size_t number_of_simd_values) {
+  auto backend = party->GetBackend();
+  auto reg = backend->GetRegister();
+  
+  ublas::matrix<proto::socium::WirePointer<TypeParam>> result(m, n);
+  for(size_t i = 0; i != m; ++i) {
+    for(size_t j = 0; j != n; ++j) {
+      std::vector<TypeParam> simd_input1, simd_input2, simd_input3;
+      simd_input1.reserve(number_of_simd_values);
+      simd_input2.reserve(number_of_simd_values);
+      simd_input3.reserve(number_of_simd_values);
+      for(size_t s = 0; s != number_of_simd_values; ++s) {
+        simd_input1.emplace_back(42);
+        simd_input2.emplace_back(42);
+        simd_input3.emplace_back(42);
+      }
+      auto w = reg->template EmplaceWire<proto::socium::Wire<TypeParam>>(
+        *backend, number_of_simd_values, std::move(simd_input1), std::move(simd_input2), std::move(simd_input3));
+      result(i, j) = w;
+      w->SetSetupIsReady();
+      w->SetOnlineFinished();
+    }
+  }
+  return result;
+}
+
 void AssignSquare(ublas::matrix<ShareWrapper>& D, ublas::matrix<ShareWrapper> const& C_k, 
                   size_t window, size_t D_row_offset, size_t D_column_offset,
                   size_t C_row_offset, size_t C_column_offset) {
@@ -173,6 +220,18 @@ void AssignSquare(ublas::matrix<ShareWrapper>& D, ublas::matrix<ShareWrapper> co
 
 void AssignSquare(ublas::matrix<proto::swift::WirePointer<TypeParam>>& D, 
                   ublas::matrix<proto::swift::WirePointer<TypeParam>> const& C_k, 
+                  size_t window, size_t D_row_offset, size_t D_column_offset,
+                  size_t C_row_offset, size_t C_column_offset) {
+  for(size_t i = 0; i != window; ++i) {
+    for(size_t j = 0; j != window; ++j) {
+      D(D_row_offset + window*i + j, D_column_offset) = 
+        C_k(C_row_offset + i, C_column_offset + j);
+    }
+  }
+}
+
+void AssignSquare(ublas::matrix<proto::socium::WirePointer<TypeParam>>& D, 
+                  ublas::matrix<proto::socium::WirePointer<TypeParam>> const& C_k, 
                   size_t window, size_t D_row_offset, size_t D_column_offset,
                   size_t C_row_offset, size_t C_column_offset) {
   for(size_t i = 0; i != window; ++i) {
@@ -234,7 +293,6 @@ FixedPointMatrixMultiplication(
     backend.GetRegister()->EmplaceGate<proto::swift::MatrixReconversionGate<uint64_t>>(
       fpa_mult_wire);
   return matrix_reconversion_gate->GetWireMatrix();
-      
 }
 
 ublas::matrix<proto::swift::WirePointer<TypeParam>> Conv(
@@ -258,6 +316,62 @@ ublas::matrix<proto::swift::WirePointer<TypeParam>> Conv(
   }
   
   return FixedPointMatrixMultiplication(K, D, 16);
+}
+
+ublas::matrix<proto::socium::WirePointer<TypeParam>>
+SociumFixedPointMatrixMultiplication(
+  ublas::matrix<proto::socium::WirePointer<TypeParam>> A, 
+  ublas::matrix<proto::socium::WirePointer<TypeParam>> B, 
+  size_t precision) {
+  
+  Backend& backend = A(0, 0)->GetBackend();
+  
+  auto matrix_conversion_gate_A = 
+    backend.GetRegister()->EmplaceGate<proto::socium::MatrixConversionGate<uint64_t>>(A);
+  auto matrix_conversion_wire_A = 
+    std::dynamic_pointer_cast<proto::socium::MatrixWire<uint64_t>>(
+      matrix_conversion_gate_A->GetOutputWires()[0]);
+      
+  auto matrix_conversion_gate_B = 
+    backend.GetRegister()->EmplaceGate<proto::socium::MatrixConversionGate<uint64_t>>(B);
+  auto matrix_conversion_wire_B = 
+    std::dynamic_pointer_cast<proto::socium::MatrixWire<uint64_t>>(
+      matrix_conversion_gate_B->GetOutputWires()[0]);
+      
+  auto fpa_mult_gate = 
+    backend.GetRegister()->EmplaceGate<proto::socium::FpaMatrixMultiplicationGate<uint64_t>>( // Only change
+      matrix_conversion_wire_A, matrix_conversion_wire_B, precision);
+  auto fpa_mult_wire = 
+    std::dynamic_pointer_cast<proto::socium::MatrixWire<uint64_t>>(
+      fpa_mult_gate->GetOutputWires()[0]);
+      
+  auto matrix_reconversion_gate = 
+    backend.GetRegister()->EmplaceGate<proto::socium::MatrixReconversionGate<uint64_t>>(
+      fpa_mult_wire);
+  return matrix_reconversion_gate->GetWireMatrix();
+}
+
+ublas::matrix<proto::socium::WirePointer<TypeParam>> SociumConv(
+  std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks,
+  ublas::matrix<proto::socium::WirePointer<TypeParam>> K, size_t w) {
+  size_t m = C_ks[0].size1();
+  size_t n = C_ks[0].size2();
+  size_t max_m = m - w + 1;
+  size_t max_n = n - w + 1;
+  ublas::matrix<proto::socium::WirePointer<TypeParam>> D(
+    w*w * C_ks.size(), max_m * max_n);
+  size_t row_offset = 0;
+  for(size_t k = 0; k != C_ks.size(); ++k) {
+    auto& C_k = C_ks[k];
+    for(size_t i = 0; i != max_m; ++i) {
+      for(size_t j = 0; j != max_n; ++j) {
+        AssignSquare(D, C_k, w, row_offset, max_n * i + j, i, j);
+      }
+    }
+    row_offset += w*w;
+  }
+  
+  return SociumFixedPointMatrixMultiplication(K, D, 16); // Only change
 }
 
 ShareWrapper GetSquareSum(ublas::matrix<ShareWrapper> const& P, size_t w, 
@@ -284,6 +398,23 @@ proto::swift::WirePointer<TypeParam> GetSquareSum(
       if(i == 0 && j == 0) continue;
       square_sum = std::dynamic_pointer_cast<proto::swift::Wire<uint64_t>>(
         backend.GetRegister()->EmplaceGate<proto::swift::AdditionGate<TypeParam>>(
+         square_sum, P(P_row_offset + i, P_column_offset + j))->GetOutputWires()[0]);
+    }
+  }
+  return square_sum;
+}
+
+proto::socium::WirePointer<TypeParam> GetSquareSum(
+  ublas::matrix<proto::socium::WirePointer<TypeParam>> const& P, size_t w, 
+  size_t P_row_offset, size_t P_column_offset) {
+  proto::socium::WirePointer<TypeParam> square_sum = P(P_row_offset, P_column_offset);
+  Backend& backend = square_sum->GetBackend();
+  for(size_t i = 0; i != w; ++i) {
+    for(size_t j = 0; j != w; ++j) {
+      //Skip the first iteration as we already assigned it to square_sum
+      if(i == 0 && j == 0) continue;
+      square_sum = std::dynamic_pointer_cast<proto::socium::Wire<uint64_t>>(
+        backend.GetRegister()->EmplaceGate<proto::socium::AdditionGate<TypeParam>>(
          square_sum, P(P_row_offset + i, P_column_offset + j))->GetOutputWires()[0]);
     }
   }
@@ -352,6 +483,48 @@ ublas::matrix<proto::swift::WirePointer<TypeParam>> AvgPool(
       
   auto matrix_reconversion_gate = 
     backend.GetRegister()->EmplaceGate<proto::swift::MatrixReconversionGate<uint64_t>>(
+      fpa_mult_const_wire);
+  return matrix_reconversion_gate->GetWireMatrix();
+}
+
+ublas::matrix<proto::socium::WirePointer<TypeParam>> SociumAvgPool(
+  ublas::matrix<proto::socium::WirePointer<TypeParam>> P, size_t w, unsigned precision) {
+  constexpr size_t kMaxPrecision = sizeof(size_t) * CHAR_BIT - 1;
+  unsigned scaling_w_inv = kMaxPrecision - precision;
+  size_t w_inv = (size_t(1) << kMaxPrecision) / w;
+  if(scaling_w_inv < precision) {
+    w_inv <<= precision - scaling_w_inv;
+  } else if(scaling_w_inv > precision) {
+    w_inv >>= scaling_w_inv - precision;
+  }
+  size_t w_inv_square = (w_inv * w_inv) >> precision;
+  
+  size_t m = P.size1();
+  size_t n = P.size2();
+  ublas::matrix<proto::socium::WirePointer<TypeParam>> S(m/w, n/w);
+  for(size_t i = 0; i != m/w; ++i) {
+    for(size_t j = 0; j != n/w; ++j) {
+      S(i, j) = GetSquareSum(P, w, w*i, w*j);
+    }
+  }
+  
+  Backend& backend = S(0, 0)->GetBackend();
+  
+  auto matrix_conversion_gate_S = 
+    backend.GetRegister()->EmplaceGate<proto::socium::MatrixConversionGate<uint64_t>>(S);
+  auto matrix_conversion_wire_S = 
+    std::dynamic_pointer_cast<proto::socium::MatrixWire<uint64_t>>(
+      matrix_conversion_gate_S->GetOutputWires()[0]);
+      
+  auto fpa_mult_const_gate = 
+    backend.GetRegister()->EmplaceGate<proto::socium::FpaMatrixMultiplicationConstantGate<uint64_t>>(
+      matrix_conversion_wire_S, w_inv_square, precision);
+  auto fpa_mult_const_wire = 
+    std::dynamic_pointer_cast<proto::socium::MatrixWire<uint64_t>>(
+      fpa_mult_const_gate->GetOutputWires()[0]);
+      
+  auto matrix_reconversion_gate = 
+    backend.GetRegister()->EmplaceGate<proto::socium::MatrixReconversionGate<uint64_t>>(
       fpa_mult_const_wire);
   return matrix_reconversion_gate->GetWireMatrix();
 }
@@ -6395,104 +6568,6 @@ void Benchmark_Swift_VGG16_37(program_options::variables_map& user_options, size
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ublas::matrix<proto::swift::WirePointer<TypeParam>>
-SociumFixedPointMatrixMultiplication(
-  ublas::matrix<proto::swift::WirePointer<TypeParam>> A, 
-  ublas::matrix<proto::swift::WirePointer<TypeParam>> B, 
-  size_t precision) {
-  
-  Backend& backend = A(0, 0)->GetBackend();
-  
-  auto matrix_conversion_gate_A = 
-    backend.GetRegister()->EmplaceGate<proto::swift::MatrixConversionGate<uint64_t>>(A);
-  auto matrix_conversion_wire_A = 
-    std::dynamic_pointer_cast<proto::swift::MatrixWire<uint64_t>>(
-      matrix_conversion_gate_A->GetOutputWires()[0]);
-      
-  auto matrix_conversion_gate_B = 
-    backend.GetRegister()->EmplaceGate<proto::swift::MatrixConversionGate<uint64_t>>(B);
-  auto matrix_conversion_wire_B = 
-    std::dynamic_pointer_cast<proto::swift::MatrixWire<uint64_t>>(
-      matrix_conversion_gate_B->GetOutputWires()[0]);
-      
-  auto fpa_mult_gate = 
-    backend.GetRegister()->EmplaceGate<proto::swift::SociumFpaMatrixMultiplicationGate<uint64_t>>( // Only change
-      matrix_conversion_wire_A, matrix_conversion_wire_B, precision);
-  auto fpa_mult_wire = 
-    std::dynamic_pointer_cast<proto::swift::MatrixWire<uint64_t>>(
-      fpa_mult_gate->GetOutputWires()[0]);
-      
-  auto matrix_reconversion_gate = 
-    backend.GetRegister()->EmplaceGate<proto::swift::MatrixReconversionGate<uint64_t>>(
-      fpa_mult_wire);
-  return matrix_reconversion_gate->GetWireMatrix();
-}
-
-ublas::matrix<proto::swift::WirePointer<TypeParam>> SociumConv(
-  std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks,
-  ublas::matrix<proto::swift::WirePointer<TypeParam>> K, size_t w) {
-  size_t m = C_ks[0].size1();
-  size_t n = C_ks[0].size2();
-  size_t max_m = m - w + 1;
-  size_t max_n = n - w + 1;
-  ublas::matrix<proto::swift::WirePointer<TypeParam>> D(
-    w*w * C_ks.size(), max_m * max_n);
-  size_t row_offset = 0;
-  for(size_t k = 0; k != C_ks.size(); ++k) {
-    auto& C_k = C_ks[k];
-    for(size_t i = 0; i != max_m; ++i) {
-      for(size_t j = 0; j != max_n; ++j) {
-        AssignSquare(D, C_k, w, row_offset, max_n * i + j, i, j);
-      }
-    }
-    row_offset += w*w;
-  }
-  
-  return SociumFixedPointMatrixMultiplication(K, D, 16); // Only change
-}
-
-ublas::matrix<proto::swift::WirePointer<TypeParam>> SociumAvgPool(
-  ublas::matrix<proto::swift::WirePointer<TypeParam>> P, size_t w, unsigned precision) {
-  constexpr size_t kMaxPrecision = sizeof(size_t) * CHAR_BIT - 1;
-  unsigned scaling_w_inv = kMaxPrecision - precision;
-  size_t w_inv = (size_t(1) << kMaxPrecision) / w;
-  if(scaling_w_inv < precision) {
-    w_inv <<= precision - scaling_w_inv;
-  } else if(scaling_w_inv > precision) {
-    w_inv >>= scaling_w_inv - precision;
-  }
-  size_t w_inv_square = (w_inv * w_inv) >> precision;
-  
-  size_t m = P.size1();
-  size_t n = P.size2();
-  ublas::matrix<proto::swift::WirePointer<TypeParam>> S(m/w, n/w);
-  for(size_t i = 0; i != m/w; ++i) {
-    for(size_t j = 0; j != n/w; ++j) {
-      S(i, j) = GetSquareSum(P, w, w*i, w*j);
-    }
-  }
-  
-  Backend& backend = S(0, 0)->GetBackend();
-  
-  auto matrix_conversion_gate_S = 
-    backend.GetRegister()->EmplaceGate<proto::swift::MatrixConversionGate<uint64_t>>(S);
-  auto matrix_conversion_wire_S = 
-    std::dynamic_pointer_cast<proto::swift::MatrixWire<uint64_t>>(
-      matrix_conversion_gate_S->GetOutputWires()[0]);
-      
-  auto fpa_mult_const_gate = 
-    backend.GetRegister()->EmplaceGate<proto::swift::SociumFpaMatrixMultiplicationConstantGate<uint64_t>>( // only change
-      matrix_conversion_wire_S, w_inv_square, precision);
-  auto fpa_mult_const_wire = 
-    std::dynamic_pointer_cast<proto::swift::MatrixWire<uint64_t>>(
-      fpa_mult_const_gate->GetOutputWires()[0]);
-      
-  auto matrix_reconversion_gate = 
-    backend.GetRegister()->EmplaceGate<proto::swift::MatrixReconversionGate<uint64_t>>(
-      fpa_mult_const_wire);
-  return matrix_reconversion_gate->GetWireMatrix();
-}
-
 void Benchmark_Socium_MNIST_1(program_options::variables_map& user_options, size_t number_of_repetitions) {
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_setup_statistics;
   encrypto::motion::AccumulatedRunTimeStatistics accumulated_statistics;
@@ -6500,9 +6575,9 @@ void Benchmark_Socium_MNIST_1(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto c_0 = SwiftMakeDummyInputMatrix(party, 28, 28); // Sharing semantics same as SWIFT
-    auto K = SwiftMakeDummyInputMatrix(party, 16, 25); // Sharing semantics same as SWIFT
-    auto result = SociumConv({c_0}, K, 5); // Custom Conv
+    auto c_0 = SociumMakeDummyInputMatrix(party, 28, 28);
+    auto K = SociumMakeDummyInputMatrix(party, 16, 25);
+    auto result = SociumConv({c_0}, K, 5);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6527,8 +6602,8 @@ void Benchmark_Socium_MNIST_2(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 16, 576); // Sharing semantics same as SWIFT
-    auto result = proto::swift::SociumReLU(m); // Custom ReLU
+    auto m = SociumMakeDummyInputMatrix(party, 16, 576);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6553,8 +6628,8 @@ void Benchmark_Socium_MNIST_3(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = SwiftMakeDummyInputSimdMatrices(party, 24, 24, 16); // Sharing semantics same as SWIFT
-    auto result = SociumAvgPool(S, 2, 16); // Custom AvgPool
+    auto S = SociumMakeDummyInputSimdMatrices(party, 24, 24, 16);
+    auto result = SociumAvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6579,13 +6654,13 @@ void Benchmark_Socium_MNIST_4(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(16);
     for(size_t i = 0; i != 16; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 12, 12)); // Sharing semantics same as SWIFT
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 12, 12));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 16, 400); // Sharing semantics same as SWIFT
-    auto result = SociumConv(C_ks, K, 5); // Custom Conv
+    auto K = SociumMakeDummyInputMatrix(party, 16, 400);
+    auto result = SociumConv(C_ks, K, 5);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6610,8 +6685,8 @@ void Benchmark_Socium_MNIST_5(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 16, 64); // Sharing semantics same as SWIFT
-    auto result = proto::swift::SociumReLU(m); // Custom ReLU
+    auto m = SociumMakeDummyInputMatrix(party, 16, 64);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6636,8 +6711,8 @@ void Benchmark_Socium_MNIST_6(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = SwiftMakeDummyInputSimdMatrices(party, 8, 8, 16); // Sharing semantics same as SWIFT
-    auto result = SociumAvgPool(S, 2, 16); // Custom AvgPool
+    auto S = SociumMakeDummyInputSimdMatrices(party, 8, 8, 16);
+    auto result = SociumAvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6662,9 +6737,9 @@ void Benchmark_Socium_MNIST_7(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = SwiftMakeDummyInputMatrix(party, 100, 256); // Sharing semantics same as SWIFT
-    auto b = SwiftMakeDummyInputMatrix(party, 256, 1); // Sharing semantics same as SWIFT
-    auto result = SociumFixedPointMatrixMultiplication(a, b, 16); // Changed MatMult
+    auto a = SociumMakeDummyInputMatrix(party, 100, 256);
+    auto b = SociumMakeDummyInputMatrix(party, 256, 1);
+    auto result = SociumFixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6689,8 +6764,8 @@ void Benchmark_Socium_MNIST_8(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 100, 1); // Sharing semantics same as SWIFT
-    auto result = proto::swift::SociumReLU(m); // Custom ReLU
+    auto m = SociumMakeDummyInputMatrix(party, 100, 1);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6715,9 +6790,9 @@ void Benchmark_Socium_MNIST_9(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = SwiftMakeDummyInputMatrix(party, 10, 100); // Sharing semantics same as SWIFT
-    auto b = SwiftMakeDummyInputMatrix(party, 100, 1); // Sharing semantics same as SWIFT
-    auto result = SociumFixedPointMatrixMultiplication(a, b, 16); // Changed MatMult
+    auto a = SociumMakeDummyInputMatrix(party, 10, 100);
+    auto b = SociumMakeDummyInputMatrix(party, 100, 1);
+    auto result = SociumFixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6742,12 +6817,12 @@ void Benchmark_Socium_CIFAR_10_1(program_options::variables_map& user_options, s
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(3);
     for(size_t i = 0; i != 3; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 34, 34));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 34, 34));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 64, 27);
+    auto K = SociumMakeDummyInputMatrix(party, 64, 27);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -6773,8 +6848,8 @@ void Benchmark_Socium_CIFAR_10_2(program_options::variables_map& user_options, s
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 64, 1024);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 64, 1024);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6799,12 +6874,12 @@ void Benchmark_Socium_CIFAR_10_3(program_options::variables_map& user_options, s
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 34, 34));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 34, 34));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 64, 576);
+    auto K = SociumMakeDummyInputMatrix(party, 64, 576);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -6830,8 +6905,8 @@ void Benchmark_Socium_CIFAR_10_4(program_options::variables_map& user_options, s
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 64, 1024);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 64, 1024);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6856,7 +6931,7 @@ void Benchmark_Socium_CIFAR_10_5(program_options::variables_map& user_options, s
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = SwiftMakeDummyInputSimdMatrices(party, 32, 32, 64);
+    auto S = SociumMakeDummyInputSimdMatrices(party, 32, 32, 64);
     auto result = SociumAvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -6882,12 +6957,12 @@ void Benchmark_Socium_CIFAR_10_6(program_options::variables_map& user_options, s
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 18, 18));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 18, 18));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 64, 576);
+    auto K = SociumMakeDummyInputMatrix(party, 64, 576);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -6913,8 +6988,8 @@ void Benchmark_Socium_CIFAR_10_7(program_options::variables_map& user_options, s
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 64, 256);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 64, 256);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6939,12 +7014,12 @@ void Benchmark_Socium_CIFAR_10_8(program_options::variables_map& user_options, s
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 18, 18));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 18, 18));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 64, 576);
+    auto K = SociumMakeDummyInputMatrix(party, 64, 576);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -6970,8 +7045,8 @@ void Benchmark_Socium_CIFAR_10_9(program_options::variables_map& user_options, s
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 64, 256);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 64, 256);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -6996,7 +7071,7 @@ void Benchmark_Socium_CIFAR_10_10(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = SwiftMakeDummyInputSimdMatrices(party, 16, 16, 64);
+    auto S = SociumMakeDummyInputSimdMatrices(party, 16, 16, 64);
     auto result = SociumAvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7022,12 +7097,12 @@ void Benchmark_Socium_CIFAR_10_11(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 10, 10));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 10, 10));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 64, 576);
+    auto K = SociumMakeDummyInputMatrix(party, 64, 576);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7053,8 +7128,8 @@ void Benchmark_Socium_CIFAR_10_12(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 64, 64);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 64, 64);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7079,12 +7154,12 @@ void Benchmark_Socium_CIFAR_10_13(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 8, 8));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 8, 8));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 64, 64);
+    auto K = SociumMakeDummyInputMatrix(party, 64, 64);
     auto result = SociumConv(C_ks, K, 1);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7110,8 +7185,8 @@ void Benchmark_Socium_CIFAR_10_14(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 64, 64);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 64, 64);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7136,12 +7211,12 @@ void Benchmark_Socium_CIFAR_10_15(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 8, 8));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 8, 8));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 16, 64);
+    auto K = SociumMakeDummyInputMatrix(party, 16, 64);
     auto result = SociumConv(C_ks, K, 1);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7167,8 +7242,8 @@ void Benchmark_Socium_CIFAR_10_16(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 16, 64);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 16, 64);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7193,8 +7268,8 @@ void Benchmark_Socium_CIFAR_10_17(program_options::variables_map& user_options, 
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = SwiftMakeDummyInputMatrix(party, 10, 1024);
-    auto b = SwiftMakeDummyInputMatrix(party, 1024, 1);
+    auto a = SociumMakeDummyInputMatrix(party, 10, 1024);
+    auto b = SociumMakeDummyInputMatrix(party, 1024, 1);
     auto result = SociumFixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7222,12 +7297,12 @@ void Benchmark_Socium_VGG16_1(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(3);
     for(size_t i = 0; i != 3; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 34, 34));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 34, 34));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 64, 27);
+    auto K = SociumMakeDummyInputMatrix(party, 64, 27);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7253,8 +7328,8 @@ void Benchmark_Socium_VGG16_2(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 64, 1024);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 64, 1024);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7279,12 +7354,12 @@ void Benchmark_Socium_VGG16_3(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 34, 34));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 34, 34));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 64, 576);
+    auto K = SociumMakeDummyInputMatrix(party, 64, 576);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7310,8 +7385,8 @@ void Benchmark_Socium_VGG16_4(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 64, 1024);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 64, 1024);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7336,7 +7411,7 @@ void Benchmark_Socium_VGG16_5(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = SwiftMakeDummyInputSimdMatrices(party, 32, 32, 64);
+    auto S = SociumMakeDummyInputSimdMatrices(party, 32, 32, 64);
     auto result = SociumAvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7362,12 +7437,12 @@ void Benchmark_Socium_VGG16_6(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(64);
     for(size_t i = 0; i != 64; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 18, 18));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 18, 18));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 128, 576);
+    auto K = SociumMakeDummyInputMatrix(party, 128, 576);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7393,8 +7468,8 @@ void Benchmark_Socium_VGG16_7(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 128, 256);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 128, 256);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7419,12 +7494,12 @@ void Benchmark_Socium_VGG16_8(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(128);
     for(size_t i = 0; i != 128; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 18, 18));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 18, 18));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 128, 1152);
+    auto K = SociumMakeDummyInputMatrix(party, 128, 1152);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7450,8 +7525,8 @@ void Benchmark_Socium_VGG16_9(program_options::variables_map& user_options, size
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 128, 256);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 128, 256);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7476,7 +7551,7 @@ void Benchmark_Socium_VGG16_10(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = SwiftMakeDummyInputSimdMatrices(party, 16, 16, 128);
+    auto S = SociumMakeDummyInputSimdMatrices(party, 16, 16, 128);
     auto result = SociumAvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7502,12 +7577,12 @@ void Benchmark_Socium_VGG16_11(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(128);
     for(size_t i = 0; i != 128; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 10, 10));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 10, 10));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 256, 1152);
+    auto K = SociumMakeDummyInputMatrix(party, 256, 1152);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7533,8 +7608,8 @@ void Benchmark_Socium_VGG16_12(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 256, 64);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 256, 64);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7559,12 +7634,12 @@ void Benchmark_Socium_VGG16_13(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(256);
     for(size_t i = 0; i != 256; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 10, 10));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 10, 10));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 256, 2304);
+    auto K = SociumMakeDummyInputMatrix(party, 256, 2304);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7590,8 +7665,8 @@ void Benchmark_Socium_VGG16_14(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 256, 64);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 256, 64);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7616,12 +7691,12 @@ void Benchmark_Socium_VGG16_15(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(256);
     for(size_t i = 0; i != 256; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 10, 10));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 10, 10));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 256, 2304);
+    auto K = SociumMakeDummyInputMatrix(party, 256, 2304);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7647,8 +7722,8 @@ void Benchmark_Socium_VGG16_16(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 256, 64);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 256, 64);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7673,7 +7748,7 @@ void Benchmark_Socium_VGG16_17(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = SwiftMakeDummyInputSimdMatrices(party, 8, 8, 256);
+    auto S = SociumMakeDummyInputSimdMatrices(party, 8, 8, 256);
     auto result = SociumAvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7699,12 +7774,12 @@ void Benchmark_Socium_VGG16_18(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(256);
     for(size_t i = 0; i != 256; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 6, 6));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 6, 6));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 512, 2304);
+    auto K = SociumMakeDummyInputMatrix(party, 512, 2304);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7730,8 +7805,8 @@ void Benchmark_Socium_VGG16_19(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 512, 16);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 512, 16);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7756,12 +7831,12 @@ void Benchmark_Socium_VGG16_20(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(512);
     for(size_t i = 0; i != 512; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 6, 6));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 6, 6));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto K = SociumMakeDummyInputMatrix(party, 512, 4608);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7787,8 +7862,8 @@ void Benchmark_Socium_VGG16_21(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 512, 16);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 512, 16);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7813,12 +7888,12 @@ void Benchmark_Socium_VGG16_22(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(512);
     for(size_t i = 0; i != 512; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 6, 6));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 6, 6));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto K = SociumMakeDummyInputMatrix(party, 512, 4608);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7844,8 +7919,8 @@ void Benchmark_Socium_VGG16_23(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 512, 16);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 512, 16);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7870,7 +7945,7 @@ void Benchmark_Socium_VGG16_24(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = SwiftMakeDummyInputSimdMatrices(party, 4, 4, 512);
+    auto S = SociumMakeDummyInputSimdMatrices(party, 4, 4, 512);
     auto result = SociumAvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7896,12 +7971,12 @@ void Benchmark_Socium_VGG16_25(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(512);
     for(size_t i = 0; i != 512; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 4, 4));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 4, 4));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto K = SociumMakeDummyInputMatrix(party, 512, 4608);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7927,8 +8002,8 @@ void Benchmark_Socium_VGG16_26(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 512, 4);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 512, 4);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -7953,12 +8028,12 @@ void Benchmark_Socium_VGG16_27(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(512);
     for(size_t i = 0; i != 512; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 4, 4));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 4, 4));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto K = SociumMakeDummyInputMatrix(party, 512, 4608);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -7984,8 +8059,8 @@ void Benchmark_Socium_VGG16_28(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 512, 4);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 512, 4);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -8010,12 +8085,12 @@ void Benchmark_Socium_VGG16_29(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    std::vector<ublas::matrix<proto::swift::WirePointer<TypeParam>>> C_ks;
+    std::vector<ublas::matrix<proto::socium::WirePointer<TypeParam>>> C_ks;
     C_ks.reserve(512);
     for(size_t i = 0; i != 512; ++i) {
-      C_ks.emplace_back(SwiftMakeDummyInputMatrix(party, 4, 4));
+      C_ks.emplace_back(SociumMakeDummyInputMatrix(party, 4, 4));
     }
-    auto K = SwiftMakeDummyInputMatrix(party, 512, 4608);
+    auto K = SociumMakeDummyInputMatrix(party, 512, 4608);
     auto result = SociumConv(C_ks, K, 3);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -8041,8 +8116,8 @@ void Benchmark_Socium_VGG16_30(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 512, 4);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 512, 4);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -8067,7 +8142,7 @@ void Benchmark_Socium_VGG16_31(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto S = SwiftMakeDummyInputSimdMatrices(party, 2, 2, 512);
+    auto S = SociumMakeDummyInputSimdMatrices(party, 2, 2, 512);
     auto result = SociumAvgPool(S, 2, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -8093,8 +8168,8 @@ void Benchmark_Socium_VGG16_32(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = SwiftMakeDummyInputMatrix(party, 4096, 512);
-    auto b = SwiftMakeDummyInputMatrix(party, 512, 1);
+    auto a = SociumMakeDummyInputMatrix(party, 4096, 512);
+    auto b = SociumMakeDummyInputMatrix(party, 512, 1);
     auto result = SociumFixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -8121,8 +8196,8 @@ void Benchmark_Socium_VGG16_33(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 4096, 1);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 4096, 1);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -8147,8 +8222,8 @@ void Benchmark_Socium_VGG16_34(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = SwiftMakeDummyInputMatrix(party, 4096, 4096);
-    auto b = SwiftMakeDummyInputMatrix(party, 4096, 1);
+    auto a = SociumMakeDummyInputMatrix(party, 4096, 4096);
+    auto b = SociumMakeDummyInputMatrix(party, 4096, 1);
     auto result = SociumFixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -8175,8 +8250,8 @@ void Benchmark_Socium_VGG16_35(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 4096, 1);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 4096, 1);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();
@@ -8201,8 +8276,8 @@ void Benchmark_Socium_VGG16_36(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto a = SwiftMakeDummyInputMatrix(party, 1000, 4096);
-    auto b = SwiftMakeDummyInputMatrix(party, 4096, 1);
+    auto a = SociumMakeDummyInputMatrix(party, 1000, 4096);
+    auto b = SociumMakeDummyInputMatrix(party, 4096, 1);
     auto result = SociumFixedPointMatrixMultiplication(a, b, 16);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
@@ -8229,8 +8304,8 @@ void Benchmark_Socium_VGG16_37(program_options::variables_map& user_options, siz
   encrypto::motion::AccumulatedCommunicationStatistics accumulated_communication_statistics;
   for (std::size_t i = 0; i != number_of_repetitions; ++i) {
     PartyPointer party{CreateParty(user_options)};
-    auto m = SwiftMakeDummyInputMatrix(party, 1000, 1);
-    auto result = proto::swift::SociumReLU(m);
+    auto m = SociumMakeDummyInputMatrix(party, 1000, 1);
+    auto result = proto::socium::ReLU(m);
     party->Run();
     accumulated_setup_statistics.Add(g_setup_statistics);
     auto statistics = party->GetBackend()->GetRunTimeStatistics().front();

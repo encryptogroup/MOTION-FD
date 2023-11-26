@@ -26,8 +26,8 @@
 #include <type_traits>
 
 #include "base/backend.h"
-#include "swift_gate.h"
-#include "swift_wire.h"
+#include "socium_gate.h"
+#include "socium_wire.h"
 #include "protocols/share_wrapper.h"
 #include "communication/message_manager.h"
 #include "utility/helpers.h"
@@ -62,13 +62,13 @@ std::mutex print_mutex;
 
 }
 
-namespace encrypto::motion::proto::swift {
+namespace encrypto::motion::proto::socium {
 using std::to_string;
 
 template <typename T>
 InputGate<T>::InputGate(std::vector<T> input, std::size_t input_owner, Backend& backend)
     : Base(backend) {
-  using communication::MessageType::kSwiftInputGate;
+  using communication::MessageType::kSociumInputGate;
   input_owner_id_ = input_owner;
 
   uint64_t my_id = GetCommunicationLayer().GetMyId();
@@ -79,20 +79,20 @@ InputGate<T>::InputGate(std::vector<T> input, std::size_t input_owner, Backend& 
   assert(input_owner_id_ >= 0);
   if(my_id != uint64_t(input_owner_id_)) {
     output_wires_ = 
-      {GetRegister().template EmplaceWire<swift::Wire<T>>(backend_, number_of_simd_values)};
+      {GetRegister().template EmplaceWire<socium::Wire<T>>(backend_, number_of_simd_values)};
   } else {
     output_wires_ = 
-      {GetRegister().template EmplaceWire<swift::Wire<T>>(
+      {GetRegister().template EmplaceWire<socium::Wire<T>>(
         backend_, number_of_simd_values, std::move(input), std::vector<T>{}, std::vector<T>{})};
   }
 
   if(my_id != uint64_t(input_owner_id_)) {
     input_future_ = 
       GetCommunicationLayer().GetMessageManager().RegisterReceive(
-        input_owner_id_, kSwiftInputGate, gate_id_);
+        input_owner_id_, kSociumInputGate, gate_id_);
   }
   
-  auto input_hash_verifier = backend_.GetSwiftInputHashVerifier();
+  auto input_hash_verifier = backend_.GetSociumInputHashVerifier();
   if(next_id == uint64_t(input_owner_id_)) {
     //We are S_i-1 so we reserve memory for hash input that we will send to previous_id (S_i+1)
     verifier_hash_data_ = 
@@ -118,7 +118,7 @@ void InputGate<T>::EvaluateSetup() {
          uint64_t(input_owner_id_) == previous_id);
   GetBaseProvider().WaitSetup();
 
-  auto out_wire = std::dynamic_pointer_cast<swift::Wire<T>>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::Wire<T>>(output_wires_[0]);
   assert(out_wire);
   auto& out_data = out_wire->GetMutableData();
   size_t number_of_simd_values = out_wire->GetNumberOfSimdValues();
@@ -165,11 +165,11 @@ void InputGate<T>::EvaluateSetup() {
 
 template <typename T>
 void InputGate<T>::EvaluateOnline() {
-  using communication::MessageType::kSwiftInputGate;
+  using communication::MessageType::kSociumInputGate;
   WaitSetup();
   assert(setup_is_ready_);
 
-  auto out_wire = std::dynamic_pointer_cast<swift::Wire<T>>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::Wire<T>>(output_wires_[0]);
   assert(out_wire);
   auto& out_data = out_wire->GetMutableData();
 
@@ -181,7 +181,7 @@ void InputGate<T>::EvaluateOnline() {
   assert(input_owner_id_ >= 0);
   if(my_id == uint64_t(input_owner_id_)) {
     auto payload = ToByteVector<T>(out_data.values);
-    auto message = communication::BuildMessage(kSwiftInputGate, gate_id_, payload);
+    auto message = communication::BuildMessage(kSociumInputGate, gate_id_, payload);
   
     communication_layer.BroadcastMessage(message.Release());
   } else {
@@ -189,7 +189,7 @@ void InputGate<T>::EvaluateOnline() {
     const auto payload = communication::GetMessage(message.data())->payload();
     out_data.values = FromByteVector<T>({payload->Data(), payload->size()});
     
-    auto input_hash_verifier = backend_.GetSwiftInputHashVerifier();
+    auto input_hash_verifier = backend_.GetSociumInputHashVerifier();
     verifier_hash_data_.AssignData(out_data.values);
     if(next_id == uint64_t(input_owner_id_)) {
       //We are S_i-1 so we are the one sending the hash to S_i+1
@@ -212,7 +212,7 @@ template class InputGate<std::uint32_t>;
 template class InputGate<std::uint64_t>;
 
 template <typename T>
-OutputGate<T>::OutputGate(swift::WirePointer<T> const& parent, std::size_t output_owner)
+OutputGate<T>::OutputGate(socium::WirePointer<T> const& parent, std::size_t output_owner)
     : Base(parent->GetBackend()) {
   assert(parent);
 
@@ -225,16 +225,16 @@ OutputGate<T>::OutputGate(swift::WirePointer<T> const& parent, std::size_t outpu
   output_owner_ = output_owner;
 
   output_wires_ = 
-    {GetRegister().template EmplaceWire<swift::Wire<T>>(backend_, number_of_simd_values)};
+    {GetRegister().template EmplaceWire<socium::Wire<T>>(backend_, number_of_simd_values)};
 
   assert(output_owner_ >= 0);
   if (uint64_t(output_owner_) == my_id || uint64_t(output_owner_) == kAll) {
     lambda_i_plus_1_future_ = 
       GetCommunicationLayer().GetMessageManager().RegisterReceive(
-        previous_id, communication::MessageType::kSwiftOutputGate, gate_id_);
+        previous_id, communication::MessageType::kSociumOutputGate, gate_id_);
   }
   
-  auto output_hash_verifier = backend_.GetSwiftOutputHashVerifier();
+  auto output_hash_verifier = backend_.GetSociumOutputHashVerifier();
   if(uint64_t(output_owner_) == previous_id || uint64_t(output_owner_) == kAll) {
     //We assume the role of S_i+1 so we reserve memory for hash that we will send to next_id (S_i)
     verifier_message_hash_data_ = 
@@ -258,7 +258,7 @@ void OutputGate<T>::EvaluateOnline() {
   assert(setup_is_ready_);
   parent_[0]->GetIsReadyCondition().Wait();
   size_t number_of_simd_values = parent_[0]->GetNumberOfSimdValues();
-  auto in_wire = std::dynamic_pointer_cast<swift::Wire<T>>(parent_[0]);
+  auto in_wire = std::dynamic_pointer_cast<socium::Wire<T>>(parent_[0]);
   assert(in_wire);
   auto& in_data = in_wire->GetMutableData();
   assert(in_data.values.size() == number_of_simd_values);
@@ -277,10 +277,10 @@ void OutputGate<T>::EvaluateOnline() {
     auto payload = ToByteVector<T>(in_data.lambda_previous_id);
     auto message = 
       communication::BuildMessage(
-        communication::MessageType::kSwiftOutputGate, gate_id_, payload);
+        communication::MessageType::kSociumOutputGate, gate_id_, payload);
     communication_layer.SendMessage(next_id, message.Release());
   }
-  auto output_hash_verifier = backend_.GetSwiftOutputHashVerifier();
+  auto output_hash_verifier = backend_.GetSociumOutputHashVerifier();
   if(uint64_t(output_owner_) == previous_id || uint64_t(output_owner_) == kAll) {
     //We assume the role of S_i+1 here, preparing the hash of lambda_i+1, to be sent to S_i
     verifier_message_hash_data_.AssignData(in_data.lambda_my_id);
@@ -288,7 +288,7 @@ void OutputGate<T>::EvaluateOnline() {
   }
   if (uint64_t(output_owner_) == my_id || uint64_t(output_owner_) == kAll) {
     //We assume the role of S_i here, receiving lambda_i+1 from S_i-1 and h_i+1 from S_i+1
-    auto out_wire = std::dynamic_pointer_cast<swift::Wire<T>>(output_wires_[0]);
+    auto out_wire = std::dynamic_pointer_cast<socium::Wire<T>>(output_wires_[0]);
     assert(out_wire);
     auto& out_data = out_wire->GetMutableData();
     assert(out_data.values.size() == 0);
@@ -317,14 +317,14 @@ template class OutputGate<std::uint32_t>;
 template class OutputGate<std::uint64_t>;
 
 template <typename T>
-MultiplicationGate<T>::MultiplicationGate(swift::WirePointer<T> const& a,
-                                          swift::WirePointer<T> const& b)
+MultiplicationGate<T>::MultiplicationGate(socium::WirePointer<T> const& a,
+                                          socium::WirePointer<T> const& b)
     : TwoGate(a->GetBackend()), 
       gamma_xy_my_id_(a->GetNumberOfSimdValues()),
       gamma_xy_previous_id_(a->GetNumberOfSimdValues()),
-      triple_(backend_.GetSwiftVerifier()->ReserveTriples128(a->GetNumberOfSimdValues())) {
-  using communication::MessageType::kSwiftSetupMultiplyGate;
-  using communication::MessageType::kSwiftOnlineMultiplyGate;
+      triple_(backend_.GetSociumVerifier()->ReserveTriples128(a->GetNumberOfSimdValues())) {
+  using communication::MessageType::kSociumSetupMultiplyGate;
+  using communication::MessageType::kSociumOnlineMultiplyGate;
   size_t number_of_simd_values = a->GetNumberOfSimdValues();
   assert(number_of_simd_values == b->GetNumberOfSimdValues());
   parent_a_ = {std::move(a)};
@@ -333,62 +333,50 @@ MultiplicationGate<T>::MultiplicationGate(swift::WirePointer<T> const& a,
   uint64_t previous_id = (my_id + 2) % 3;
 
   output_wires_ = 
-    {GetRegister().template EmplaceWire<swift::Wire<T>>(
+    {GetRegister().template EmplaceWire<socium::Wire<T>>(
       backend_, number_of_simd_values, 
       std::vector<T>(number_of_simd_values),
       std::vector<T>(number_of_simd_values),
       std::vector<T>(number_of_simd_values))};
 
   auto& message_manager = backend_.GetCommunicationLayer().GetMessageManager();
-  multiply_future_setup_ =
-    message_manager.RegisterReceive(previous_id, kSwiftSetupMultiplyGate, gate_id_);
+  if (my_id == 0 || my_id == 1) {
+    multiply_future_setup_ =
+      message_manager.RegisterReceive(previous_id, kSociumSetupMultiplyGate, gate_id_);
+  }
     
   if(my_id == 0) {
     multiply_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(1, kSociumOnlineMultiplyGate, gate_id_);
   } else if(my_id == 1) {
     multiply_future_online_ = 
-      message_manager.RegisterReceive(2, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(2, kSociumOnlineMultiplyGate, gate_id_);
   } else if(my_id == 2) {
     multiply_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(1, kSociumOnlineMultiplyGate, gate_id_);
   }
   
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
+  auto multipy_hash_verifier = backend_.GetSociumMultiplyHashVerifier();
   if(my_id == 0) {
-    //We are S_0, so we reserve hash memory for the hash we will receive from S2
-    verifier_received_hash_data_ = 
-      multipy_hash_verifier->ReserveHashCheck(
-        number_of_simd_values * sizeof(T), 2);
-    //we also reserve memory for the hash we will be sending to S1 and S2
+    //We are S_0, so we reserve memory for the hash we will be sending to S1
     verifier_s1_message_data_ =
       multipy_hash_verifier->ReserveHashMessage(
         number_of_simd_values * sizeof(T), 1);
-    verifier_s2_message_data_ =
-      multipy_hash_verifier->ReserveHashMessage(
-        number_of_simd_values * sizeof(T), 2);
-  } else {
-    //We are S1 or S2 and thus will receive a hash from S0;
+  } else if (my_id == 1) {
+    //We are S1 and thus will receive a hash from S0;
     verifier_received_hash_data_ = 
-      multipy_hash_verifier->ReserveHashCheck(
-        number_of_simd_values * sizeof(T), 0);
-  }
-  if(my_id == 2) {
-    //We reserve memory for the hash we will be sending to S0
-    verifier_s2_message_data_ = 
-      multipy_hash_verifier->ReserveHashMessage(
-        number_of_simd_values * sizeof(T), 0);
+      multipy_hash_verifier->ReserveHashCheck(number_of_simd_values * sizeof(T), 0);
   }
 }
 
 template <typename T>
 void MultiplicationGate<T>::EvaluateSetup() {
-  using communication::MessageType::kSwiftSetupMultiplyGate;
+  using communication::MessageType::kSociumSetupMultiplyGate;
   auto& communication_layer = GetCommunicationLayer();
   uint64_t my_id = communication_layer.GetMyId();
   uint64_t next_id = (my_id + 1) % 3;
   uint64_t previous_id = (my_id + 2) % 3;
-  auto out_wire = std::dynamic_pointer_cast<swift::Wire<T>>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::Wire<T>>(output_wires_[0]);
   assert(out_wire);
   auto& out_data = out_wire->GetMutableData();
   size_t number_of_simd_values = out_wire->GetNumberOfSimdValues();
@@ -396,6 +384,7 @@ void MultiplicationGate<T>::EvaluateSetup() {
   size_t const number_of_gamma_xy_bytes = number_of_simd_values * sizeof(UInt128);
   size_t const number_of_lambda_z_bytes = number_of_simd_values * sizeof(T);
   size_t const random_bytes = number_of_gamma_xy_bytes + number_of_lambda_z_bytes;
+
     
   //We assume the role of S_i and generate the random numbers we share with S_i+1
   auto& rng_i = backend_.GetBaseProvider().GetMyRandomnessGenerator(next_id);
@@ -430,11 +419,10 @@ void MultiplicationGate<T>::EvaluateSetup() {
   }
   out_wire->SetSetupIsReady();
   
-
-  auto a_wire = std::dynamic_pointer_cast<swift::Wire<T>>(parent_a_[0]);
+  auto a_wire = std::dynamic_pointer_cast<socium::Wire<T>>(parent_a_[0]);
   assert(a_wire);
   assert(a_wire->GetNumberOfSimdValues() == number_of_simd_values);
-  auto b_wire = std::dynamic_pointer_cast<swift::Wire<T>>(parent_b_[0]);
+  auto b_wire = std::dynamic_pointer_cast<socium::Wire<T>>(parent_b_[0]);
   assert(b_wire);
   assert(b_wire->GetNumberOfSimdValues() == number_of_simd_values);
   a_wire->GetSetupReadyCondition()->Wait();
@@ -462,13 +450,13 @@ void MultiplicationGate<T>::EvaluateSetup() {
   }
   //Now the c_i values are in randoms_my_id[0,...,number_of_gamma_xy_bytes]
   
-  {
+  if (my_id == 0 || my_id == 2) { // S1 does not send in Socium
     auto payload = std::span<uint8_t const>(randoms_my_id.data(), number_of_gamma_xy_bytes);
-    auto message = communication::BuildMessage(kSwiftSetupMultiplyGate, gate_id_, payload);
+    auto message = communication::BuildMessage(kSociumSetupMultiplyGate, gate_id_, payload);
     communication_layer.SendMessage(next_id, message.Release());
   }
   
-  {
+  if (my_id == 0 || my_id == 1) { // S2 does not receive in Socium
     auto message = multiply_future_setup_.get();
     const auto payload = communication::GetMessage(message.data())->payload();
     auto received_data = std::span<uint8_t const>{payload->Data(), payload->size()};
@@ -486,30 +474,46 @@ void MultiplicationGate<T>::EvaluateSetup() {
         memcpy(&gamma_xy_previous_id, 
                gamma_xy_previous_id_pointer + gamma_xy_offset,
                sizeof(UInt128));
-        triple_.AppendTriple(
-          UInt128(a_data.lambda_my_id[i]), UInt128(a_data.lambda_previous_id[i]),
-          UInt128(b_data.lambda_my_id[i]), UInt128(b_data.lambda_previous_id[i]),
-          gamma_xy_my_id, gamma_xy_previous_id);
+        triple_.AppendTriple(UInt128(a_data.lambda_my_id[i]), UInt128(a_data.lambda_previous_id[i]),
+                             UInt128(b_data.lambda_my_id[i]), UInt128(b_data.lambda_previous_id[i]),
+                             gamma_xy_my_id, gamma_xy_previous_id);
         gamma_xy_my_id_[i] = T(gamma_xy_my_id);
         gamma_xy_previous_id_[i] = T(gamma_xy_previous_id);
         gamma_xy_offset += sizeof(UInt128);
       }
-      backend_.GetSwiftVerifier()->SetReady();
+      backend_.GetSociumVerifier()->SetReady();
       assert(gamma_xy_offset == number_of_gamma_xy_bytes);
     }
+  } else { // S2
+    UInt128 empty = 0;
+    size_t gamma_xy_offset = 0;
+    uint8_t const* const gamma_xy_my_id_pointer = randoms_my_id.data();
+    for(size_t i = 0; i != number_of_simd_values; ++i) {
+      UInt128 gamma_xy_my_id;
+      memcpy(&gamma_xy_my_id, gamma_xy_my_id_pointer + gamma_xy_offset, sizeof(UInt128));
+
+      triple_.AppendTriple(UInt128(a_data.lambda_my_id[i]), UInt128(a_data.lambda_previous_id[i]),
+                           UInt128(b_data.lambda_my_id[i]), UInt128(b_data.lambda_previous_id[i]),
+                           gamma_xy_my_id, empty);
+      gamma_xy_my_id_[i]= T(gamma_xy_my_id);
+      gamma_xy_offset += sizeof(UInt128);
+    }
+    backend_.GetSociumVerifier()->SetReady();
+
+    assert(gamma_xy_offset == number_of_gamma_xy_bytes);
   }
 }
 
 template <typename T>
 void MultiplicationGate<T>::EvaluateOnline() {
-  using communication::MessageType::kSwiftOnlineMultiplyGate;
+  using communication::MessageType::kSociumOnlineMultiplyGate;
   auto& communication_layer = GetCommunicationLayer();
   auto my_id = communication_layer.GetMyId();
-  auto out_wire = std::dynamic_pointer_cast<swift::Wire<T>>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::Wire<T>>(output_wires_[0]);
   assert(out_wire);
-  auto a_wire = std::dynamic_pointer_cast<swift::Wire<T>>(parent_a_[0]);
+  auto a_wire = std::dynamic_pointer_cast<socium::Wire<T>>(parent_a_[0]);
   assert(a_wire);
-  auto b_wire = std::dynamic_pointer_cast<swift::Wire<T>>(parent_b_[0]);
+  auto b_wire = std::dynamic_pointer_cast<socium::Wire<T>>(parent_b_[0]);
   assert(b_wire);
   size_t number_of_simd_values = a_wire->GetNumberOfSimdValues();
   assert(b_wire->GetNumberOfSimdValues() == number_of_simd_values);
@@ -525,53 +529,55 @@ void MultiplicationGate<T>::EvaluateOnline() {
   
   std::vector<T> m_my_id, m_previous_id;
   m_my_id.reserve(number_of_simd_values);
-  m_previous_id.reserve(number_of_simd_values);
+  if (my_id != 2) {
+    m_previous_id.reserve(number_of_simd_values); // For S1, this will be Y0+Y1
+  }
   
   for(size_t i = 0; i != number_of_simd_values; ++i) {
     m_my_id.emplace_back(
       a_data.values[i] * b_data.lambda_my_id[i]
       + b_data.values[i] * a_data.lambda_my_id[i]
       + gamma_xy_my_id_[i] - out_data.lambda_my_id[i]);
-    m_previous_id.emplace_back( 
-      a_data.values[i] * b_data.lambda_previous_id[i]
-      + b_data.values[i] * a_data.lambda_previous_id[i]
-      + gamma_xy_previous_id_[i] - out_data.lambda_previous_id[i]);
+    if (my_id != 2) {
+      m_previous_id.emplace_back( 
+        a_data.values[i] * b_data.lambda_previous_id[i]
+        + b_data.values[i] * a_data.lambda_previous_id[i]
+        + gamma_xy_previous_id_[i] - out_data.lambda_previous_id[i]);
+    }
+    if (my_id == 1) {
+      m_previous_id[i] += m_my_id[i];
+    }
   }
   
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
+  auto multipy_hash_verifier = backend_.GetSociumMultiplyHashVerifier();
   if(my_id == 0) {
     verifier_s1_message_data_.AssignData(m_previous_id);
     multipy_hash_verifier->SetReady();
-    verifier_s2_message_data_.AssignData(m_my_id);
-    multipy_hash_verifier->SetReady();
   }
   else if(my_id == 1) {
-    //We are S1 so we send m_0 to S2, which is m_previous_id
-    //and m_1 to S0, which is m_my_id
+    //We are S1 so we send m_0+m_1 to S2, which is m_previous_id
+    //and m_0+m_1 to S0, which is m_previous_id
     {
       auto payload = ToByteVector<T>(m_previous_id);
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(2, message.Release());
     }
     
     {
-      auto payload = ToByteVector<T>(m_my_id);
+      auto payload = ToByteVector<T>(m_previous_id);
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(0, message.Release());
     }
   } else if(my_id == 2) {
     //We are S2 so we send m_2 to S1, which is m_my_id
-    //and H(m_1) which is H(m_previous_id)
     {
       auto payload = ToByteVector<T>(m_my_id);
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(1, message.Release());
     }
-    verifier_s2_message_data_.AssignData(m_previous_id);
-    multipy_hash_verifier->SetReady();
   } else {
     assert(false);
   }
@@ -580,12 +586,20 @@ void MultiplicationGate<T>::EvaluateOnline() {
     auto message = multiply_future_online_.get();
     auto payload = communication::GetMessage(message.data())->payload();
     auto m_missing_id = FromByteVector<T>({payload->Data(), payload->size()});
-    verifier_received_hash_data_.AssignData(m_missing_id);
-    multipy_hash_verifier->SetReady();
     for(size_t i = 0; i != number_of_simd_values; ++i) {
-      out_data.values[i] = 
-        m_previous_id[i] + m_my_id[i] + m_missing_id[i] 
-        + a_data.values[i] * b_data.values[i];
+      if (my_id == 0) { // Got m0+m1, have m2
+        out_data.values[i] = m_missing_id[i] + m_previous_id[i] + a_data.values[i] * b_data.values[i];
+      } else if (my_id == 1) { // Got m2, have m0+m1 (in prev)
+        out_data.values[i] = m_missing_id[i] + m_previous_id[i] + a_data.values[i] * b_data.values[i];
+      } else if (my_id == 2) { // Got m0+m1, have m2
+        out_data.values[i] = m_missing_id[i] + m_my_id[i] + a_data.values[i] * b_data.values[i];
+      } else {
+        assert(false);
+      }
+    }
+    if (my_id == 1) {
+      verifier_received_hash_data_.AssignData(m_missing_id);
+      multipy_hash_verifier->SetReady();
     }
   }
 }
@@ -596,8 +610,8 @@ template class MultiplicationGate<std::uint32_t>;
 template class MultiplicationGate<std::uint64_t>;
 
 template<typename T>
-AdditionGate<T>::AdditionGate(swift::WirePointer<T> const& a, 
-                              swift::WirePointer<T> const& b)
+AdditionGate<T>::AdditionGate(socium::WirePointer<T> const& a, 
+                              socium::WirePointer<T> const& b)
     : TwoGate(a->GetBackend()) {
   size_t number_of_simd_values = a->GetNumberOfSimdValues();
   assert(number_of_simd_values == b->GetNumberOfSimdValues());
@@ -605,7 +619,7 @@ AdditionGate<T>::AdditionGate(swift::WirePointer<T> const& a,
   parent_b_ = {std::move(b)};
 
   output_wires_ = 
-    {GetRegister().template EmplaceWire<swift::Wire<T>>(
+    {GetRegister().template EmplaceWire<socium::Wire<T>>(
       backend_, number_of_simd_values,
       std::vector<T>(number_of_simd_values),
       std::vector<T>(number_of_simd_values),
@@ -614,11 +628,11 @@ AdditionGate<T>::AdditionGate(swift::WirePointer<T> const& a,
 
 template<typename T>
 void AdditionGate<T>::EvaluateSetup() {
-  auto out_wire = std::dynamic_pointer_cast<swift::Wire<T>>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::Wire<T>>(output_wires_[0]);
   assert(out_wire);
-  auto a_wire = std::dynamic_pointer_cast<swift::Wire<T>>(parent_a_[0]);
+  auto a_wire = std::dynamic_pointer_cast<socium::Wire<T>>(parent_a_[0]);
   assert(a_wire);
-  auto b_wire = std::dynamic_pointer_cast<swift::Wire<T>>(parent_b_[0]);
+  auto b_wire = std::dynamic_pointer_cast<socium::Wire<T>>(parent_b_[0]);
   assert(b_wire);
   
   size_t number_of_simd_values = parent_a_[0]->GetNumberOfSimdValues();
@@ -640,11 +654,11 @@ void AdditionGate<T>::EvaluateSetup() {
 
 template<typename T>
 void AdditionGate<T>::EvaluateOnline() {
-  auto out_wire = std::dynamic_pointer_cast<swift::Wire<T>>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::Wire<T>>(output_wires_[0]);
   assert(out_wire);
-  auto a_wire = std::dynamic_pointer_cast<swift::Wire<T>>(parent_a_[0]);
+  auto a_wire = std::dynamic_pointer_cast<socium::Wire<T>>(parent_a_[0]);
   assert(a_wire);
-  auto b_wire = std::dynamic_pointer_cast<swift::Wire<T>>(parent_b_[0]);
+  auto b_wire = std::dynamic_pointer_cast<socium::Wire<T>>(parent_b_[0]);
   assert(b_wire);
   WaitSetup();
   assert(setup_is_ready_);
@@ -672,13 +686,13 @@ constexpr size_t BitsToBytes(size_t bits) {
   return (bits + CHAR_BIT - 1)/CHAR_BIT;
 }
 
-AndGate::AndGate(swift::BooleanWirePointer const& a, swift::BooleanWirePointer const& b)
+AndGate::AndGate(socium::BooleanWirePointer const& a, socium::BooleanWirePointer const& b)
     : TwoGate(a->GetBackend()), 
       gamma_xy_my_id_(a->GetNumberOfSimdValues()),
       gamma_xy_previous_id_(a->GetNumberOfSimdValues()),
-      triple_(backend_.GetSwiftVerifier()->ReserveTriples64(a->GetNumberOfSimdValues())) {
-  using communication::MessageType::kSwiftSetupMultiplyGate;
-  using communication::MessageType::kSwiftOnlineMultiplyGate;
+      triple_(backend_.GetSociumVerifier()->ReserveTriples64(a->GetNumberOfSimdValues())) {
+  using communication::MessageType::kSociumSetupMultiplyGate;
+  using communication::MessageType::kSociumOnlineMultiplyGate;
   size_t number_of_simd_values = a->GetNumberOfSimdValues();
   assert(number_of_simd_values == b->GetNumberOfSimdValues());
   parent_a_ = {std::move(a)};
@@ -687,7 +701,7 @@ AndGate::AndGate(swift::BooleanWirePointer const& a, swift::BooleanWirePointer c
   uint64_t previous_id = (my_id + 2) % 3;
 
   output_wires_ = 
-    {GetRegister().template EmplaceWire<swift::BooleanWire>(
+    {GetRegister().template EmplaceWire<socium::BooleanWire>(
       backend_,
       BitVector<>(number_of_simd_values, false),
       BitVector<>(number_of_simd_values, false),
@@ -696,59 +710,49 @@ AndGate::AndGate(swift::BooleanWirePointer const& a, swift::BooleanWirePointer c
   gamma_xy_previous_id_ = BitVector<>(number_of_simd_values, false);
 
   auto& message_manager = backend_.GetCommunicationLayer().GetMessageManager();
-  multiply_future_setup_ =
-    message_manager.RegisterReceive(previous_id, kSwiftSetupMultiplyGate, gate_id_);
+  if (my_id == 0 || my_id == 1) { // S2 does not receive in setup
+    multiply_future_setup_ =
+      message_manager.RegisterReceive(previous_id, kSociumSetupMultiplyGate, gate_id_);
+  }
     
   if(my_id == 0) {
     multiply_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(1, kSociumOnlineMultiplyGate, gate_id_);
   } else if(my_id == 1) {
     multiply_future_online_ = 
-      message_manager.RegisterReceive(2, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(2, kSociumOnlineMultiplyGate, gate_id_);
   } else if(my_id == 2) {
     multiply_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(1, kSociumOnlineMultiplyGate, gate_id_);
+  } else {
+    assert(false);
   }
   
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
+  auto multipy_hash_verifier = backend_.GetSociumMultiplyHashVerifier();
   if(my_id == 0) {
-    //We are S_0, so we reserve hash memory for the hash we will receive from S2
-    verifier_received_hash_data_ = 
-      multipy_hash_verifier->ReserveHashCheck(
-        BitsToBytes(number_of_simd_values), 2);
-    //we also reserve memory for the hash we will be sending to S1 and S2
+    //We are S_0, so we reserve memory for the hash we will be sending to S1
     verifier_s1_message_data_ =
       multipy_hash_verifier->ReserveHashMessage(
         BitsToBytes(number_of_simd_values), 1);
-    verifier_s2_message_data_ =
-      multipy_hash_verifier->ReserveHashMessage(
-        BitsToBytes(number_of_simd_values), 2);
-  } else {
-    //We are S1 or S2 and thus will receive a hash from S0;
+  } else if (my_id == 1) {
+    //We are S1 and thus will receive a hash from S0;
     verifier_received_hash_data_ = 
       multipy_hash_verifier->ReserveHashCheck(
         BitsToBytes(number_of_simd_values), 0);
   }
-  
-  if(my_id == 2) {
-    //We reserve memory for the hash we will be sending to S0
-    verifier_s2_message_data_ = 
-      multipy_hash_verifier->ReserveHashMessage(
-        number_of_simd_values, 0);
-  }
 }
 
 void AndGate::EvaluateSetup() {
-  using communication::MessageType::kSwiftSetupMultiplyGate;
+  using communication::MessageType::kSociumSetupMultiplyGate;
   auto& communication_layer = GetCommunicationLayer();
   uint64_t my_id = communication_layer.GetMyId();
   uint64_t next_id = (my_id + 1) % 3;
   uint64_t previous_id = (my_id + 2) % 3;
-  auto out_wire = std::dynamic_pointer_cast<swift::BooleanWire>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::BooleanWire>(output_wires_[0]);
   assert(out_wire);
+  size_t number_of_simd_values = out_wire->GetNumberOfSimdValues();
   auto& out_lambdas_my_id = out_wire->GetMutableLambdasMyId();
   auto& out_lambdas_previous_id = out_wire->GetMutableLambdasPreviousId();
-  size_t const number_of_simd_values = out_wire->GetNumberOfSimdValues();
   
   size_t const number_of_gamma_xy_bytes = number_of_simd_values * sizeof(uint64_t);
   size_t const number_of_lambda_z_bytes = BitsToBytes(number_of_simd_values);
@@ -784,10 +788,10 @@ void AndGate::EvaluateSetup() {
   }
   out_wire->SetSetupIsReady();
   
-  auto a_wire = std::dynamic_pointer_cast<swift::BooleanWire>(parent_a_[0]);
+  auto a_wire = std::dynamic_pointer_cast<socium::BooleanWire>(parent_a_[0]);
   assert(a_wire);
   assert(a_wire->GetNumberOfSimdValues() == number_of_simd_values);
-  auto b_wire = std::dynamic_pointer_cast<swift::BooleanWire>(parent_b_[0]);
+  auto b_wire = std::dynamic_pointer_cast<socium::BooleanWire>(parent_b_[0]);
   assert(b_wire);
   assert(b_wire->GetNumberOfSimdValues() == number_of_simd_values);
   a_wire->GetSetupReadyCondition()->Wait();
@@ -817,13 +821,13 @@ void AndGate::EvaluateSetup() {
   }
   //Now the c_i values are in randoms_my_id[0,...,number_of_gamma_xy_bytes]
   
-  {
+  if (my_id == 0 || my_id == 2) { // S1 does not send
     auto payload = std::span<uint8_t const>(randoms_my_id.data(), number_of_gamma_xy_bytes);
-    auto message = communication::BuildMessage(kSwiftSetupMultiplyGate, gate_id_, payload);
+    auto message = communication::BuildMessage(kSociumSetupMultiplyGate, gate_id_, payload);
     communication_layer.SendMessage(next_id, message.Release());
   }
   
-  {
+  if (my_id == 0 || my_id == 1) { // S2 does not receive
     auto message = multiply_future_setup_.get();
     const auto payload = communication::GetMessage(message.data())->payload();
     auto received_data = std::span<uint8_t const>{payload->Data(), payload->size()};
@@ -846,23 +850,44 @@ void AndGate::EvaluateSetup() {
                              gamma_xy_my_id, gamma_xy_previous_id);
         gamma_xy_my_id_.Set(gamma_xy_my_id & 0x1, i);
         gamma_xy_previous_id_.Set(gamma_xy_previous_id & 0x1, i);
+        
         gamma_xy_offset += sizeof(uint64_t);
       }
-      backend_.GetSwiftVerifier()->SetReady();
+      backend_.GetSociumVerifier()->SetReady();
       assert(gamma_xy_offset == number_of_gamma_xy_bytes);
     }
+  } else { // S2
+    uint64_t empty = 0;
+    size_t gamma_xy_offset = 0;
+    uint8_t const* const gamma_xy_my_id_pointer = randoms_my_id.data();
+    for(size_t i = 0; i != number_of_simd_values; ++i) {
+      uint64_t gamma_xy_my_id;
+      memcpy(&gamma_xy_my_id, 
+             gamma_xy_my_id_pointer + gamma_xy_offset,
+             sizeof(uint64_t));
+
+      triple_.AppendTriple(uint64_t(a_lambdas_my_id.Get(i)), uint64_t(a_lambdas_previous_id.Get(i)),
+                           uint64_t(b_lambdas_my_id.Get(i)), uint64_t(b_lambdas_previous_id.Get(i)),
+                          gamma_xy_my_id, empty);
+      gamma_xy_my_id_.Set(gamma_xy_my_id & 0x1, i);
+
+      gamma_xy_offset += sizeof(uint64_t);
+    }
+    backend_.GetSociumVerifier()->SetReady();
+
+    assert(gamma_xy_offset == number_of_gamma_xy_bytes);
   }
 }
 
 void AndGate::EvaluateOnline() {
-  using communication::MessageType::kSwiftOnlineMultiplyGate;
+  using communication::MessageType::kSociumOnlineMultiplyGate;
   auto& communication_layer = GetCommunicationLayer();
   auto my_id = communication_layer.GetMyId();
-  auto out_wire = std::dynamic_pointer_cast<swift::BooleanWire>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::BooleanWire>(output_wires_[0]);
   assert(out_wire);
-  auto a_wire = std::dynamic_pointer_cast<swift::BooleanWire>(parent_a_[0]);
+  auto a_wire = std::dynamic_pointer_cast<socium::BooleanWire>(parent_a_[0]);
   assert(a_wire);
-  auto b_wire = std::dynamic_pointer_cast<swift::BooleanWire>(parent_b_[0]);
+  auto b_wire = std::dynamic_pointer_cast<socium::BooleanWire>(parent_b_[0]);
   assert(b_wire);
   WaitSetup();
   assert(setup_is_ready_);
@@ -885,47 +910,41 @@ void AndGate::EvaluateOnline() {
   BitVector<> m_previous_id = 
     (a_values & b_lambdas_previous_id) ^ (b_values & a_lambdas_previous_id)
     ^ gamma_xy_previous_id_ ^ out_lambdas_previous_id;
+  BitVector<> m_both = m_my_id ^ m_previous_id;
   
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
+  auto multipy_hash_verifier = backend_.GetSociumMultiplyHashVerifier();
   if(my_id == 0) {
     verifier_s1_message_data_.AssignData(m_previous_id.GetData());
     multipy_hash_verifier->SetReady();
-    verifier_s2_message_data_.AssignData(m_my_id.GetData());
-    multipy_hash_verifier->SetReady();
-  }
-  else if(my_id == 1) {
-    //We are S1 so we send m_0 to S2, which is m_previous_id
-    //and m_1 to S0, which is m_my_id
+  } else if(my_id == 1) {
+    //We are S1 so we send m_0+m_1 to S2 and S0
     {
       std::span<uint8_t const> payload(
-        reinterpret_cast<uint8_t const*>(m_previous_id.GetData().data()), 
-        m_previous_id.GetData().size());
+        reinterpret_cast<uint8_t const*>(m_both.GetData().data()), 
+        m_both.GetData().size());
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(2, message.Release());
     }
     
     {
       std::span<uint8_t const> payload(
-        reinterpret_cast<uint8_t const*>(m_my_id.GetData().data()), 
-        m_my_id.GetData().size());
+        reinterpret_cast<uint8_t const*>(m_both.GetData().data()), 
+        m_both.GetData().size());
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(0, message.Release());
     }
   } else if(my_id == 2) {
     //We are S2 so we send m_2 to S1, which is m_my_id
-    //and H(m_1) which is H(m_previous_id)
     {
       std::span<uint8_t const> payload(
         reinterpret_cast<uint8_t const*>(m_my_id.GetData().data()), 
         m_my_id.GetData().size());
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(1, message.Release());
     }
-    verifier_s2_message_data_.AssignData(m_previous_id.GetData());
-    multipy_hash_verifier->SetReady();
   } else {
     assert(false);
   }
@@ -933,14 +952,22 @@ void AndGate::EvaluateOnline() {
   {
     auto message = multiply_future_online_.get();
     auto payload = communication::GetMessage(message.data())->payload();
-    BitVector<> m_missing_id(payload->Data(), payload->size());
-    verifier_received_hash_data_.AssignData(m_missing_id.GetData());
-    multipy_hash_verifier->SetReady();
-    out_values = m_previous_id ^ m_my_id ^ m_missing_id ^ (a_values & b_values);
+    BitVector<> m_missing_part(payload->Data(), payload->size());
+    if (my_id == 0) { // m_missing_part is m0 + m1
+      out_values = m_previous_id ^ m_missing_part ^ (a_values & b_values);
+    } else if (my_id == 1) {// m_missing_part is m2
+      verifier_received_hash_data_.AssignData(m_missing_part.GetData());
+      multipy_hash_verifier->SetReady();
+      out_values = m_previous_id ^ m_my_id ^ m_missing_part ^ (a_values & b_values);
+    } else if (my_id == 2) { // m_missing_part is m0 + m1
+      out_values = m_my_id ^ m_missing_part ^ (a_values & b_values);
+    } else {
+      assert(false);
+    }
   }
 }
 
-XorGate::XorGate(swift::BooleanWirePointer const& a, swift::BooleanWirePointer const& b)
+XorGate::XorGate(socium::BooleanWirePointer const& a, socium::BooleanWirePointer const& b)
     : TwoGate(a->GetBackend()) {
   size_t number_of_simd_values = a->GetNumberOfSimdValues();
   assert(number_of_simd_values == b->GetNumberOfSimdValues());
@@ -948,7 +975,7 @@ XorGate::XorGate(swift::BooleanWirePointer const& a, swift::BooleanWirePointer c
   parent_b_ = {std::move(b)};
 
   output_wires_ = 
-    {GetRegister().template EmplaceWire<swift::BooleanWire>(
+    {GetRegister().template EmplaceWire<socium::BooleanWire>(
       backend_,
       BitVector<>(number_of_simd_values, false),
       BitVector<>(number_of_simd_values, false),
@@ -956,11 +983,11 @@ XorGate::XorGate(swift::BooleanWirePointer const& a, swift::BooleanWirePointer c
 }
 
 void XorGate::EvaluateSetup() {
-  auto out_wire = std::dynamic_pointer_cast<swift::BooleanWire>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::BooleanWire>(output_wires_[0]);
   assert(out_wire);
-  auto a_wire = std::dynamic_pointer_cast<swift::BooleanWire>(parent_a_[0]);
+  auto a_wire = std::dynamic_pointer_cast<socium::BooleanWire>(parent_a_[0]);
   assert(a_wire);
-  auto b_wire = std::dynamic_pointer_cast<swift::BooleanWire>(parent_b_[0]);
+  auto b_wire = std::dynamic_pointer_cast<socium::BooleanWire>(parent_b_[0]);
   assert(b_wire);
 
   a_wire->GetSetupReadyCondition()->Wait();
@@ -980,11 +1007,11 @@ void XorGate::EvaluateSetup() {
 }
 
 void XorGate::EvaluateOnline() {
-  auto out_wire = std::dynamic_pointer_cast<swift::BooleanWire>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::BooleanWire>(output_wires_[0]);
   assert(out_wire);
-  auto a_wire = std::dynamic_pointer_cast<swift::BooleanWire>(parent_a_[0]);
+  auto a_wire = std::dynamic_pointer_cast<socium::BooleanWire>(parent_a_[0]);
   assert(a_wire);
-  auto b_wire = std::dynamic_pointer_cast<swift::BooleanWire>(parent_b_[0]);
+  auto b_wire = std::dynamic_pointer_cast<socium::BooleanWire>(parent_b_[0]);
   assert(b_wire);
   WaitSetup();
   assert(setup_is_ready_);
@@ -998,8 +1025,8 @@ void XorGate::EvaluateOnline() {
   out_values = a_values ^ b_values;
 }
 
-swift::BooleanWirePointer MsbAdd(std::vector<swift::BooleanWirePointer> const& a, 
-                                 std::vector<swift::BooleanWirePointer> const& b) {
+socium::BooleanWirePointer MsbAdd(std::vector<socium::BooleanWirePointer> const& a, 
+                                  std::vector<socium::BooleanWirePointer> const& b) {
   using namespace std::literals::string_literals;
   std::string path;
   assert(a.size() > 0);
@@ -1065,7 +1092,7 @@ swift::BooleanWirePointer MsbAdd(std::vector<swift::BooleanWirePointer> const& a
 
   std::getline(stream, line);
   assert(line.empty());
-  std::vector<swift::BooleanWirePointer> wires(number_of_wires);
+  std::vector<socium::BooleanWirePointer> wires(number_of_wires);
   assert(a.size() == number_of_wires_parent_a);
   assert(b.size() == number_of_wires_parent_b);
   for(size_t i = 0; i != a.size(); ++i) {
@@ -1087,15 +1114,15 @@ swift::BooleanWirePointer MsbAdd(std::vector<swift::BooleanWirePointer> const& a
     
     if(type == "XOR"s) {
       wires[out_index] = 
-        std::dynamic_pointer_cast<swift::BooleanWire>(
-          backend.GetRegister()->EmplaceGate<swift::XorGate>(a_wire, b_wire)->
+        std::dynamic_pointer_cast<socium::BooleanWire>(
+          backend.GetRegister()->EmplaceGate<socium::XorGate>(a_wire, b_wire)->
             GetOutputWires()[0]);
       assert(wires[out_index]);
     }
     else if(type == "AND"s) {
       wires[out_index] = 
-        std::dynamic_pointer_cast<swift::BooleanWire>(
-          backend.GetRegister()->EmplaceGate<swift::AndGate>(a_wire, b_wire)->
+        std::dynamic_pointer_cast<socium::BooleanWire>(
+          backend.GetRegister()->EmplaceGate<socium::AndGate>(a_wire, b_wire)->
             GetOutputWires()[0]);
       assert(wires[out_index]);
     }
@@ -1108,7 +1135,7 @@ swift::BooleanWirePointer MsbAdd(std::vector<swift::BooleanWirePointer> const& a
 
 template<typename T>
 MatrixConversionGate<T>::MatrixConversionGate(
-  boost::numeric::ublas::matrix<swift::WirePointer<T>> wires) 
+  boost::numeric::ublas::matrix<socium::WirePointer<T>> wires) 
 : Base(wires(0, 0)->GetBackend()), wires_(std::move(wires)) {
   
   size_t n = wires_.size1();
@@ -1116,13 +1143,13 @@ MatrixConversionGate<T>::MatrixConversionGate(
   size_t number_of_simd_values = wires_(0, 0)->GetNumberOfSimdValues();
 
   output_wires_ = 
-    {GetRegister().template EmplaceWire<swift::MatrixWire<T>>(backend_, n, m, number_of_simd_values)};
+    {GetRegister().template EmplaceWire<socium::MatrixWire<T>>(backend_, n, m, number_of_simd_values)};
   
 }
 
 template<typename T>
 void MatrixConversionGate<T>::EvaluateSetup() {
-  auto matrix_out_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(output_wires_[0]);
+  auto matrix_out_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(output_wires_[0]);
   assert(matrix_out_wire);
   auto& out_lambda_my_id_matrices = matrix_out_wire->GetMutableLambdaMyIdMatrices();
   auto& out_lambda_previous_id_matrices = matrix_out_wire->GetMutableLambdaPreviousIdMatrices();
@@ -1133,7 +1160,7 @@ void MatrixConversionGate<T>::EvaluateSetup() {
   size_t const n = wires_.size2();
   for(size_t i = 0; i != m; ++i) {
     for(size_t j = 0; j != n; ++j) {
-      swift::WirePointer<T> w = wires_(i, j);
+      socium::WirePointer<T> w = wires_(i, j);
       w->GetSetupReadyCondition()->Wait();
       auto const& data = w->GetData();
       assert(data.lambda_my_id.size() == number_of_simd_values);
@@ -1149,14 +1176,14 @@ void MatrixConversionGate<T>::EvaluateSetup() {
 
 template<typename T>
 void MatrixConversionGate<T>::EvaluateOnline() {
-  auto matrix_out_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(output_wires_[0]);
+  auto matrix_out_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(output_wires_[0]);
   assert(matrix_out_wire);
   auto& out_value_matrices = matrix_out_wire->GetMutableValueMatrices();
   size_t const number_of_simd_values = out_value_matrices.size();
   
   for(size_t i = 0; i != wires_.size1(); ++i) {
     for(size_t j = 0; j != wires_.size2(); ++j) {
-      swift::WirePointer<T> w = wires_(i, j);
+      socium::WirePointer<T> w = wires_(i, j);
       w->GetIsReadyCondition().Wait();
       auto const& data = w->GetData();
       assert(data.values.size() == number_of_simd_values);
@@ -1173,27 +1200,23 @@ template class MatrixConversionGate<std::uint32_t>;
 template class MatrixConversionGate<std::uint64_t>;
 
 template<typename T>
-MatrixReconversionGate<T>::MatrixReconversionGate(swift::MatrixWirePointer<T> const& matrix_wire) 
+MatrixReconversionGate<T>::MatrixReconversionGate(socium::MatrixWirePointer<T> const& matrix_wire) 
 : Base(matrix_wire->GetBackend()) {
-  
   auto const& value_matrices = matrix_wire->GetMutableValueMatrices(); 
-    
   size_t const number_of_simd_values = value_matrices.size();
   size_t const m = value_matrices[0].size1();
   size_t const n = value_matrices[0].size2();
   wire_matrix_.resize(m, n);
-  
   for(size_t i = 0; i != m; ++i) {
     for(size_t j = 0; j != n; ++j) {
       wire_matrix_(i, j) = 
-        GetRegister().template EmplaceWire<swift::Wire<T>>(
+        GetRegister().template EmplaceWire<socium::Wire<T>>(
           backend_, number_of_simd_values, 
           std::vector<T>(number_of_simd_values),
           std::vector<T>(number_of_simd_values),
           std::vector<T>(number_of_simd_values));
     }
   }
-
   matrix_input_wire_ = std::move(matrix_wire);
 }
 
@@ -1254,7 +1277,7 @@ template class MatrixReconversionGate<std::uint64_t>;
 
 template<typename T>
 MatrixSimdReconversionGate<T>::MatrixSimdReconversionGate(
-  swift::MatrixWirePointer<T> const& matrix_wire) 
+  socium::MatrixWirePointer<T> const& matrix_wire) 
 : Base(matrix_wire->GetBackend()) {
   
   auto const& value_matrices = matrix_wire->GetMutableValueMatrices(); 
@@ -1262,7 +1285,7 @@ MatrixSimdReconversionGate<T>::MatrixSimdReconversionGate(
   size_t const number_of_simd_values = 
     value_matrices.size() * value_matrices[0].size1() * value_matrices[0].size2();
   
-  wire_ = GetRegister().template EmplaceWire<swift::Wire<T>>(
+  wire_ = GetRegister().template EmplaceWire<socium::Wire<T>>(
     backend_, number_of_simd_values, 
     std::vector<T>(number_of_simd_values),
     std::vector<T>(number_of_simd_values),
@@ -1399,11 +1422,11 @@ void DeserializeMatrices(std::vector<boost::numeric::ublas::matrix<T>>& matrices
 
 template<typename T>
 MatrixMultiplicationGate<T>::MatrixMultiplicationGate(
-  swift::MatrixWirePointer<T> matrix_a, swift::MatrixWirePointer<T> matrix_b)
+  socium::MatrixWirePointer<T> matrix_a, socium::MatrixWirePointer<T> matrix_b)
 : TwoGate(matrix_a->GetBackend()),
-  triple_(backend_.GetSwiftVerifier()->ReserveMatrixTriples128(matrix_a->GetNumberOfSimdValues())) {
-  using communication::MessageType::kSwiftSetupMultiplyGate;
-  using communication::MessageType::kSwiftOnlineMultiplyGate;
+  triple_(backend_.GetSociumVerifier()->ReserveMatrixTriples128(matrix_a->GetNumberOfSimdValues())) {
+  using communication::MessageType::kSociumSetupMultiplyGate;
+  using communication::MessageType::kSociumOnlineMultiplyGate;
   size_t const u = matrix_a->GetMutableLambdaMyIdMatrices()[0].size1();
   size_t const v = matrix_b->GetMutableLambdaMyIdMatrices()[0].size2();
   size_t const number_of_simd_values = matrix_a->GetNumberOfSimdValues();
@@ -1415,7 +1438,7 @@ MatrixMultiplicationGate<T>::MatrixMultiplicationGate(
   parent_b_ = {std::move(matrix_b)};
   
   output_wires_ = 
-    {GetRegister().template EmplaceWire<swift::MatrixWire<T>>(backend_, u, v, number_of_simd_values)};
+    {GetRegister().template EmplaceWire<socium::MatrixWire<T>>(backend_, u, v, number_of_simd_values)};
     
   matrix_gamma_xy_my_id_ = CreateMatrices<T>(u, v, number_of_simd_values);
   matrix_gamma_xy_previous_id_ = CreateMatrices<T>(u, v, number_of_simd_values);
@@ -1425,20 +1448,20 @@ MatrixMultiplicationGate<T>::MatrixMultiplicationGate(
   
   auto& message_manager = backend_.GetCommunicationLayer().GetMessageManager();
   matrix_multiply_future_setup_ =
-    message_manager.RegisterReceive(previous_id, kSwiftSetupMultiplyGate, gate_id_);
+    message_manager.RegisterReceive(previous_id, kSociumSetupMultiplyGate, gate_id_);
     
   if(my_id == 0) {
     matrix_multiply_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(1, kSociumOnlineMultiplyGate, gate_id_);
   } else if(my_id == 1) {
     matrix_multiply_future_online_ = 
-      message_manager.RegisterReceive(2, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(2, kSociumOnlineMultiplyGate, gate_id_);
   } else if(my_id == 2) {
     matrix_multiply_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(1, kSociumOnlineMultiplyGate, gate_id_);
   }
   
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
+  auto multipy_hash_verifier = backend_.GetSociumMultiplyHashVerifier();
   if(my_id == 0) {
     //We are S_0, so we reserve hash memory for the hash we will receive from S2
     verifier_received_hash_data_ = 
@@ -1468,16 +1491,16 @@ MatrixMultiplicationGate<T>::MatrixMultiplicationGate(
 template<typename T>
 void MatrixMultiplicationGate<T>::EvaluateSetup() {
   using boost::numeric::ublas::matrix;
-  using communication::MessageType::kSwiftSetupMultiplyGate;
+  using communication::MessageType::kSociumSetupMultiplyGate;
   auto& communication_layer = GetCommunicationLayer();
   uint64_t my_id = communication_layer.GetMyId();
   uint64_t next_id = (my_id + 1) % 3;
   uint64_t previous_id = (my_id + 2) % 3;
-  auto matrix_out_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(output_wires_[0]);
+  auto matrix_out_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(output_wires_[0]);
   assert(matrix_out_wire);
-  auto matrix_a_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_a_[0]);
+  auto matrix_a_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_a_[0]);
   assert(matrix_a_wire);
-  auto matrix_b_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_b_[0]);
+  auto matrix_b_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_b_[0]);
   assert(matrix_b_wire);
   
   auto& a_my_id_lambda_matrices = matrix_a_wire->GetMutableLambdaMyIdMatrices();
@@ -1629,7 +1652,7 @@ void MatrixMultiplicationGate<T>::EvaluateSetup() {
   
   {
     auto payload = std::span<uint8_t const>(randoms_my_id.data(), number_of_gamma_xy_bytes);
-    auto message = communication::BuildMessage(kSwiftSetupMultiplyGate, gate_id_, payload);
+    auto message = communication::BuildMessage(kSociumSetupMultiplyGate, gate_id_, payload);
     communication_layer.SendMessage(next_id, message.Release());
   }
   
@@ -1666,7 +1689,7 @@ void MatrixMultiplicationGate<T>::EvaluateSetup() {
         }
         gamma_xy_offset += u * v * sizeof(UInt128);
       }
-      backend_.GetSwiftVerifier()->SetReady();
+      backend_.GetSociumVerifier()->SetReady();
       assert(gamma_xy_offset == number_of_gamma_xy_bytes);
     }
   }
@@ -1674,15 +1697,15 @@ void MatrixMultiplicationGate<T>::EvaluateSetup() {
 
 template<typename T>
 void MatrixMultiplicationGate<T>::EvaluateOnline() {
-  using communication::MessageType::kSwiftOnlineMultiplyGate;
+  using communication::MessageType::kSociumOnlineMultiplyGate;
   using boost::numeric::ublas::matrix;
   auto& communication_layer = GetCommunicationLayer();
   auto my_id = communication_layer.GetMyId();
-  auto matrix_out_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(output_wires_[0]);
+  auto matrix_out_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(output_wires_[0]);
   assert(matrix_out_wire);
-  auto matrix_a_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_a_[0]);
+  auto matrix_a_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_a_[0]);
   assert(matrix_a_wire);
-  auto matrix_b_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_b_[0]);
+  auto matrix_b_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_b_[0]);
   assert(matrix_b_wire);
   size_t number_of_simd_values = matrix_a_wire->GetNumberOfSimdValues();
   assert(matrix_b_wire->GetNumberOfSimdValues() == number_of_simd_values);
@@ -1720,7 +1743,7 @@ void MatrixMultiplicationGate<T>::EvaluateOnline() {
       + matrix_gamma_xy_previous_id_[s] - out_previous_id_lambda_matrices[s]);
   }
   
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
+  auto multipy_hash_verifier = backend_.GetSociumMultiplyHashVerifier();
   if(my_id == 0) {
     verifier_s1_message_data_.AssignData(m_previous_id);
     multipy_hash_verifier->SetReady();
@@ -1733,14 +1756,14 @@ void MatrixMultiplicationGate<T>::EvaluateOnline() {
     {
       auto payload = SerializeMatrices(m_previous_id);
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(2, message.Release());
     }
     
     {
       auto payload = SerializeMatrices(m_my_id);
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(0, message.Release());
     }
   } else if(my_id == 2) {
@@ -1749,7 +1772,7 @@ void MatrixMultiplicationGate<T>::EvaluateOnline() {
     {
       auto payload = SerializeMatrices(m_my_id);
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(1, message.Release());
     }
     verifier_s2_message_data_.AssignData(m_previous_id);
@@ -1780,17 +1803,34 @@ template class MatrixMultiplicationGate<std::uint16_t>;
 template class MatrixMultiplicationGate<std::uint32_t>;
 template class MatrixMultiplicationGate<std::uint64_t>;
 
+constexpr bool checkSignedShift() {
+  uint64_t unsigned_number = -2;
+  int64_t signed_number = unsigned_number;
+  return (signed_number >> 1) == -1;
+}
+
+static_assert(checkSignedShift(), "Signed shift is not supported on this platform");
+
+template<typename T>
+void Truncate(std::vector<boost::numeric::ublas::matrix<T>>& m, unsigned precision) {
+  for(size_t k = 0; k != m.size(); ++k)
+  for(size_t i = 0; i != m[k].size1(); ++i) {
+    for(size_t j = 0; j != m[k].size2(); ++j) {
+      T& element = m[k](i, j);
+      std::make_signed_t<T> signed_element = element;
+      signed_element >>= precision;
+      element = signed_element;
+    }
+  }
+}
+
 template<typename T>
 FpaMatrixMultiplicationGate<T>::FpaMatrixMultiplicationGate(
-  swift::MatrixWirePointer<T> matrix_a, swift::MatrixWirePointer<T> matrix_b)
+  socium::MatrixWirePointer<T> matrix_a, socium::MatrixWirePointer<T> matrix_b, unsigned precision)
 : TwoGate(matrix_a->GetBackend()),
-  triple_(backend_.GetSwiftVerifier()->ReserveMatrixTriples128(matrix_a->GetNumberOfSimdValues())),
-  truncation_pairs_(backend_.GetSwiftTruncation()->AddTruncationPairs(
-    matrix_a->GetNumberOfSimdValues()
-    * matrix_a->GetMutableLambdaMyIdMatrices()[0].size1()
-    * matrix_b->GetMutableLambdaMyIdMatrices()[0].size2())) {
-  using communication::MessageType::kSwiftSetupMultiplyGate;
-  using communication::MessageType::kSwiftOnlineMultiplyGate;
+  triple_(backend_.GetSociumVerifier()->ReserveMatrixTriples128(matrix_a->GetNumberOfSimdValues())), precision_(precision) {
+  using communication::MessageType::kSociumSetupMultiplyGate;
+  using communication::MessageType::kSociumOnlineMultiplyGate;
   size_t const u = matrix_a->GetMutableLambdaMyIdMatrices()[0].size1();
   size_t const v = matrix_b->GetMutableLambdaMyIdMatrices()[0].size2();
   size_t const number_of_simd_values = matrix_a->GetNumberOfSimdValues();
@@ -1802,55 +1842,43 @@ FpaMatrixMultiplicationGate<T>::FpaMatrixMultiplicationGate(
   parent_b_ = {std::move(matrix_b)};
   
   output_wires_ = 
-    {GetRegister().template EmplaceWire<swift::MatrixWire<T>>(backend_, u, v, number_of_simd_values)};
+    {GetRegister().template EmplaceWire<socium::MatrixWire<T>>(backend_, u, v, number_of_simd_values)};
     
-  matrix_gamma_xy_my_id_ = CreateMatrices<T>(u, v, number_of_simd_values);
-  matrix_gamma_xy_previous_id_ = CreateMatrices<T>(u, v, number_of_simd_values);
-  matrix_lambda_wd_0_ = CreateMatrices<T>(u, v, number_of_simd_values);
-  matrix_lambda_wd_1_ = CreateMatrices<T>(u, v, number_of_simd_values);
-  matrix_lambda_wd_2_ = CreateMatrices<T>(u, v, number_of_simd_values);
-
   uint64_t my_id = GetCommunicationLayer().GetMyId();
   uint64_t previous_id = (my_id + 2) % 3;
-  
+
+  matrix_gamma_xy_my_id_ = CreateMatrices<T>(u, v, number_of_simd_values);
+  if (my_id == 0 || my_id == 1) { // S2 will never receive gamma1
+    matrix_gamma_xy_previous_id_ = CreateMatrices<T>(u, v, number_of_simd_values);
+  }
+
   auto& message_manager = backend_.GetCommunicationLayer().GetMessageManager();
-  matrix_multiply_future_setup_ =
-    message_manager.RegisterReceive(previous_id, kSwiftSetupMultiplyGate, gate_id_);
+  if (my_id == 0 || my_id == 1) { // S2 will never receive gamma1
+    matrix_multiply_future_setup_ =
+      message_manager.RegisterReceive(previous_id, kSociumSetupMultiplyGate, gate_id_);
+  }
     
   if(my_id == 0) {
     matrix_multiply_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(1, kSociumOnlineMultiplyGate, gate_id_);
   } else if(my_id == 1) {
     matrix_multiply_future_online_ = 
-      message_manager.RegisterReceive(2, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(2, kSociumOnlineMultiplyGate, gate_id_);
   } else if(my_id == 2) {
     matrix_multiply_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(1, kSociumOnlineMultiplyGate, gate_id_);
   }
   
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
+  auto multipy_hash_verifier = backend_.GetSociumMultiplyHashVerifier();
   if(my_id == 0) {
-    //We are S_0, so we reserve hash memory for the hash we will receive from S2
-    verifier_received_hash_data_ = 
-      multipy_hash_verifier->ReserveHashCheck(
-        u * v * number_of_simd_values * sizeof(T), 2);
-    //we also reserve memory for the hash we will be sending to S1 and S2
+    //we reserve memory for the hash we will be sending to S1
     verifier_s1_message_data_ =
       multipy_hash_verifier->ReserveHashMessage(
         u * v * number_of_simd_values * sizeof(T), 1);
-    verifier_s2_message_data_ =
-      multipy_hash_verifier->ReserveHashMessage(
-        u * v * number_of_simd_values * sizeof(T), 2);
-  } else {
-    //We are S1 or S2 and thus will receive a hash from S0;
+  } else if (my_id == 1) {
+    //We are S1 and thus will receive a hash from S0;
     verifier_received_hash_data_ = 
       multipy_hash_verifier->ReserveHashCheck(
-        u * v * number_of_simd_values * sizeof(T), 0);
-  }
-  if(my_id == 2) {
-    //We reserve memory for the hash we will be sending to S0
-    verifier_s2_message_data_ = 
-      multipy_hash_verifier->ReserveHashMessage(
         u * v * number_of_simd_values * sizeof(T), 0);
   }
 }
@@ -1858,16 +1886,16 @@ FpaMatrixMultiplicationGate<T>::FpaMatrixMultiplicationGate(
 template<typename T>
 void FpaMatrixMultiplicationGate<T>::EvaluateSetup() {
   using boost::numeric::ublas::matrix;
-  using communication::MessageType::kSwiftSetupMultiplyGate;
+  using communication::MessageType::kSociumSetupMultiplyGate;
   auto& communication_layer = GetCommunicationLayer();
   uint64_t my_id = communication_layer.GetMyId();
   uint64_t next_id = (my_id + 1) % 3;
   uint64_t previous_id = (my_id + 2) % 3;
-  auto matrix_out_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(output_wires_[0]);
+  auto matrix_out_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(output_wires_[0]);
   assert(matrix_out_wire);
-  auto matrix_a_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_a_[0]);
+  auto matrix_a_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_a_[0]);
   assert(matrix_a_wire);
-  auto matrix_b_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_b_[0]);
+  auto matrix_b_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_b_[0]);
   assert(matrix_b_wire);
   
   auto& a_my_id_lambda_matrices = matrix_a_wire->GetMutableLambdaMyIdMatrices();
@@ -1883,8 +1911,8 @@ void FpaMatrixMultiplicationGate<T>::EvaluateSetup() {
   size_t const v = b_my_id_lambda_matrices[0].size2();
   size_t const u_v_elements = u * v * number_of_simd_values;
   size_t const number_of_gamma_xy_bytes = u_v_elements * sizeof(UInt128);
-  size_t const random_bytes = number_of_gamma_xy_bytes;
-  size_t const lambda_w_bytes = u * v * number_of_simd_values * sizeof(T);
+  size_t const number_of_lambda_z_bytes = u_v_elements * sizeof(T);
+  size_t const random_bytes = number_of_gamma_xy_bytes + number_of_lambda_z_bytes;
     
   auto AssignToMatrix = [](auto& mat, uint8_t const* const data_pointer) {
     using ArithmeticType = typename std::decay_t<decltype(mat)>::value_type;
@@ -1909,7 +1937,7 @@ void FpaMatrixMultiplicationGate<T>::EvaluateSetup() {
       }
     }
   };
-  
+
   //We assume the role of S_i and generate the random numbers we share with S_i+1
   auto& rng_i = backend_.GetBaseProvider().GetMyRandomnessGenerator(next_id);
   //We assume the role of S_i+1 and generate the random numbers we share with S_i
@@ -1920,72 +1948,24 @@ void FpaMatrixMultiplicationGate<T>::EvaluateSetup() {
   //randoms_previous_id contains gamma_xy_previous_id
   std::vector<uint8_t> randoms_previous_id = 
     rng_i_minus_1.template GetUnsigned<uint8_t>(gate_id_, random_bytes);
-  auto& rng_global = backend_.GetBaseProvider().GetGlobalRandomnessGenerator();
-  
-  std::vector<uint8_t> lambdas_w_0_2 = 
-    rng_global.template GetUnsigned<uint8_t>(gate_id_, 2 * lambda_w_bytes);
-  std::vector<uint8_t> lambdas_w_1;
-  if(my_id == 1) {
-    auto& rng_1_2 = backend_.GetBaseProvider().GetMyRandomnessGenerator(2);
-    lambdas_w_1 = rng_1_2.template GetUnsigned<uint8_t>(gate_id_, lambda_w_bytes);
-  } else if(my_id == 2) {
-    auto& rng_1_2 = backend_.GetBaseProvider().GetTheirRandomnessGenerator(1);
-    lambdas_w_1 = rng_1_2.template GetUnsigned<uint8_t>(gate_id_, lambda_w_bytes);
-  }
-  
-  backend_.GetSwiftTruncation()->GetRDoneCondition().Wait();
-  backend_.GetSwiftTruncation()->GetRDDoneCondition().Wait();
-  std::span<uint64_t const> rd_values_my_id = truncation_pairs_.GetRdsMyId();
-  std::span<uint64_t const> rd_values_previous_id = truncation_pairs_.GetRdsPreviousId();
+
   {
-    size_t offset = 0;
-    uint8_t* lambda_w_0_pointer = lambdas_w_0_2.data();
-    uint8_t* lambda_w_1_pointer = (my_id == 0) ? nullptr : lambdas_w_1.data();
-    uint8_t* lambda_w_2_pointer = lambdas_w_0_2.data() + lambda_w_bytes;
+    size_t lambda_z_offset = 0;
+    uint8_t const* const lambda_z_my_id_pointer = 
+      randoms_my_id.data() + number_of_gamma_xy_bytes;
+    uint8_t const* const lambda_z_previous_id_pointer = 
+      randoms_previous_id.data() + number_of_gamma_xy_bytes;
     for(size_t s = 0; s != number_of_simd_values; ++s) {
-      for(size_t i = 0; i != u; ++i) {
-        for(size_t j = 0; j != v; ++j) {
-          size_t const index = s * u * v + i * v + j;
-          T lambda_w_0, lambda_w_1, lambda_w_2;
-          memcpy(&lambda_w_0, lambda_w_0_pointer + offset, sizeof(T));
-          memcpy(&lambda_w_2, lambda_w_2_pointer + offset, sizeof(T));
-          matrix_lambda_wd_0_[s](i, j) = lambda_w_0;
-          matrix_lambda_wd_2_[s](i, j) = lambda_w_2;
-          if(my_id != 0) {
-            memcpy(&lambda_w_1, lambda_w_1_pointer + offset, sizeof(T));
-            matrix_lambda_wd_1_[s](i, j) = lambda_w_1;
-          }
-          switch(my_id) {
-            case 0: {
-              out_previous_id_lambda_matrices[s](i, j) =
-                T(rd_values_previous_id[index]) + lambda_w_2;
-              out_my_id_lambda_matrices[s](i, j) =
-                T(rd_values_my_id[index]) + lambda_w_0;
-              break;
-            }
-            case 1: {
-              out_previous_id_lambda_matrices[s](i, j) =
-                T(rd_values_previous_id[index]) + lambda_w_0;
-              out_my_id_lambda_matrices[s](i, j) =
-                T(rd_values_my_id[index]) + lambda_w_1;
-              break;
-            }
-            case 2: {
-              out_previous_id_lambda_matrices[s](i, j) =
-                T(rd_values_previous_id[index]) + lambda_w_1;
-              out_my_id_lambda_matrices[s](i, j) =
-                T(rd_values_my_id[index]) + lambda_w_2;
-              break;
-            }
-          }
-          offset += sizeof(T);
-        }
-      }
+      AssignToMatrix(out_my_id_lambda_matrices[s], 
+                     lambda_z_my_id_pointer + lambda_z_offset);
+      AssignToMatrix(out_previous_id_lambda_matrices[s], 
+                     lambda_z_previous_id_pointer + lambda_z_offset);
+      lambda_z_offset += u * v * sizeof(T);
     }
-    assert(offset == u * v * number_of_simd_values * sizeof(T));
+    assert(lambda_z_offset == number_of_lambda_z_bytes);
   }
   matrix_out_wire->SetSetupIsReady();
-  
+    
   //Extend input lambdas
   std::vector<matrix<UInt128>> extended_a_my_id_lambda_matrices;
   std::vector<matrix<UInt128>> extended_a_previous_id_lambda_matrices;
@@ -2063,13 +2043,13 @@ void FpaMatrixMultiplicationGate<T>::EvaluateSetup() {
   }
   //Now the c_i values are in randoms_my_id[0,...,number_of_gamma_xy_bytes]
   
-  {
+  if (my_id == 0 || my_id == 2) { // S_1 does not send in SOCIUM
     auto payload = std::span<uint8_t const>(randoms_my_id.data(), number_of_gamma_xy_bytes);
-    auto message = communication::BuildMessage(kSwiftSetupMultiplyGate, gate_id_, payload);
+    auto message = communication::BuildMessage(kSociumSetupMultiplyGate, gate_id_, payload);
     communication_layer.SendMessage(next_id, message.Release());
   }
   
-  {
+  if (my_id == 0 || my_id == 1) { // S2 does not receive in SOCIUM
     auto message = matrix_multiply_future_setup_.get();
     const auto payload = communication::GetMessage(message.data())->payload();
     auto received_data = std::span<uint8_t const>{payload->Data(), payload->size()};
@@ -2083,6 +2063,7 @@ void FpaMatrixMultiplicationGate<T>::EvaluateSetup() {
                        gamma_xy_my_id_pointer + gamma_xy_offset);
         AssignToMatrix(gamma_xy_previous_id, 
                        gamma_xy_previous_id_pointer + gamma_xy_offset);
+
         triple_.AppendTriple(
           extended_a_my_id_lambda_matrices[s], 
           extended_a_previous_id_lambda_matrices[s],
@@ -2100,23 +2081,51 @@ void FpaMatrixMultiplicationGate<T>::EvaluateSetup() {
         }
         gamma_xy_offset += u * v * sizeof(UInt128);
       }
-      backend_.GetSwiftVerifier()->SetReady();
+      backend_.GetSociumVerifier()->SetReady();
+
       assert(gamma_xy_offset == number_of_gamma_xy_bytes);
     }
+  } else { // S2
+    matrix<UInt128> empty(u, v);
+    size_t gamma_xy_offset = 0;
+    uint8_t const* const gamma_xy_my_id_pointer = randoms_my_id.data();
+    for(size_t s = 0; s != number_of_simd_values; ++s) {
+      matrix<UInt128> gamma_xy_my_id(u, v);
+      AssignToMatrix(gamma_xy_my_id, 
+                     gamma_xy_my_id_pointer + gamma_xy_offset);
+
+      triple_.AppendTriple(
+        extended_a_my_id_lambda_matrices[s], 
+        extended_a_previous_id_lambda_matrices[s],
+        extended_b_my_id_lambda_matrices[s], 
+        extended_b_previous_id_lambda_matrices[s],
+        gamma_xy_my_id, 
+        empty);
+      for(size_t i = 0; i != u; ++i) {
+        for(size_t j = 0; j != v; ++j) {
+          matrix_gamma_xy_my_id_[s](i, j) = 
+            T(gamma_xy_my_id(i, j));
+        }
+      }
+      gamma_xy_offset += u * v * sizeof(UInt128);
+    }
+    backend_.GetSociumVerifier()->SetReady();
+
+    assert(gamma_xy_offset == number_of_gamma_xy_bytes);
   }
 }
 
 template<typename T>
 void FpaMatrixMultiplicationGate<T>::EvaluateOnline() {
-  using communication::MessageType::kSwiftOnlineMultiplyGate;
+  using communication::MessageType::kSociumOnlineMultiplyGate;
   using boost::numeric::ublas::matrix;
   auto& communication_layer = GetCommunicationLayer();
   auto my_id = communication_layer.GetMyId();
-  auto matrix_out_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(output_wires_[0]);
+  auto matrix_out_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(output_wires_[0]);
   assert(matrix_out_wire);
-  auto matrix_a_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_a_[0]);
+  auto matrix_a_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_a_[0]);
   assert(matrix_a_wire);
-  auto matrix_b_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_b_[0]);
+  auto matrix_b_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_b_[0]);
   assert(matrix_b_wire);
   size_t number_of_simd_values = matrix_a_wire->GetNumberOfSimdValues();
   assert(matrix_b_wire->GetNumberOfSimdValues() == number_of_simd_values);
@@ -2133,89 +2142,95 @@ void FpaMatrixMultiplicationGate<T>::EvaluateOnline() {
   auto& b_my_id_lambda_matrices = matrix_b_wire->GetMutableLambdaMyIdMatrices();
   auto& b_previous_id_lambda_matrices = matrix_b_wire->GetMutableLambdaPreviousIdMatrices();
   auto& out_value_matrices = matrix_out_wire->GetMutableValueMatrices();
+  auto& out_my_id_lambda_matrices = matrix_out_wire->GetMutableLambdaMyIdMatrices();
+  auto& out_previous_id_lambda_matrices = matrix_out_wire->GetMutableLambdaPreviousIdMatrices();
   
   size_t const u = a_my_id_lambda_matrices[0].size1();
   size_t const v = b_my_id_lambda_matrices[0].size2();
   
-  std::vector<matrix<T>> m_my_id, m_previous_id;
-  m_my_id.reserve(number_of_simd_values);
-  m_previous_id.reserve(number_of_simd_values);
+  std::vector<matrix<T>> t_my_id;
+  t_my_id.reserve(number_of_simd_values);
   
-  std::span<uint64_t const> r_values_my_id = truncation_pairs_.GetRsMyId();
-  std::span<uint64_t const> r_values_previous_id = truncation_pairs_.GetRsPreviousId();
   for(size_t s = 0; s != number_of_simd_values; ++s) {
-    matrix<T> matrix_r_my_id(u, v), matrix_r_previous_id(u, v);
-    for(size_t i = 0; i != u; ++i) {
-      for(size_t j = 0; j != v; ++j) {
-        size_t const index = s * u * v + i * v + j;
-        matrix_r_my_id(i, j) = T(r_values_my_id[index]);
-        matrix_r_previous_id(i, j) = T(r_values_previous_id[index]);
-      }
+    if (my_id == 1) {
+      t_my_id.emplace_back(
+        prod(a_value_matrices[s], b_previous_id_lambda_matrices[s])
+        + prod(a_previous_id_lambda_matrices[s], b_value_matrices[s])
+        + matrix_gamma_xy_previous_id_[s]
+        + prod(a_value_matrices[s], b_my_id_lambda_matrices[s])
+        + prod(a_my_id_lambda_matrices[s], b_value_matrices[s])
+        + matrix_gamma_xy_my_id_[s]
+      );
+      Truncate(t_my_id, precision_);
+      t_my_id[s] = t_my_id[s] - out_previous_id_lambda_matrices[s] - out_my_id_lambda_matrices[s];
+    } else if (my_id == 0) {
+      t_my_id.emplace_back(
+        prod(a_value_matrices[s], b_value_matrices[s])
+        + prod(a_value_matrices[s], b_previous_id_lambda_matrices[s])
+        + prod(a_previous_id_lambda_matrices[s], b_value_matrices[s])
+        + matrix_gamma_xy_previous_id_[s]
+      );
+      Truncate(t_my_id, precision_);
+      t_my_id[s] = t_my_id[s] - out_previous_id_lambda_matrices[s];
+    } else {
+      t_my_id.emplace_back(
+        prod(a_value_matrices[s], b_value_matrices[s])
+        + prod(a_value_matrices[s], b_my_id_lambda_matrices[s])
+        + prod(a_my_id_lambda_matrices[s], b_value_matrices[s])
+        + matrix_gamma_xy_my_id_[s]
+      );
+      Truncate(t_my_id, precision_);
+      t_my_id[s] = t_my_id[s] - out_my_id_lambda_matrices[s];
     }
-    m_my_id.emplace_back(
-      prod(a_value_matrices[s], b_my_id_lambda_matrices[s])
-      + prod(a_my_id_lambda_matrices[s], b_value_matrices[s])
-      + matrix_gamma_xy_my_id_[s] - matrix_r_my_id);
-    m_previous_id.emplace_back( 
-      prod(a_value_matrices[s], b_previous_id_lambda_matrices[s])
-      + prod(a_previous_id_lambda_matrices[s], b_value_matrices[s])
-      + matrix_gamma_xy_previous_id_[s] - matrix_r_previous_id);
   }
-  //m_my_id and m_previous_id contain W_i
   
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
+  auto multipy_hash_verifier = backend_.GetSociumMultiplyHashVerifier();
   if(my_id == 0) {
-    verifier_s1_message_data_.AssignData(m_previous_id);
-    multipy_hash_verifier->SetReady();
-    verifier_s2_message_data_.AssignData(m_my_id);
+    verifier_s1_message_data_.AssignData(t_my_id);
     multipy_hash_verifier->SetReady();
   }
   else if(my_id == 1) {
-    //We are S1 so we send W_0 to S2, which is m_previous_id
+    //We are S1 so we send T1 to S2, S0
     {
-      auto payload = SerializeMatrices(m_previous_id);
+      auto payload = SerializeMatrices(t_my_id);
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(2, message.Release());
     }
-  } else if(my_id == 2) {
-    //We are S2 so we send W_2 to S1, which is m_my_id
+    
     {
-      auto payload = SerializeMatrices(m_my_id);
+      auto payload = SerializeMatrices(t_my_id);
       auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
+      communication_layer.SendMessage(0, message.Release());
+    }
+  } else if(my_id == 2) {
+    //We are S2 so we send T2 to S1
+    {
+      auto payload = SerializeMatrices(t_my_id);
+      auto message = 
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
       communication_layer.SendMessage(1, message.Release());
     }
   } else {
     assert(false);
   }
+
   {
     auto message = matrix_multiply_future_online_.get();
     auto payload = communication::GetMessage(message.data())->payload();
-    std::vector<matrix<T>> m_missing_id = 
+    std::vector<matrix<T>> t_missing_id = 
       CreateMatrices<T>(u, v, number_of_simd_values);
     DeserializeMatrices(
-      m_missing_id, std::span<uint8_t const>{payload->Data(), payload->size()});
-    for(size_t s = 0; s != number_of_simd_values; ++s) {
-      //Compute [[Wd]]
-      out_value_matrices[s] = 
-        m_previous_id[s] + m_my_id[s] + m_missing_id[s]
-        + prod(a_value_matrices[s], b_value_matrices[s])
-        - matrix_lambda_wd_0_[s] - matrix_lambda_wd_1_[s]
-        - matrix_lambda_wd_2_[s];
-    }
-    if(my_id == 1) {
-      auto payload = SerializeMatrices(out_value_matrices);
-      auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
-      communication_layer.SendMessage(0, message.Release());
-    } else if(my_id == 2) {
-      verifier_s2_message_data_.AssignData(m_previous_id);
+      t_missing_id, std::span<uint8_t const>{payload->Data(), payload->size()});
+    if (my_id == 1) {
+      verifier_received_hash_data_.AssignData(t_missing_id);
       multipy_hash_verifier->SetReady();
     }
-    verifier_received_hash_data_.AssignData(m_missing_id);
-    multipy_hash_verifier->SetReady();
-    //lambdas Z has already been calculated in the setup phase
+    for(size_t s = 0; s != number_of_simd_values; ++s) {
+      out_value_matrices[s] = 
+        t_my_id[s] + t_missing_id[s];
+    }
   }
 }
 
@@ -2224,37 +2239,13 @@ template class FpaMatrixMultiplicationGate<std::uint16_t>;
 template class FpaMatrixMultiplicationGate<std::uint32_t>;
 template class FpaMatrixMultiplicationGate<std::uint64_t>;
 
-constexpr bool checkSignedShift() {
-  uint64_t unsigned_number = -2;
-  int64_t signed_number = unsigned_number;
-  return (signed_number >> 1) == -1;
-}
-
-static_assert(checkSignedShift(), "Signed shift is not supported on this platform");
-
-template<typename T>
-void Truncate(std::vector<boost::numeric::ublas::matrix<T>>& m, unsigned precision) {
-  for(size_t k = 0; k != m.size(); ++k)
-  for(size_t i = 0; i != m[k].size1(); ++i) {
-    for(size_t j = 0; j != m[k].size2(); ++j) {
-      T& element = m[k](i, j);
-      std::make_signed_t<T> signed_element = element;
-      signed_element >>= precision;
-      element = signed_element;
-    }
-  }
-}
-
 template<typename T>
 FpaMatrixMultiplicationConstantGate<T>::FpaMatrixMultiplicationConstantGate(
-  swift::MatrixWirePointer<T> matrix_a, size_t constant)
+  socium::MatrixWirePointer<T> matrix_a, size_t constant, unsigned precision)
 : OneGate(matrix_a->GetBackend()),
-  constant_(constant),
-  truncation_pairs_(backend_.GetSwiftTruncation()->AddTruncationPairs(
-    matrix_a->GetNumberOfSimdValues()
-    * matrix_a->GetMutableLambdaMyIdMatrices()[0].size1()
-    * matrix_a->GetMutableLambdaMyIdMatrices()[0].size2())) {
-  using communication::MessageType::kSwiftOnlineMultiplyGate;
+  constant_(constant), precision_(precision) {
+  using communication::MessageType::kSociumSetupMultiplyGate;
+  using communication::MessageType::kSociumOnlineMultiplyGate;
   size_t const u = matrix_a->GetMutableLambdaMyIdMatrices()[0].size1();
   size_t const v = matrix_a->GetMutableLambdaMyIdMatrices()[0].size2();
   size_t const number_of_simd_values = matrix_a->GetNumberOfSimdValues();
@@ -2262,54 +2253,29 @@ FpaMatrixMultiplicationConstantGate<T>::FpaMatrixMultiplicationConstantGate(
   parent_ = {std::move(matrix_a)};
   
   output_wires_ = 
-    {GetRegister().template EmplaceWire<swift::MatrixWire<T>>(backend_, u, v, number_of_simd_values)};
+    {GetRegister().template EmplaceWire<socium::MatrixWire<T>>(backend_, u, v, number_of_simd_values)};
 
   uint64_t my_id = GetCommunicationLayer().GetMyId();
   auto& message_manager = backend_.GetCommunicationLayer().GetMessageManager();
   if(my_id == 0) {
     matrix_multiply_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftOnlineMultiplyGate, gate_id_);
+      message_manager.RegisterReceive(1, kSociumOnlineMultiplyGate, gate_id_);
   } else if(my_id == 1) {
-    matrix_multiply_future_online_ = 
-      message_manager.RegisterReceive(2, kSwiftOnlineMultiplyGate, gate_id_);
+    matrix_multiply_future_setup_ = 
+      message_manager.RegisterReceive(0, kSociumSetupMultiplyGate, gate_id_);
   } else if(my_id == 2) {
-    matrix_multiply_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftOnlineMultiplyGate, gate_id_);
-  }
-  
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
-  if(my_id == 0) {
-    //We are S_0, so we reserve hash memory for the hash we will receive from S2
-    verifier_received_hash_data_ = 
-      multipy_hash_verifier->ReserveHashCheck(
-        u * v * number_of_simd_values * sizeof(T), 2);
-    //we also reserve memory for the hash we will be sending to S1 and S2
-    verifier_s1_message_data_ =
-      multipy_hash_verifier->ReserveHashMessage(
-        u * v * number_of_simd_values * sizeof(T), 1);
-    verifier_s2_message_data_ =
-      multipy_hash_verifier->ReserveHashMessage(
-        u * v * number_of_simd_values * sizeof(T), 2);
-  } else {
-    //We are S1 or S2 and thus will receive a hash from S0;
-    verifier_received_hash_data_ = 
-      multipy_hash_verifier->ReserveHashCheck(
-        u * v * number_of_simd_values * sizeof(T), 0);
-  }
-  if(my_id == 2) {
-    //We reserve memory for the hash we will be sending to S0
-    verifier_s2_message_data_ = 
-      multipy_hash_verifier->ReserveHashMessage(
-        u * v * number_of_simd_values * sizeof(T), 0);
+    matrix_multiply_future_setup_ = 
+      message_manager.RegisterReceive(0, kSociumSetupMultiplyGate, gate_id_);
   }
 }
 
 template<typename T>
 void FpaMatrixMultiplicationConstantGate<T>::EvaluateSetup() {
   using boost::numeric::ublas::matrix;
-  auto matrix_out_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(output_wires_[0]);
+  using communication::MessageType::kSociumSetupMultiplyGate;
+  auto matrix_out_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(output_wires_[0]);
   assert(matrix_out_wire);
-  auto matrix_a_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_[0]);
+  auto matrix_a_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_[0]);
   assert(matrix_a_wire);
   
   auto& a_my_id_lambda_matrices =
@@ -2320,46 +2286,102 @@ void FpaMatrixMultiplicationConstantGate<T>::EvaluateSetup() {
     matrix_out_wire->GetMutableLambdaMyIdMatrices();
   auto& out_previous_id_lambda_matrices =
     matrix_out_wire->GetMutableLambdaPreviousIdMatrices();
+  auto& out_value_matrices =
+    matrix_out_wire->GetMutableValueMatrices();
+
+  auto& communication_layer = GetCommunicationLayer();
+  uint64_t my_id = communication_layer.GetMyId();
+  uint64_t next_id = (my_id + 1) % 3;
+  uint64_t previous_id = (my_id + 2) % 3;
   
   size_t const number_of_simd_values = matrix_a_wire->GetNumberOfSimdValues();
   size_t const u = a_my_id_lambda_matrices[0].size1();
   size_t const v = a_my_id_lambda_matrices[0].size2();
+  size_t const u_v_elements = u * v * number_of_simd_values;
+  size_t const number_of_lambda_z_bytes = u_v_elements * sizeof(T);
+  size_t const random_bytes = number_of_lambda_z_bytes;
 
-  matrix_a_wire->GetSetupReadyCondition()->Wait();
-  backend_.GetSwiftTruncation()->GetRDoneCondition().Wait();
-  backend_.GetSwiftTruncation()->GetRDDoneCondition().Wait();
-  
-  std::span<uint64_t const> r_values_my_id = truncation_pairs_.GetRsMyId();
-  std::span<uint64_t const> r_values_previous_id = truncation_pairs_.GetRsPreviousId();
-  for(size_t s = 0; s != number_of_simd_values; ++s) {
-    matrix<T> matrix_r_my_id(u, v), matrix_r_previous_id(u, v);
-    for(size_t i = 0; i != u; ++i) {
-      for(size_t j = 0; j != v; ++j) {
-        size_t const index = s * u * v + i * v + j;
-        matrix_r_my_id(i, j) = T(r_values_my_id[index]);
-        matrix_r_previous_id(i, j) = T(r_values_previous_id[index]);
+  auto AssignToMatrix = [](auto& mat, uint8_t const* const data_pointer) {
+    using ArithmeticType = typename std::decay_t<decltype(mat)>::value_type;
+    size_t offset = 0;
+    for(size_t i = 0; i != mat.size1(); ++i) {
+      for(size_t j = 0; j != mat.size2(); ++j) {
+        ArithmeticType& v = mat(i, j);
+        memcpy(&v, data_pointer + offset, sizeof(ArithmeticType));
+        offset += sizeof(ArithmeticType);
       }
     }
-    out_previous_id_lambda_matrices[s] = 
-      constant_ * a_previous_id_lambda_matrices[s] - matrix_r_my_id;
-    out_my_id_lambda_matrices[s] = 
-      constant_ * a_my_id_lambda_matrices[s] - matrix_r_previous_id;
+  };
+
+  //We assume the role of S_i and generate the random numbers we share with S_i+1
+  auto& rng_i = backend_.GetBaseProvider().GetMyRandomnessGenerator(next_id);
+  //We assume the role of S_i+1 and generate the random numbers we share with S_i
+  auto& rng_i_minus_1 = backend_.GetBaseProvider().GetTheirRandomnessGenerator(previous_id);
+  std::vector<uint8_t> randoms_my_id = 
+    rng_i.template GetUnsigned<uint8_t>(gate_id_, random_bytes);
+  std::vector<uint8_t> randoms_previous_id = 
+    rng_i_minus_1.template GetUnsigned<uint8_t>(gate_id_, random_bytes);
+
+  // Sample output mask
+  {
+    size_t lambda_z_offset = 0;
+    uint8_t const* const lambda_z_my_id_pointer = 
+      randoms_my_id.data();
+    uint8_t const* const lambda_z_previous_id_pointer = 
+      randoms_previous_id.data();
+    for(size_t s = 0; s != number_of_simd_values; ++s) {
+      AssignToMatrix(out_my_id_lambda_matrices[s], 
+                     lambda_z_my_id_pointer + lambda_z_offset);
+      AssignToMatrix(out_previous_id_lambda_matrices[s], 
+                     lambda_z_previous_id_pointer + lambda_z_offset);
+      lambda_z_offset += u * v * sizeof(T);
+    }
+    assert(lambda_z_offset == number_of_lambda_z_bytes);
   }
-  
   matrix_out_wire->SetSetupIsReady();
+
+  if (my_id == 0) {
+    matrix_a_wire->GetSetupReadyCondition()->Wait();
+    std::vector<matrix<T>> t0, t2;
+    t0.reserve(number_of_simd_values);
+    t2.reserve(number_of_simd_values);
+    for(size_t s = 0; s != number_of_simd_values; ++s) {
+      t0.emplace_back(u, v);
+      t0[s] = constant_ * (a_my_id_lambda_matrices[s] + a_previous_id_lambda_matrices[s]);
+    }
+    Truncate(t0, precision_);
+    for(size_t s = 0; s != number_of_simd_values; ++s) {
+      t2.emplace_back(u, v);
+      t2[s] = t0[s] - out_previous_id_lambda_matrices[s];
+      out_value_matrices[s] = t2[s];
+      t0[s] = t0[s] - out_my_id_lambda_matrices[s];
+    }
+    auto payload = SerializeMatrices(t0);
+    auto message = 
+      communication::BuildMessage(kSociumSetupMultiplyGate, gate_id_, payload);
+    communication_layer.SendMessage(2, message.Release());
+    auto payload2 = SerializeMatrices(t2);
+    auto message2 = 
+      communication::BuildMessage(kSociumSetupMultiplyGate, gate_id_, payload2);
+    communication_layer.SendMessage(1, message2.Release());
+  } else {
+    auto message = matrix_multiply_future_setup_.get();
+    const auto payload = communication::GetMessage(message.data())->payload();
+    DeserializeMatrices(out_value_matrices, std::span<uint8_t const>{payload->Data(), payload->size()});
+  }
 }
 
 template<typename T>
 void FpaMatrixMultiplicationConstantGate<T>::EvaluateOnline() {
-  using communication::MessageType::kSwiftOnlineMultiplyGate;
+  using communication::MessageType::kSociumOnlineMultiplyGate;
   using boost::numeric::ublas::matrix;
   auto& communication_layer = GetCommunicationLayer();
   auto my_id = communication_layer.GetMyId();
   auto matrix_out_wire = 
-    std::dynamic_pointer_cast<swift::MatrixWire<T>>(output_wires_[0]);
+    std::dynamic_pointer_cast<socium::MatrixWire<T>>(output_wires_[0]);
   assert(matrix_out_wire);
   auto matrix_a_wire =
-    std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_[0]);
+    std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_[0]);
   assert(matrix_a_wire);
   size_t const number_of_simd_values = 
     matrix_a_wire->GetNumberOfSimdValues();
@@ -2370,6 +2392,10 @@ void FpaMatrixMultiplicationConstantGate<T>::EvaluateOnline() {
   
   auto& a_value_matrices =
     matrix_a_wire->GetMutableValueMatrices();
+  auto& a_my_id_lambda_matrices =
+    matrix_a_wire->GetMutableLambdaMyIdMatrices();
+  auto& a_previous_id_lambda_matrices =
+    matrix_a_wire->GetMutableLambdaPreviousIdMatrices();
   auto& out_value_matrices =
     matrix_out_wire->GetMutableValueMatrices();
   auto& out_my_id_lambda_matrices =
@@ -2379,73 +2405,47 @@ void FpaMatrixMultiplicationConstantGate<T>::EvaluateOnline() {
   
   size_t const u = a_value_matrices[0].size1();
   size_t const v = a_value_matrices[0].size2();
-  
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
-  if(my_id == 0) {
-    verifier_s1_message_data_.AssignData(out_previous_id_lambda_matrices);
-    multipy_hash_verifier->SetReady();
-    verifier_s2_message_data_.AssignData(out_my_id_lambda_matrices);
-    multipy_hash_verifier->SetReady();
-  }
-  else if(my_id == 1) {
-    //We are S1 so we send lambda_y0 to S2
-    {
-      auto payload = SerializeMatrices(out_previous_id_lambda_matrices);
-      auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
-      communication_layer.SendMessage(2, message.Release());
+
+  if (my_id == 1) {
+    std::vector<matrix<T>> t1;
+    t1.reserve(number_of_simd_values);
+    for(size_t s = 0; s != number_of_simd_values; ++s) {
+      t1.emplace_back(u, v);
+      t1[s] = constant_ * (a_value_matrices[s] + a_my_id_lambda_matrices[s]);
     }
-  } else if(my_id == 2) {
-    //We are S2 so we send lambda_y2 to S1
-    {
-      auto payload = SerializeMatrices(out_my_id_lambda_matrices);
-      auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
-      communication_layer.SendMessage(1, message.Release());
+    Truncate(t1, precision_);
+    for(size_t s = 0; s != number_of_simd_values; ++s) {
+      t1[s] = t1[s] - out_my_id_lambda_matrices[s];
+      out_value_matrices[s] = out_value_matrices[s] + t1[s] - out_previous_id_lambda_matrices[s];
     }
-  } else {
-    assert(false);
-  }
-  
-  {
+
+    {
+      auto payload = SerializeMatrices(t1);
+      auto message = 
+        communication::BuildMessage(kSociumOnlineMultiplyGate, gate_id_, payload);
+      communication_layer.SendMessage(0, message.Release());
+    }
+  } else if (my_id == 2) {
+    std::vector<matrix<T>> t1;
+    t1.reserve(number_of_simd_values);
+    for(size_t s = 0; s != number_of_simd_values; ++s) {
+      t1.emplace_back(u, v);
+      t1[s] = constant_ * (a_value_matrices[s] + a_previous_id_lambda_matrices[s]);
+    }
+    Truncate(t1, precision_);
+    for(size_t s = 0; s != number_of_simd_values; ++s) {
+      t1[s] = t1[s] - out_previous_id_lambda_matrices[s];
+      out_value_matrices[s] = out_value_matrices[s] + t1[s] - out_my_id_lambda_matrices[s];
+    }
+  } else if (my_id == 0) {
     auto message = matrix_multiply_future_online_.get();
     auto payload = communication::GetMessage(message.data())->payload();
-    std::vector<matrix<T>> lambda_missing_id = 
+    std::vector<matrix<T>> t1 = 
       CreateMatrices<T>(u, v, number_of_simd_values);
-    DeserializeMatrices(
-      lambda_missing_id, 
-      std::span<uint8_t const>{payload->Data(), payload->size()});
-    
-    std::span<uint64_t const> rd_values_my_id = truncation_pairs_.GetRdsMyId();
-    std::span<uint64_t const> rd_values_previous_id = truncation_pairs_.GetRdsPreviousId();
+    DeserializeMatrices(t1, std::span<uint8_t const>{payload->Data(), payload->size()});
     for(size_t s = 0; s != number_of_simd_values; ++s) {
-      out_value_matrices[s] =
-        constant_* a_value_matrices[s]
-        + out_previous_id_lambda_matrices[s]
-        + out_my_id_lambda_matrices[s]
-        + lambda_missing_id[s];
-      
-      for(size_t i = 0; i != u; ++i) {
-        for(size_t j = 0; j != v; ++j) {
-          size_t const index = s * u * v + i * v + j;
-          out_my_id_lambda_matrices[s](i, j) +=
-            T(rd_values_my_id[index]);
-          out_previous_id_lambda_matrices[s](i, j) +=
-            T(rd_values_previous_id[index]);
-        }
-      }
+      out_value_matrices[s] += t1[s] - out_my_id_lambda_matrices[s];
     }
-    if(my_id == 1) {
-      auto payload = SerializeMatrices(out_my_id_lambda_matrices);
-      auto message = 
-        communication::BuildMessage(kSwiftOnlineMultiplyGate, gate_id_, payload);
-      communication_layer.SendMessage(0, message.Release());
-    } else if(my_id == 2) {
-      verifier_s2_message_data_.AssignData(out_previous_id_lambda_matrices);
-      multipy_hash_verifier->SetReady();
-    }
-    verifier_received_hash_data_.AssignData(lambda_missing_id);
-    multipy_hash_verifier->SetReady();
   }
 }
 
@@ -2457,13 +2457,13 @@ template class FpaMatrixMultiplicationConstantGate<std::uint64_t>;
 template<typename T>
 BitAGate<T>::BitAGate(BitMatrixWirePointer bit_matrix_wire)
 : OneGate(bit_matrix_wire->GetBackend()),
-  triple_(backend_.GetSwiftVerifier()->ReserveTriples128(
+  triple_(backend_.GetSociumVerifier()->ReserveTriples128(
     2 * bit_matrix_wire->GetMatrixSimdValues() 
       * bit_matrix_wire->GetNumberOfRows()
       * bit_matrix_wire->GetNumberOfColumns())) {
-  using communication::MessageType::kSwiftBitASetupD;
-  using communication::MessageType::kSwiftBitASetupF;
-  using communication::MessageType::kSwiftBitAOnline;
+  using communication::MessageType::kSociumBitASetupD;
+  using communication::MessageType::kSociumBitASetupF;
+  using communication::MessageType::kSociumBitAOnline;
   
   parent_ = {bit_matrix_wire};
   
@@ -2480,45 +2480,33 @@ BitAGate<T>::BitAGate(BitMatrixWirePointer bit_matrix_wire)
   auto& message_manager = backend_.GetCommunicationLayer().GetMessageManager();
   
   bit_a_future_setup_d_ = 
-    message_manager.RegisterReceive(previous_id, kSwiftBitASetupD, gate_id_);
-  bit_a_future_setup_f_ = 
-    message_manager.RegisterReceive(previous_id, kSwiftBitASetupF, gate_id_);
+    message_manager.RegisterReceive(previous_id, kSociumBitASetupD, gate_id_);
+  if (my_id != 2) { // S2 does not receive in second setup mult
+    bit_a_future_setup_f_ = 
+      message_manager.RegisterReceive(previous_id, kSociumBitASetupF, gate_id_);
+  }
     
   if(my_id == 0) {
     bit_a_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftBitAOnline, gate_id_);
+      message_manager.RegisterReceive(1, kSociumBitAOnline, gate_id_);
   } else if(my_id == 1) {
     bit_a_future_online_ = 
-      message_manager.RegisterReceive(2, kSwiftBitAOnline, gate_id_);
+      message_manager.RegisterReceive(2, kSociumBitAOnline, gate_id_);
   } else if(my_id == 2) {
     bit_a_future_online_ = 
-      message_manager.RegisterReceive(1, kSwiftBitAOnline, gate_id_);
+      message_manager.RegisterReceive(1, kSociumBitAOnline, gate_id_);
   }
    
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
+  auto multipy_hash_verifier = backend_.GetSociumMultiplyHashVerifier();
   if(my_id == 0) {
-    //We are S_0, so we reserve hash memory for the hash we will receive from S2
-    verifier_received_hash_data_ = 
-      multipy_hash_verifier->ReserveHashCheck(
-        number_of_simd_values * sizeof(T), 2);
-    //we also reserve memory for the hash we will be sending to S1 and S2
+    //We are S_0, so we reserve memory for the hash we will be sending to S1
     verifier_s1_message_data_ =
       multipy_hash_verifier->ReserveHashMessage(
         number_of_simd_values * sizeof(T), 1);
-    verifier_s2_message_data_ =
-      multipy_hash_verifier->ReserveHashMessage(
-        number_of_simd_values * sizeof(T), 2);
-  } else {
-    //We are S1 or S2 and thus will receive a hash from S0;
+  } else if (my_id == 1) {
+    //We are S1 and thus will receive a hash from S0;
     verifier_received_hash_data_ = 
       multipy_hash_verifier->ReserveHashCheck(
-        number_of_simd_values * sizeof(T), 0);
-  }
-  
-  if(my_id == 2) {
-    //We reserve memory for the hash we will be sending to S0
-    verifier_s2_message_data_ = 
-      multipy_hash_verifier->ReserveHashMessage(
         number_of_simd_values * sizeof(T), 0);
   }
 }
@@ -2526,8 +2514,8 @@ BitAGate<T>::BitAGate(BitMatrixWirePointer bit_matrix_wire)
 template<typename T>
 void BitAGate<T>::EvaluateSetup() {
   using boost::numeric::ublas::matrix;
-  using communication::MessageType::kSwiftBitASetupD;
-  using communication::MessageType::kSwiftBitASetupF;
+  using communication::MessageType::kSociumBitASetupD;
+  using communication::MessageType::kSociumBitASetupF;
   
   auto& communication_layer = GetCommunicationLayer();
   uint64_t my_id = communication_layer.GetMyId();
@@ -2595,11 +2583,14 @@ void BitAGate<T>::EvaluateSetup() {
     }
   }
   matrix_out_wire->SetSetupIsReady();
+    
+  //We don't actually compute matrices A (lambda_0), B (lambda_1), C (lambda_2)
   
-  bit_matrix_wire->GetSetupReadyCondition()->Wait();
-  //Calculate D_my_id, D_previous_id
+  //Calculate D_my_id, D_previous_id where D = A [component wise *] B. 
+  // This is a Socium setup mult as we need to chain it with another setup mult that then is Socium
   std::vector<matrix<UInt128>> D_my_id;
   D_my_id.reserve(number_of_simd_values);
+  bit_matrix_wire->GetSetupReadyCondition()->Wait();
   {
     size_t offset = 0;
     size_t bit_offset = 0;
@@ -2626,6 +2617,8 @@ void BitAGate<T>::EvaluateSetup() {
               break;
             }
             case 1: {
+              // Since a_1 = b_0 = 0,
+              // a_1 * b_1 + a_1 * b_0 + a_0 * b_1 = a_0 * b_1
               UInt128 a_0 = bit_matrix_lambdas_previous_id.Get(bit_offset);
               UInt128 b_1 = bit_matrix_lambdas_my_id.Get(bit_offset);
               D_my_id[s](i, j) = a_0 * b_1 + alpha_my_id - alpha_previous_id;
@@ -2650,7 +2643,7 @@ void BitAGate<T>::EvaluateSetup() {
   {
     auto payload = SerializeMatrices(D_my_id);
     auto message = 
-      communication::BuildMessage(kSwiftBitASetupD, gate_id_, payload);
+      communication::BuildMessage(kSociumBitASetupD, gate_id_, payload);
     communication_layer.SendMessage(next_id, message.Release());
   }
   
@@ -2693,7 +2686,7 @@ void BitAGate<T>::EvaluateSetup() {
               UInt128 a_2 = 0;
               UInt128 b_1 = bit_matrix_lambdas_previous_id.Get(bit_offset);
               UInt128 b_2 = 0;
-              UInt128 d_1 = D_previous_id[s](i, j);
+              UInt128 d_1 = D_previous_id[s](i, j); // is ignored anyways as Socium
               UInt128 d_2 = D_my_id[s](i, j);
               triple_.AppendTriple(a_2, a_1, b_2, b_1, d_2, d_1);
               break;
@@ -2705,10 +2698,11 @@ void BitAGate<T>::EvaluateSetup() {
     }
   }
   
-  //Calculate F_my_id, F_previous_id
+  //Calculate F_my_id, F_previous_id where F = C [component wise *] (A + B - 2 * D).
+  // A + B - 2 * D = E
+  // This is normal Socium setup mult
   std::vector<matrix<UInt128>> F_my_id;
   F_my_id.reserve(number_of_simd_values);
-
   {
     size_t offset = 0;
     size_t bit_offset = 0;
@@ -2729,6 +2723,10 @@ void BitAGate<T>::EvaluateSetup() {
                  sizeof(UInt128));
           switch(my_id) {
             case 0: {
+              //Since c_0 = 0,
+              // c_0 * e_0 + c_0 * e_2 + c_2 * e_0 = c_2 * e_0.
+              // Also, since b_0 = 0,
+              // a_0 + b_0 - 2 * d_0 = a_0 - 2 * d_0.
               UInt128 a_0 = bit_matrix_lambdas_my_id.Get(bit_offset);
               UInt128 c_2 = bit_matrix_lambdas_previous_id.Get(bit_offset);
               UInt128 E_0_value = a_0 - 2*D_my_id[s](i, j);
@@ -2743,6 +2741,11 @@ void BitAGate<T>::EvaluateSetup() {
               break;
             }
             case 2: {
+              //Since c_1 = 0,
+              // c_2 * e_2 + c_2 * e_1 + c_1 * e_2 = c_2 * e_2 + c_2 * e_1.
+              // Also, since b_2 = b_2 = a_1 = 0,
+              // a_2 + b_2 - 2 * d_2 = - 2 * d_0 and
+              // a_1 + b_1 - 2 * d_1 = b_1 - 2 * d_0.
               UInt128 b_1 = bit_matrix_lambdas_previous_id.Get(bit_offset);
               UInt128 c_2 = bit_matrix_lambdas_my_id.Get(bit_offset);
               UInt128 E_1_value = b_1 - 2*D_my_id[s](i, j);
@@ -2762,14 +2765,14 @@ void BitAGate<T>::EvaluateSetup() {
   std::vector<matrix<UInt128>> F_previous_id = 
     CreateMatrices<UInt128>(u, v, number_of_simd_values);
   
-  {
+  if (my_id == 0 || my_id == 2) { // S1 does not send in Socium
     auto payload = SerializeMatrices(F_my_id);
     auto message = 
-      communication::BuildMessage(kSwiftBitASetupF, gate_id_, payload);
+      communication::BuildMessage(kSociumBitASetupF, gate_id_, payload);
     communication_layer.SendMessage(next_id, message.Release());
   }
   
-  {
+  if (my_id == 0 || my_id == 1) { // S2 does not receive in Socium
     auto message = bit_a_future_setup_f_.get();
     auto payload = communication::GetMessage(message.data())->payload();
     DeserializeMatrices(
@@ -2818,9 +2821,9 @@ void BitAGate<T>::EvaluateSetup() {
               UInt128 d_2 = D_my_id[s](i, j);
               UInt128 e_1 = b_1 - 2*d_1;
               UInt128 e_2 = -2*d_2;
-              UInt128 f_1 = F_previous_id[s](i, j);
+              UInt128 empty = 0; // Socium
               UInt128 f_2 = F_my_id[s](i, j);
-              triple_.AppendTriple(c_2, c_1, e_2, e_1, f_2, f_1);
+              triple_.AppendTriple(c_2, c_1, e_2, e_1, f_2, empty);
               break;
             }
           }
@@ -2829,11 +2832,13 @@ void BitAGate<T>::EvaluateSetup() {
       }
     }
   }
-  backend_.GetSwiftVerifier()->SetReady();
+  backend_.GetSociumVerifier()->SetReady();
   
   //Calculate H
   H_my_id.reserve(number_of_simd_values);
-  H_previous_id.reserve(number_of_simd_values);
+  if (my_id == 0 || my_id == 1) { // Incomplete sharing, S2 does not have previous
+    H_previous_id.reserve(number_of_simd_values);
+  }
   {
     size_t offset = 0;
     size_t bit_offset = 0;
@@ -2866,13 +2871,9 @@ void BitAGate<T>::EvaluateSetup() {
               break;
             }
             case 2: {
-              UInt128 b_1 = bit_matrix_lambdas_previous_id.Get(bit_offset);
               UInt128 c_2 = bit_matrix_lambdas_my_id.Get(bit_offset);
-              UInt128 E_1_value = b_1 - 2*D_my_id[s](i, j);
               UInt128 E_2_value = -2*D_previous_id[s](i, j);
-              UInt128 G_1_value = E_1_value - 2*F_previous_id[s](i, j);
               UInt128 G_2_value = c_2 + E_2_value - 2*F_my_id[s](i, j);
-              H_previous_id[s](i, j) = T(G_1_value);
               H_my_id[s](i, j) = T(G_2_value);
               break;
             }
@@ -2888,7 +2889,7 @@ void BitAGate<T>::EvaluateSetup() {
 template<typename T>
 void BitAGate<T>::EvaluateOnline() {
   using boost::numeric::ublas::matrix;
-  using communication::MessageType::kSwiftBitAOnline;
+  using communication::MessageType::kSociumBitAOnline;
   
   auto& communication_layer = GetCommunicationLayer();
   uint64_t my_id = communication_layer.GetMyId();
@@ -2917,7 +2918,7 @@ void BitAGate<T>::EvaluateOnline() {
   
   std::vector<matrix<T>> lambda_Y_my_id, lambda_Y_previous_id;
   lambda_Y_my_id.reserve(number_of_simd_values);
-  lambda_Y_previous_id.reserve(number_of_simd_values);
+  lambda_Y_previous_id.reserve(number_of_simd_values); // For S1, this will be Y0+Y1
   {
     size_t bit_offset = 0;
     for(size_t s = 0; s != number_of_simd_values; ++s) {
@@ -2928,49 +2929,49 @@ void BitAGate<T>::EvaluateOnline() {
           lambda_Y_my_id[s](i, j) = 
             H_my_id[s](i, j) * (1 - 2*bit_matrix_values[bit_offset])
             - out_lambda_my_id_matrices[s](i, j);
-          lambda_Y_previous_id[s](i, j) = 
-            H_previous_id[s](i, j) * (1 - 2*bit_matrix_values[bit_offset])
-            - out_lambda_previous_id_matrices[s](i, j);
+          if (my_id == 0 || my_id == 1) { // Socium, so S2 does not have H1
+            lambda_Y_previous_id[s](i, j) = 
+              H_previous_id[s](i, j) * (1 - 2*bit_matrix_values[bit_offset])
+              - out_lambda_previous_id_matrices[s](i, j);
+          }
+          if (my_id == 1) { // see above, Y0+Y1
+            lambda_Y_previous_id[s](i, j) += lambda_Y_my_id[s](i, j);
+          }
           bit_offset += 1;
         }
       }
     }
   }
   
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
+  auto multipy_hash_verifier = backend_.GetSociumMultiplyHashVerifier();
   if(my_id == 0) {
     verifier_s1_message_data_.AssignData(lambda_Y_previous_id);
     multipy_hash_verifier->SetReady();
-    verifier_s2_message_data_.AssignData(lambda_Y_my_id);
-    multipy_hash_verifier->SetReady();
   }
   else if(my_id == 1) {
-    //We are S1 so we send lambda_Y_0 to S2, which is lambda_Y_previous_id
-    //and lambda_Y_1 to S0, which is lambda_Y_my_id
+    //We are S1 so we send lambda_Y_0+lambda_Y_1 to S2 and lambda_Y_0+lambda_Y_1 to S0
+    // Both values already written to lambda_Y_0
     {
       auto payload = SerializeMatrices(lambda_Y_previous_id);
       auto message = 
-        communication::BuildMessage(kSwiftBitAOnline, gate_id_, payload);
+        communication::BuildMessage(kSociumBitAOnline, gate_id_, payload);
       communication_layer.SendMessage(2, message.Release());
     }
     
     {
-      auto payload = SerializeMatrices(lambda_Y_my_id);
+      auto payload = SerializeMatrices(lambda_Y_previous_id);
       auto message = 
-        communication::BuildMessage(kSwiftBitAOnline, gate_id_, payload);
+        communication::BuildMessage(kSociumBitAOnline, gate_id_, payload);
       communication_layer.SendMessage(0, message.Release());
     }
   } else if(my_id == 2) {
     //We are S2 so we send lambda_Y_2 to S1, which is lambda_Y_my_id
-    //and H(lambda_Y_1) which is H(lambda_Y_previous_id)
     {
       auto payload = SerializeMatrices(lambda_Y_my_id);
       auto message = 
-        communication::BuildMessage(kSwiftBitAOnline, gate_id_, payload);
+        communication::BuildMessage(kSociumBitAOnline, gate_id_, payload);
       communication_layer.SendMessage(1, message.Release());
     }
-    verifier_s2_message_data_.AssignData(lambda_Y_previous_id);
-    multipy_hash_verifier->SetReady();
   } else {
     assert(false);
   }
@@ -2988,17 +2989,28 @@ void BitAGate<T>::EvaluateOnline() {
       for(size_t s = 0; s != number_of_simd_values; ++s) {
         for(size_t i = 0; i != u; ++i) {
           for(size_t j = 0; j != v; ++j) {
-            out_value_matrices[s](i, j) = 
-              bit_matrix_values[bit_offset] + lambda_Y_previous_id[s](i, j)
-              + lambda_Y_my_id[s](i, j) + lambda_Y_missing_id[s](i, j);
+            if (my_id == 0) { // Got Y0+Y1, have Y2
+              out_value_matrices[s](i, j) = 
+                bit_matrix_values[bit_offset] + lambda_Y_missing_id[s](i, j) + lambda_Y_previous_id[s](i, j);
+            } else if (my_id == 1) { // Got Y2, have Y0+Y1 (in prev)
+              out_value_matrices[s](i, j) = 
+                bit_matrix_values[bit_offset] + lambda_Y_missing_id[s](i, j) + lambda_Y_previous_id[s](i, j);
+            } else if (my_id == 2) { // Got Y0+Y1, have Y2
+              out_value_matrices[s](i, j) = 
+                bit_matrix_values[bit_offset] + lambda_Y_missing_id[s](i, j) + lambda_Y_my_id[s](i, j);
+            } else {
+              assert(false);
+            }
             bit_offset += 1;
           }
         }
       }
     }
-    
-    verifier_received_hash_data_.AssignData(lambda_Y_missing_id);
-    multipy_hash_verifier->SetReady();
+
+    if (my_id == 1) {
+      verifier_received_hash_data_.AssignData(lambda_Y_missing_id);
+      multipy_hash_verifier->SetReady();
+    }
   }
 }
 
@@ -3010,7 +3022,7 @@ template class BitAGate<std::uint64_t>;
 template<typename T>
 MsbGate<T>::MsbGate(MatrixWirePointer<T> const& matrix_wire)
 : Base(matrix_wire->GetBackend()) {
-  using communication::MessageType::kSwiftMsb;
+  using communication::MessageType::kSociumMsb;
   parent_ = {matrix_wire};
   size_t const u = matrix_wire->GetMutableLambdaMyIdMatrices()[0].size1();
   size_t const v = matrix_wire->GetMutableLambdaPreviousIdMatrices()[0].size2();
@@ -3021,7 +3033,7 @@ MsbGate<T>::MsbGate(MatrixWirePointer<T> const& matrix_wire)
   size_t const number_of_wires = sizeof(T) * CHAR_BIT;
   size_t const number_of_bits = u * v * number_of_simd_values; 
   
-  std::vector<swift::BooleanWirePointer> S_, T_;
+  std::vector<socium::BooleanWirePointer> S_, T_;
   A_.reserve(number_of_wires);
   B_.reserve(number_of_wires);
   C_.reserve(number_of_wires);
@@ -3030,19 +3042,19 @@ MsbGate<T>::MsbGate(MatrixWirePointer<T> const& matrix_wire)
 
   for(size_t s = 0; s != number_of_wires; ++s) {
     A_.emplace_back(
-      std::make_shared<swift::BooleanWire>(
+      std::make_shared<socium::BooleanWire>(
         backend_,
         BitVector<>(number_of_bits, false), 
         BitVector<>(number_of_bits, false), 
         BitVector<>(number_of_bits, false)));
     B_.emplace_back(
-      std::make_shared<swift::BooleanWire>(
+      std::make_shared<socium::BooleanWire>(
         backend_,
         BitVector<>(number_of_bits, false), 
         BitVector<>(number_of_bits, false), 
         BitVector<>(number_of_bits, false)));
     C_.emplace_back(
-      std::make_shared<swift::BooleanWire>(
+      std::make_shared<socium::BooleanWire>(
         backend_,
         BitVector<>(number_of_bits, false), 
         BitVector<>(number_of_bits, false), 
@@ -3050,54 +3062,39 @@ MsbGate<T>::MsbGate(MatrixWirePointer<T> const& matrix_wire)
     
     //Build Circuit for S_k
     auto xor_gate_0 = backend_.GetRegister()->EmplaceGate<XorGate>(A_[s], B_[s]);
-    auto xor_wire_0 = std::dynamic_pointer_cast<swift::BooleanWire>(xor_gate_0->GetOutputWires()[0]);
+    auto xor_wire_0 = std::dynamic_pointer_cast<socium::BooleanWire>(xor_gate_0->GetOutputWires()[0]);
     assert(xor_wire_0);
     auto xor_gate_1 = backend_.GetRegister()->EmplaceGate<XorGate>(xor_wire_0, C_[s]);
-    auto xor_wire_1 = std::dynamic_pointer_cast<swift::BooleanWire>(xor_gate_1->GetOutputWires()[0]);
+    auto xor_wire_1 = std::dynamic_pointer_cast<socium::BooleanWire>(xor_gate_1->GetOutputWires()[0]);
     assert(xor_wire_1);
     S_.emplace_back(xor_wire_1);
     
     //Build Circuit for T_k
     //A[s] ^ B[s] is already calculated as xor_gate_0
     auto xor_gate_2 = backend_.GetRegister()->EmplaceGate<XorGate>(A_[s], C_[s]);
-    auto xor_wire_2 = std::dynamic_pointer_cast<swift::BooleanWire>(xor_gate_2->GetOutputWires()[0]);
+    auto xor_wire_2 = std::dynamic_pointer_cast<socium::BooleanWire>(xor_gate_2->GetOutputWires()[0]);
     assert(xor_wire_2);
     auto and_gate_0 = backend_.GetRegister()->EmplaceGate<AndGate>(xor_wire_0, xor_wire_2);
-    auto and_wire_0 = std::dynamic_pointer_cast<swift::BooleanWire>(and_gate_0->GetOutputWires()[0]);
+    auto and_wire_0 = std::dynamic_pointer_cast<socium::BooleanWire>(and_gate_0->GetOutputWires()[0]);
     assert(and_wire_0);
     auto xor_gate_3 = backend_.GetRegister()->EmplaceGate<XorGate>(A_[s], and_wire_0);
-    auto xor_wire_3 = std::dynamic_pointer_cast<swift::BooleanWire>(xor_gate_3->GetOutputWires()[0]);
+    auto xor_wire_3 = std::dynamic_pointer_cast<socium::BooleanWire>(xor_gate_3->GetOutputWires()[0]);
     assert(xor_wire_3);
     T_.emplace_back(xor_wire_3);
   }
-  PPA_ = swift::MsbAdd(S_, T_);
+  PPA_ = socium::MsbAdd(S_, T_);
   
   assert(number_of_bits == PPA_->GetValues().GetSize());
   assert(number_of_bits == PPA_->GetLambdasMyId().GetSize());
   assert(number_of_bits == PPA_->GetLambdasPreviousId().GetSize());
   output_wires_ =
-    {GetRegister().template EmplaceWire<swift::BitMatrixWire>(
+    {GetRegister().template EmplaceWire<socium::BitMatrixWire>(
        backend_, PPA_->GetValues(), PPA_->GetLambdasMyId(), 
        PPA_->GetLambdasPreviousId(), u, v, number_of_simd_values)};
-
+  
   if(my_id == 0) {
     auto& message_manager = communication_layer.GetMessageManager();
-    msb_future_ = message_manager.RegisterReceive(1, kSwiftMsb, gate_id_);
-  }
-  
-  
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
-  if(my_id == 0) {
-    //S0 will receive a hash from S2
-    verifier_data_ = 
-      multipy_hash_verifier->ReserveHashCheck(
-        number_of_simd_values * sizeof(T), 2);
-  } else if(my_id == 2) {
-    //S2 will send a hash to S0, so reserve that memory
-    verifier_data_ =
-      multipy_hash_verifier->ReserveHashMessage(
-        number_of_simd_values * sizeof(T), 0);
-      
+    msb_future_ = message_manager.RegisterReceive(1, kSociumMsb, gate_id_);
   }
 }
 
@@ -3107,13 +3104,13 @@ void MsbGate<T>::EvaluateSetup() {
   using boost::numeric::ublas::matrix;
   auto& communication_layer = GetCommunicationLayer();
   uint64_t my_id = communication_layer.GetMyId();
-  auto matrix_in_wire = std::dynamic_pointer_cast<swift::MatrixWire<T>>(parent_[0]);
+  auto matrix_in_wire = std::dynamic_pointer_cast<socium::MatrixWire<T>>(parent_[0]);
   assert(matrix_in_wire);
   auto const& matrix_in_lambdas_my_id = 
     matrix_in_wire->GetMutableLambdaMyIdMatrices();
   auto const& matrix_in_lambdas_previous_id = 
     matrix_in_wire->GetMutableLambdaPreviousIdMatrices();
-  auto out_wire = std::dynamic_pointer_cast<swift::BitMatrixWire>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::BitMatrixWire>(output_wires_[0]);
   assert(out_wire);
 
   matrix_in_wire->GetSetupReadyCondition()->Wait();
@@ -3238,7 +3235,7 @@ void MsbGate<T>::EvaluateSetup() {
 template<typename T>
 void MsbGate<T>::EvaluateOnline() {
   using boost::numeric::ublas::matrix;
-  using communication::MessageType::kSwiftMsb;
+  using communication::MessageType::kSociumMsb;
   WaitSetup();
   assert(setup_is_ready_);
   
@@ -3247,7 +3244,7 @@ void MsbGate<T>::EvaluateOnline() {
   
   auto matrix_in_wire = std::dynamic_pointer_cast<MatrixWire<T>>(parent_[0]);
   assert(matrix_in_wire);
-  auto out_wire = std::dynamic_pointer_cast<swift::BitMatrixWire>(output_wires_[0]);
+  auto out_wire = std::dynamic_pointer_cast<socium::BitMatrixWire>(output_wires_[0]);
   assert(out_wire);
   auto const& matrix_in_lambdas_my_id = 
     matrix_in_wire->GetMutableLambdaMyIdMatrices();
@@ -3263,7 +3260,7 @@ void MsbGate<T>::EvaluateOnline() {
   matrix_in_wire->GetIsReadyCondition().Wait();
   
   std::vector<uint8_t> payload;
-  if(my_id != 0) {
+  if(my_id == 1) {
     payload.reserve(BitsToBytes(number_of_bits) * number_of_wires);
   }
   for(size_t k = 0; k != number_of_wires; ++k) {
@@ -3290,7 +3287,7 @@ void MsbGate<T>::EvaluateOnline() {
         }
         assert(index == number_of_bits);
       };
-    //lambda_c_k is already in value_c_k
+    //lambda_c_k is already in S_k_values
     auto& C_k_values = C_[k]->GetMutableValues();
     switch(my_id) {
       case 0: {
@@ -3319,10 +3316,8 @@ void MsbGate<T>::EvaluateOnline() {
     }
   }
   
-  auto multipy_hash_verifier = backend_.GetSwiftMultiplyHashVerifier();
-  switch(my_id) {
-    case 0: {
-      auto message = msb_future_.get();
+  if (my_id == 0) {
+    auto message = msb_future_.get();
       auto payload = communication::GetMessage(message.data())->payload();
       for(size_t k = 0; k != number_of_wires; ++k) {
         auto& C_k_values = C_[k]->GetMutableValues();
@@ -3331,20 +3326,10 @@ void MsbGate<T>::EvaluateOnline() {
         B_[k]->SetOnlineFinished();
         C_[k]->SetOnlineFinished();
       }
-      std::span<uint8_t const> spn(payload->Data(), payload->size());
-      verifier_data_.AssignData(spn);
-      multipy_hash_verifier->SetReady();
-      break;
-    } case 1: {
-      auto message = 
-        communication::BuildMessage(kSwiftMsb, gate_id_, payload);
+  } else if (my_id == 1) {
+    auto message = 
+        communication::BuildMessage(kSociumMsb, gate_id_, payload);
       communication_layer.SendMessage(0, message.Release());
-      break;
-    } case 2: {
-      verifier_data_.AssignData(payload);
-      multipy_hash_verifier->SetReady();
-      break;
-    }
   }
     
   PPA_->GetIsReadyCondition().Wait();
@@ -3357,4 +3342,4 @@ template class MsbGate<std::uint16_t>;
 template class MsbGate<std::uint32_t>;
 template class MsbGate<std::uint64_t>;
 
-}  // namespace encrypto::motion::proto::swift
+}  // namespace encrypto::motion::proto::socium

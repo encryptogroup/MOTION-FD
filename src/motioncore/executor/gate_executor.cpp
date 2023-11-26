@@ -31,6 +31,7 @@
 #include "protocols/wire.h"
 #include "base/backend.h"
 #include "protocols/auxiliator/auxiliator_verifier.h"
+#include "protocols/socium/socium_verifier.h"
 #include "protocols/swift/swift_verifier.h"
 #include "protocols/swift/swift_truncation.h"
 
