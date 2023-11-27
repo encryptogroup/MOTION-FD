@@ -75,4 +75,44 @@ class Share final : public motion::Share {
 template <typename T>
 using SharePointer = std::shared_ptr<Share<T>>;
 
+class BooleanShare final : public motion::BooleanShare {
+  using Base = motion::BooleanShare;
+
+ public:
+  BooleanShare(const motion::WirePointer& wire);
+  
+  BooleanShare(const socium::BooleanWirePointer& wire);
+  
+  BooleanShare(const std::vector<socium::BooleanWirePointer>& wires);
+  
+  BooleanShare(const std::vector<motion::WirePointer>& wires);
+
+  ~BooleanShare() override = default;
+
+  std::size_t GetNumberOfSimdValues() const noexcept final;
+
+  MpcProtocol GetProtocol() const noexcept final;
+
+  CircuitType GetCircuitType() const noexcept final;
+
+  const std::vector<motion::WirePointer>& GetWires() const noexcept final { return wires_; }
+
+  std::vector<motion::WirePointer>& GetMutableWires() noexcept final { return wires_; }
+
+  bool Finished();
+
+  std::size_t GetBitLength() const noexcept final { return wires_.size(); }
+
+  std::vector<motion::SharePointer> Split() const noexcept final;
+
+  motion::SharePointer GetWire(std::size_t i) const override;
+
+  BooleanShare(BooleanShare&) = delete;
+
+ private:
+  BooleanShare() = default;
+};
+
+using BooleanSharePointer = std::shared_ptr<BooleanShare>;
+
 }  // namespace encrypto::motion::proto::socium

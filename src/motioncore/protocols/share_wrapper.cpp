@@ -62,6 +62,12 @@
 #include "protocols/data_management/subset_gate.h"
 #include "protocols/data_management/unsimdify_gate.h"
 #include "protocols/garbled_circuit/garbled_circuit_provider.h"
+#include "protocols/socium/socium_gate.h"
+#include "protocols/socium/socium_share.h"
+#include "protocols/socium/socium_wire.h"
+#include "protocols/swift/swift_gate.h"
+#include "protocols/swift/swift_share.h"
+#include "protocols/swift/swift_wire.h"
 #include "secure_type/secure_unsigned_integer.h"
 #include "share.h"
 #include "utility/bit_vector.h"
@@ -109,11 +115,6 @@ ShareWrapper ShareWrapper::operator^(const ShareWrapper& other) const {
   assert(share_->GetProtocol() == other->GetProtocol());
   assert(share_->GetBitLength() == other->GetBitLength());
 
-  if (share_->GetCircuitType() == CircuitType::kArithmetic) {
-    throw std::runtime_error(
-        "Boolean primitive operations are not supported for arithmetic circuits");
-  }
-
   switch (share_->GetProtocol()) {
     case MpcProtocol::kBmr: {
       auto this_b = std::dynamic_pointer_cast<proto::bmr::Share>(share_);
@@ -146,6 +147,40 @@ ShareWrapper ShareWrapper::operator^(const ShareWrapper& other) const {
       auto xor_gate = share_->GetRegister()->EmplaceGate<proto::boolean_auxiliator::XorGate>(*this, other);
       return ShareWrapper(xor_gate->GetOutputAsBooleanAuxiliatorShare());
     }
+    case MpcProtocol::kSocium: {
+      auto this_wire_a = 
+        std::dynamic_pointer_cast<proto::socium::BooleanWire>(
+          share_->GetWires()[0]);
+
+      auto other_wire_a = 
+        std::dynamic_pointer_cast<proto::socium::BooleanWire>(
+          other->GetWires()[0]);
+
+      auto xor_gate =
+        share_->GetRegister()->EmplaceGate<proto::socium::XorGate>(
+          this_wire_a, other_wire_a);
+      auto result = 
+        std::make_shared<proto::socium::BooleanShare>(
+          xor_gate->GetOutputWires()[0]);
+      return ShareWrapper(result);
+    }
+    case MpcProtocol::kSwift: {
+      auto this_wire_a = 
+        std::dynamic_pointer_cast<proto::swift::BooleanWire>(
+          share_->GetWires()[0]);
+
+      auto other_wire_a = 
+        std::dynamic_pointer_cast<proto::swift::BooleanWire>(
+          other->GetWires()[0]);
+
+      auto xor_gate =
+        share_->GetRegister()->EmplaceGate<proto::swift::XorGate>(
+          this_wire_a, other_wire_a);
+      auto result = 
+        std::make_shared<proto::swift::BooleanShare>(
+          xor_gate->GetOutputWires()[0]);
+      return ShareWrapper(result);
+    }
     default:
       throw std::runtime_error(
           fmt::format("Unknown protocol for constructing an XOR gate with id {}",
@@ -158,12 +193,7 @@ ShareWrapper ShareWrapper::operator&(const ShareWrapper& other) const {
   assert(share_);
   assert(share_->GetProtocol() == other->GetProtocol());
   assert(share_->GetBitLength() == other->GetBitLength());
-
-  if (share_->GetCircuitType() == CircuitType::kArithmetic) {
-    throw std::runtime_error(
-        "Boolean primitive operations are not supported for arithmetic circuits");
-  }
-
+  
   switch (share_->GetProtocol()) {
     case MpcProtocol::kBmr: {
       auto this_b = std::dynamic_pointer_cast<proto::bmr::Share>(share_);
@@ -192,6 +222,40 @@ ShareWrapper ShareWrapper::operator&(const ShareWrapper& other) const {
     case MpcProtocol::kBooleanAuxiliator: {
       auto and_gate = share_->GetRegister()->EmplaceGate<proto::boolean_auxiliator::AndGate>(*this, other);
       return ShareWrapper(and_gate->GetOutputAsBooleanAuxiliatorShare());
+    }
+    case MpcProtocol::kSocium: {
+      auto this_wire_a = 
+        std::dynamic_pointer_cast<proto::socium::BooleanWire>(
+          share_->GetWires()[0]);
+
+      auto other_wire_a = 
+        std::dynamic_pointer_cast<proto::socium::BooleanWire>(
+          other->GetWires()[0]);
+
+      auto and_gate =
+        share_->GetRegister()->EmplaceGate<proto::socium::AndGate>(
+          this_wire_a, other_wire_a);
+      auto result = 
+        std::make_shared<proto::socium::BooleanShare>(
+          and_gate->GetOutputWires()[0]);
+      return ShareWrapper(result);
+    }
+    case MpcProtocol::kSwift: {
+      auto this_wire_a = 
+        std::dynamic_pointer_cast<proto::swift::BooleanWire>(
+          share_->GetWires()[0]);
+
+      auto other_wire_a = 
+        std::dynamic_pointer_cast<proto::swift::BooleanWire>(
+          other->GetWires()[0]);
+
+      auto and_gate =
+        share_->GetRegister()->EmplaceGate<proto::swift::AndGate>(
+          this_wire_a, other_wire_a);
+      auto result = 
+        std::make_shared<proto::swift::BooleanShare>(
+          and_gate->GetOutputWires()[0]);
+      return ShareWrapper(result);
     }
     default:
       throw std::runtime_error(
@@ -1102,6 +1166,34 @@ ShareWrapper ShareWrapper::Add(SharePointer share, SharePointer other) const {
       auto result = std::static_pointer_cast<Share>(addition_gate->GetOutputAsAuxiliatorShare());
       return ShareWrapper(result);
     }
+    case MpcProtocol::kSocium: {
+      auto this_a = std::dynamic_pointer_cast<proto::socium::Share<T>>(share);
+      assert(this_a);
+      auto this_wire_a = this_a->GetSociumWire();
+
+      auto other_a = std::dynamic_pointer_cast<proto::socium::Share<T>>(other);
+      assert(other_a);
+      auto other_wire_a = other_a->GetSociumWire();
+
+      auto addition_gate = share_->GetRegister()->EmplaceGate<proto::socium::AdditionGate<T>>(
+          this_wire_a, other_wire_a);
+      auto result = std::make_shared<proto::socium::Share<T>>(addition_gate->GetOutputWires()[0]);
+      return ShareWrapper(result);
+    }
+    case MpcProtocol::kSwift: {
+      auto this_a = std::dynamic_pointer_cast<proto::swift::Share<T>>(share);
+      assert(this_a);
+      auto this_wire_a = this_a->GetSwiftWire();
+
+      auto other_a = std::dynamic_pointer_cast<proto::swift::Share<T>>(other);
+      assert(other_a);
+      auto other_wire_a = other_a->GetSwiftWire();
+
+      auto addition_gate = share_->GetRegister()->EmplaceGate<proto::swift::AdditionGate<T>>(
+          this_wire_a, other_wire_a);
+      auto result = std::make_shared<proto::swift::Share<T>>(addition_gate->GetOutputWires()[0]);
+      return ShareWrapper(result);
+    }
     default:
       throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::Add");
   }
@@ -1252,6 +1344,40 @@ ShareWrapper ShareWrapper::Mul(SharePointer share, SharePointer other) const {
             this_wire_a, other_wire_a);
       auto result = std::static_pointer_cast<Share>(
                       multiplication_gate->GetOutputAsAuxiliatorShare());
+      return ShareWrapper(result);
+    }
+    case MpcProtocol::kSocium: {
+      auto this_a = std::dynamic_pointer_cast<proto::socium::Share<T>>(share);
+      assert(this_a);
+      auto this_wire_a = this_a->GetSociumWire();
+
+      auto other_a = std::dynamic_pointer_cast<proto::socium::Share<T>>(other);
+      assert(other_a);
+      auto other_wire_a = other_a->GetSociumWire();
+
+      auto multiplication_gate =
+        share_->GetRegister()->EmplaceGate<proto::socium::MultiplicationGate<T>>(
+          this_wire_a, other_wire_a);
+      auto result = 
+        std::make_shared<proto::socium::Share<T>>(
+          multiplication_gate->GetOutputWires()[0]);
+      return ShareWrapper(result);
+    }
+    case MpcProtocol::kSwift: {
+      auto this_a = std::dynamic_pointer_cast<proto::swift::Share<T>>(share);
+      assert(this_a);
+      auto this_wire_a = this_a->GetSwiftWire();
+
+      auto other_a = std::dynamic_pointer_cast<proto::swift::Share<T>>(other);
+      assert(other_a);
+      auto other_wire_a = other_a->GetSwiftWire();
+
+      auto multiplication_gate =
+          share_->GetRegister()->EmplaceGate<proto::swift::MultiplicationGate<T>>(
+            this_wire_a, other_wire_a);
+      auto result = 
+        std::make_shared<proto::swift::Share<T>>(
+          multiplication_gate->GetOutputWires()[0]);
       return ShareWrapper(result);
     }
     default:
@@ -1434,6 +1560,86 @@ AuxiliatorConvertToMatrixWire(boost::numeric::ublas::matrix<ShareWrapper> const&
 }
 
 template<typename T>
+boost::numeric::ublas::matrix<proto::socium::WirePointer<T>>
+ToSociumWireMatrix(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
+  size_t const m = a.size1();
+  size_t const n = a.size2();
+  boost::numeric::ublas::matrix<proto::socium::WirePointer<T>> result(m, n);
+  for(size_t i = 0; i != m; ++i) {
+    for(size_t j = 0; j != n; ++j) {
+      auto w = std::dynamic_pointer_cast<proto::socium::Wire<T>>(a(i, j)->GetWires()[0]);
+      assert(w);
+      result(i, j) = w;
+    }
+  }
+  return result;
+}
+
+template<typename T>
+boost::numeric::ublas::matrix<proto::swift::WirePointer<T>>
+ToSwiftWireMatrix(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
+  size_t const m = a.size1();
+  size_t const n = a.size2();
+  boost::numeric::ublas::matrix<proto::swift::WirePointer<T>> result(m, n);
+  for(size_t i = 0; i != m; ++i) {
+    for(size_t j = 0; j != n; ++j) {
+      auto w = std::dynamic_pointer_cast<proto::swift::Wire<T>>(a(i, j)->GetWires()[0]);
+      assert(w);
+      result(i, j) = w;
+    }
+  }
+  return result;
+}
+
+template<typename T>
+proto::socium::MatrixWirePointer<T> 
+SociumConvertToMatrixWire(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
+  auto share = a(0, 0);
+  auto mc_gate = share->GetRegister()->EmplaceGate<proto::socium::MatrixConversionGate<T>>(ToSociumWireMatrix<T>(a));
+  auto result = std::dynamic_pointer_cast<proto::socium::MatrixWire<T>>(mc_gate->GetOutputWires()[0]);
+  assert(result);
+  return result;
+}
+
+template<typename T>
+proto::swift::MatrixWirePointer<T> 
+SwiftConvertToMatrixWire(boost::numeric::ublas::matrix<ShareWrapper> const& a) {
+  auto share = a(0, 0);
+  auto mc_gate = share->GetRegister()->EmplaceGate<proto::swift::MatrixConversionGate<T>>(ToSwiftWireMatrix<T>(a));
+  auto result = std::dynamic_pointer_cast<proto::swift::MatrixWire<T>>(mc_gate->GetOutputWires()[0]);
+  assert(result);
+  return result;
+}
+
+template<typename T>
+boost::numeric::ublas::matrix<ShareWrapper>
+ToShareMatrix(boost::numeric::ublas::matrix<proto::socium::WirePointer<T>> const& a) {
+  size_t const m = a.size1();
+  size_t const n = a.size2();
+  boost::numeric::ublas::matrix<ShareWrapper> result(m, n);
+  for(size_t i = 0; i != m; ++i) {
+    for(size_t j = 0; j != n; ++j) {
+      result(i, j) = ShareWrapper(std::make_shared<proto::socium::Share<T>>(a(i, j)));
+    }
+  }
+  return result;
+}
+
+template<typename T>
+boost::numeric::ublas::matrix<ShareWrapper>
+ToShareMatrix(boost::numeric::ublas::matrix<proto::swift::WirePointer<T>> const& a) {
+  size_t const m = a.size1();
+  size_t const n = a.size2();
+  boost::numeric::ublas::matrix<ShareWrapper> result(m, n);
+  for(size_t i = 0; i != m; ++i) {
+    for(size_t j = 0; j != n; ++j) {
+      result(i, j) = ShareWrapper(std::make_shared<proto::swift::Share<T>>(a(i, j)));
+    }
+  }
+  return result;
+}
+
+template<typename T>
 boost::numeric::ublas::matrix<ShareWrapper> ShareWrapper::MatrixMultiplication(
   boost::numeric::ublas::matrix<ShareWrapper> const& a, 
   boost::numeric::ublas::matrix<ShareWrapper> const& b) const {
@@ -1443,7 +1649,9 @@ boost::numeric::ublas::matrix<ShareWrapper> ShareWrapper::MatrixMultiplication(
       auto matrix_multiplication_gate = 
         share_->GetRegister()->EmplaceGate<proto::astra::MatrixMultiplicationGate<T>>(
           AstraConvertToMatrixWire<T>(a), AstraConvertToMatrixWire<T>(b));
-      auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAstraShare());
+      auto product = 
+        std::static_pointer_cast<Share>(
+          matrix_multiplication_gate->GetOutputAsAstraShare());
       auto result_gate = 
         share_->GetRegister()->EmplaceGate<proto::astra::MatrixReconversionGate<T>>(product);
       return result_gate->GetShareMatrix();
@@ -1453,11 +1661,35 @@ boost::numeric::ublas::matrix<ShareWrapper> ShareWrapper::MatrixMultiplication(
       auto matrix_multiplication_gate = 
         share_->GetRegister()->EmplaceGate<proto::auxiliator::MatrixMultiplicationGate<T>>(
           AuxiliatorConvertToMatrixWire<T>(a), AuxiliatorConvertToMatrixWire<T>(b));
-      auto product = std::static_pointer_cast<Share>(matrix_multiplication_gate->GetOutputAsAuxiliatorShare());
+      auto product = 
+        std::static_pointer_cast<Share>(
+          matrix_multiplication_gate->GetOutputAsAuxiliatorShare());
       auto result_gate = 
         share_->GetRegister()->EmplaceGate<proto::auxiliator::MatrixReconversionGate<T>>(product);
       return result_gate->GetShareMatrix();
       
+    }
+    case MpcProtocol::kSocium: {
+      auto matrix_multiplication_gate = 
+        share_->GetRegister()->EmplaceGate<proto::socium::MatrixMultiplicationGate<T>>(
+          SociumConvertToMatrixWire<T>(a), SociumConvertToMatrixWire<T>(b));
+      auto product = 
+        std::dynamic_pointer_cast<proto::socium::MatrixWire<T>>(
+          matrix_multiplication_gate->GetOutputWires()[0]);
+      auto result_gate = 
+        share_->GetRegister()->EmplaceGate<proto::socium::MatrixReconversionGate<T>>(product);
+      return ToShareMatrix(result_gate->GetWireMatrix());
+    }
+    case MpcProtocol::kSwift: {
+      auto matrix_multiplication_gate = 
+        share_->GetRegister()->EmplaceGate<proto::swift::MatrixMultiplicationGate<T>>(
+          SwiftConvertToMatrixWire<T>(a), SwiftConvertToMatrixWire<T>(b));
+      auto product =
+        std::dynamic_pointer_cast<proto::swift::MatrixWire<T>>(
+          matrix_multiplication_gate->GetOutputWires()[0]);
+      auto result_gate = 
+          share_->GetRegister()->EmplaceGate<proto::swift::MatrixReconversionGate<T>>(product);
+      return ToShareMatrix(result_gate->GetWireMatrix());
     }
     default:
       throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::MatrixMultipliecation");
@@ -1558,6 +1790,30 @@ boost::numeric::ublas::matrix<ShareWrapper> FixedPointMatrixMultiplicationImpl(
         share->GetRegister()->EmplaceGate<proto::auxiliator::MatrixReconversionGate<T>>(product);
       return result_gate->GetShareMatrix();
     }
+    case MpcProtocol::kSocium: {
+      auto matrix_multiplication_gate = 
+        share->GetRegister()->EmplaceGate<proto::socium::FpaMatrixMultiplicationGate<T>>(
+          SociumConvertToMatrixWire<T>(a), SociumConvertToMatrixWire<T>(b), precision);
+      auto product = 
+        std::dynamic_pointer_cast<proto::socium::MatrixWire<T>>(
+          matrix_multiplication_gate->GetOutputWires()[0]);
+      assert(product);
+      auto result_gate = 
+        share->GetRegister()->EmplaceGate<proto::socium::MatrixReconversionGate<T>>(product);
+      return ToShareMatrix(result_gate->GetWireMatrix());
+    }
+    case MpcProtocol::kSwift: {
+      auto matrix_multiplication_gate = 
+        share->GetRegister()->EmplaceGate<proto::swift::FpaMatrixMultiplicationGate<T>>(
+          SwiftConvertToMatrixWire<T>(a), SwiftConvertToMatrixWire<T>(b));
+      auto product = 
+        std::dynamic_pointer_cast<proto::swift::MatrixWire<T>>(
+          matrix_multiplication_gate->GetOutputWires()[0]);
+      assert(product);
+      auto result_gate = 
+        share->GetRegister()->EmplaceGate<proto::swift::MatrixReconversionGate<T>>(product);
+      return ToShareMatrix(result_gate->GetWireMatrix());
+    }
     default:
       throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::MatrixMultipliecation");
   }
@@ -1606,6 +1862,30 @@ boost::numeric::ublas::matrix<ShareWrapper> FixedPointMatrixConstantMultiplicati
       auto result_gate = 
         share->GetRegister()->EmplaceGate<proto::auxiliator::MatrixReconversionGate<T>>(product);
       return result_gate->GetShareMatrix();
+    }
+    case MpcProtocol::kSocium: {
+      auto matrix_multiplication_gate = 
+        share->GetRegister()->EmplaceGate<proto::socium::FpaMatrixMultiplicationConstantGate<T>>(
+          SociumConvertToMatrixWire<T>(a), constant, precision);
+      auto product = 
+        std::dynamic_pointer_cast<proto::socium::MatrixWire<T>>(
+          matrix_multiplication_gate->GetOutputWires()[0]);
+      assert(product);
+      auto result_gate = 
+        share->GetRegister()->EmplaceGate<proto::socium::MatrixReconversionGate<T>>(product);
+      return ToShareMatrix(result_gate->GetWireMatrix());
+    }
+    case MpcProtocol::kSwift: {
+      auto matrix_multiplication_gate = 
+        share->GetRegister()->EmplaceGate<proto::swift::FpaMatrixMultiplicationConstantGate<T>>(
+          SwiftConvertToMatrixWire<T>(a), constant);
+      auto product = 
+        std::dynamic_pointer_cast<proto::swift::MatrixWire<T>>(
+          matrix_multiplication_gate->GetOutputWires()[0]);
+      assert(product);
+      auto result_gate = 
+        share->GetRegister()->EmplaceGate<proto::swift::MatrixReconversionGate<T>>(product);
+      return ToShareMatrix(result_gate->GetWireMatrix());
     }
     default:
       throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::FixedPointMatrixMultiplication");
@@ -1765,6 +2045,28 @@ ShareWrapper MatrixMsbImpl(boost::numeric::ublas::matrix<ShareWrapper> const& a)
       auto msb = std::static_pointer_cast<Share>(matrix_msb_gate->GetOutputAsBooleanAuxiliatorShare());
       return ShareWrapper(msb);
     }
+    case MpcProtocol::kSocium: {
+      auto matrix_msb_gate = 
+        share->GetRegister()->EmplaceGate<proto::socium::MsbGate<T>>(SociumConvertToMatrixWire<T>(a));
+      auto msb_wire = 
+        std::dynamic_pointer_cast<proto::socium::BitMatrixWire>(
+          matrix_msb_gate->GetOutputWires()[0]);
+      assert(msb_wire);
+      return ShareWrapper(
+        std::make_shared<proto::socium::BooleanShare>(
+          static_pointer_cast<proto::socium::BooleanWire>(msb_wire)));
+    }
+    case MpcProtocol::kSwift: {
+      auto matrix_msb_gate = 
+        share->GetRegister()->EmplaceGate<proto::swift::MsbGate<T>>(SwiftConvertToMatrixWire<T>(a));
+      auto msb_wire = 
+        std::dynamic_pointer_cast<proto::swift::BitMatrixWire>(
+          matrix_msb_gate->GetOutputWires()[0]);
+      assert(msb_wire);
+      return ShareWrapper(
+        std::make_shared<proto::swift::BooleanShare>(
+          static_pointer_cast<proto::swift::BooleanWire>(msb_wire)));
+    }
     default:
       throw std::invalid_argument("Unsupported Arithmetic protocol in MatrixMsb");
   }
@@ -1821,6 +2123,16 @@ ShareWrapper ReLUImpl(
         share->GetRegister()->EmplaceGate<proto::auxiliator::MatrixSimdReconversionGate<T>>(
           ShareWrapper(std::make_shared<proto::auxiliator::Share<T>>(X_matrix_wire)))->GetSimdShare();
       return D_simd * X_simd;
+    }
+    case MpcProtocol::kSocium: {
+      return ShareWrapper(
+        std::make_shared<proto::socium::Share<T>>(proto::socium::ReLU(
+          ToSociumWireMatrix<T>(X))));
+    }
+    case MpcProtocol::kSwift: {
+      return ShareWrapper(
+        std::make_shared<proto::swift::Share<T>>(proto::swift::ReLU(
+          ToSwiftWireMatrix<T>(X))));
     }
     default:
       throw std::invalid_argument("Unsupported Arithmetic protocol in ShareWrapper::ReLU");

@@ -324,8 +324,6 @@ template<typename T>
 socium::WirePointer<T> ReLU(
   boost::numeric::ublas::matrix<socium::WirePointer<T>> const& X) {
   using boost::numeric::ublas::matrix;
-  size_t const u = X.size1();
-  size_t const v = X.size2();
   
   Backend& backend = X(0, 0)->GetBackend();
   auto matrix_conversion_gate = 
@@ -346,11 +344,11 @@ socium::WirePointer<T> ReLU(
       std::dynamic_pointer_cast<socium::MatrixWire<T>>(D_gate->GetOutputWires()[0]);
 
   auto D_simd_reconversion_gate = 
-    backend.GetRegister()->EmplaceGate<socium::MatrixSimdReconversionGate<uint64_t>>(D_wire);
+    backend.GetRegister()->EmplaceGate<socium::MatrixSimdReconversionGate<T>>(D_wire);
   auto D_simd_wire = D_simd_reconversion_gate->GetWire();
   
   auto X_simd_reconversion_gate = 
-    backend.GetRegister()->EmplaceGate<socium::MatrixSimdReconversionGate<uint64_t>>(matrix_conversion_wire);
+    backend.GetRegister()->EmplaceGate<socium::MatrixSimdReconversionGate<T>>(matrix_conversion_wire);
   auto X_simd_wire = X_simd_reconversion_gate->GetWire();
   
   auto multiplication_gate =

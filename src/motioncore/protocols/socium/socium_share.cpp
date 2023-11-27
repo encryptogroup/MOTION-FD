@@ -129,4 +129,63 @@ template class Share<std::uint32_t>;
 template class Share<std::uint64_t>;
 template class Share<__uint128_t>;
 
+BooleanShare::BooleanShare(const motion::WirePointer& wire) 
+: Base( (assert(wire), wire->GetBackend()) ) {
+  wires_ = {wire};
+}
+
+BooleanShare::BooleanShare(const socium::BooleanWirePointer& wire)
+: Base( (assert(wire), wire->GetBackend()) ) {
+  wires_ = {std::static_pointer_cast<motion::Wire>(wire)};
+}
+
+BooleanShare::BooleanShare(std::vector<socium::BooleanWirePointer> const& wires)
+: Base( (assert(wires.size() > 0), wires[0]->GetBackend()) ) {
+  for (size_t s = 0; s != wires.size(); ++s) {
+    wires_.emplace_back(wires[s]);
+  }
+}
+
+BooleanShare::BooleanShare(std::vector<motion::WirePointer> const& wires)
+: Base( (assert(wires.size() > 0), wires[0]->GetBackend()) ) {
+  for (size_t s = 0; s != wires.size(); ++s) {
+    wires_.emplace_back(wires[s]);
+  }
+}
+
+std::size_t BooleanShare::GetNumberOfSimdValues() const noexcept {
+  return wires_[0]->GetNumberOfSimdValues();
+}
+
+MpcProtocol BooleanShare::GetProtocol() const noexcept {
+  return wires_[0]->GetProtocol();
+}
+
+CircuitType BooleanShare::GetCircuitType() const noexcept {
+  return wires_[0]->GetCircuitType();
+}
+
+bool BooleanShare::Finished() {
+  return wires_[0]->IsReady();
+}
+
+std::vector<std::shared_ptr<motion::Share>> BooleanShare::Split() const noexcept {
+  std::vector<motion::SharePointer> v;
+  v.reserve(wires_.size());
+  for (const auto& w : wires_) {
+    const std::vector<motion::WirePointer> w_v = {std::static_pointer_cast<motion::Wire>(w)};
+    v.emplace_back(std::make_shared<BooleanShare>(w_v));
+  }
+  return v;
+}
+
+std::shared_ptr<motion::Share> BooleanShare::GetWire(std::size_t i) const {
+  if (i >= wires_.size()) {
+    throw std::out_of_range(
+        fmt::format("Trying to access wire #{} out of {} wires", i, wires_.size()));
+  }
+  std::vector<motion::WirePointer> result = {std::static_pointer_cast<motion::Wire>(wires_[i])};
+  return std::make_shared<BooleanShare>(result);
+}
+
 }  // namespace encrypto::motion::proto::socium
